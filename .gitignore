@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg
+
+# Virtual envs
+.venv/
+venv/
+
+# hist local data / generated artifacts
+*.usearch
+*.db
+*.sqlite
+*.sqlite3
+.coverage
+htmlcov/
+
+# Editor
+.idea/
+.vscode/
+
+# Worktrees (created during the build, not part of the package)
+/.worktrees/
