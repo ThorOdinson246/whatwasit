@@ -126,6 +126,11 @@ def reconstruct_cwd(commands: List[Command], start_cwd: str = HOME) -> None:
     Only commands whose ``cwd`` is currently ``None`` are touched; commands
     that already carry a reliable cwd (e.g. from atuin) are left untouched
     but still used to (re)synchronize the tracked current directory.
+
+    A ``cd``/``pushd``/``popd`` is attributed to the directory it *lands in*
+    (its destination), not the directory it was launched from. This keeps the
+    command that enters a directory inside that directory's session, instead of
+    fragmenting every directory change into its own one-command session.
     """
     current = start_cwd
     oldpwd: Optional[str] = None
@@ -133,11 +138,15 @@ def reconstruct_cwd(commands: List[Command], start_cwd: str = HOME) -> None:
 
     for cmd in commands:
         if cmd.cwd is not None:
+            # Authoritative cwd (e.g. atuin): trust it as recorded, but still
+            # replay this command's directory effect for the commands after it.
             current = cmd.cwd
+            current, oldpwd = _apply_cd(cmd.raw_cmd, current, oldpwd, stack)
         else:
+            # Reconstructed: apply the directory effect first, then label this
+            # command with the resulting directory (destination for a cd).
+            current, oldpwd = _apply_cd(cmd.raw_cmd, current, oldpwd, stack)
             cmd.cwd = current
-
-        current, oldpwd = _apply_cd(cmd.raw_cmd, current, oldpwd, stack)
 
 
 def _session_cwd(group: List[Command]) -> Optional[str]:

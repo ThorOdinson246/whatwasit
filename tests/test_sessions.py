@@ -25,7 +25,7 @@ def test_reconstruct_cwd_absolute_cd():
     reconstruct_cwd(commands, start_cwd="~")
 
     assert commands[0].cwd == "~"
-    assert commands[1].cwd == "~"  # cwd *before* the cd takes effect
+    assert commands[1].cwd == "/var/log"  # cd attributed to its destination
     assert commands[2].cwd == "/var/log"
 
 
@@ -39,9 +39,10 @@ def test_reconstruct_cwd_relative_cd():
     ]
     reconstruct_cwd(commands, start_cwd="~")
 
-    assert commands[1].cwd == "/home/user/project"
+    assert commands[0].cwd == "/home/user/project"
+    assert commands[1].cwd == "/home/user/project/src"
     assert commands[2].cwd == "/home/user/project/src"
-    assert commands[3].cwd == "/home/user/project/src"
+    assert commands[3].cwd == "/home/user/project/tests"
     assert commands[4].cwd == "/home/user/project/tests"
 
 
@@ -246,14 +247,18 @@ def test_group_commands_reconstructs_missing_cwd_first():
     ]
     sessions = group_commands(commands, config)
 
-    # cwd is reconstructed in place before grouping, and every cwd change
-    # (including the very first "cd /work") triggers a session split.
+    # cwd is reconstructed in place before grouping; a "cd" is attributed to
+    # its destination, so "cd /work" and the following "ls" share the /work
+    # session, and "cd /other" starts the next one.
+    assert commands[0].cwd == "/work"
     assert commands[1].cwd == "/work"
+    assert commands[2].cwd == "/other"
     assert commands[3].cwd == "/other"
-    assert len(sessions) == 3
-    assert sessions[0].cwd == "~"
-    assert sessions[1].cwd == "/work"
-    assert sessions[2].cwd == "/other"
+    assert len(sessions) == 2
+    assert sessions[0].cwd == "/work"
+    assert [c.raw_cmd for c in sessions[0].commands] == ["cd /work", "ls"]
+    assert sessions[1].cwd == "/other"
+    assert [c.raw_cmd for c in sessions[1].commands] == ["cd /other", "pwd"]
 
 
 def test_group_commands_preserves_original_order():
