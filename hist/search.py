@@ -22,6 +22,26 @@ from .models import SearchResult
 MAX_MATCHED_INDICES = 3
 MATCH_SCORE_MARGIN = 0.05
 
+# Pivoted length normalization (BM25-style).
+# Documents shorter than _LN_PIVOT chars get a mild boost; longer ones get a
+# mild penalty.  _LN_SLOPE=0 disables the adjustment entirely; _LN_SLOPE=1
+# applies the maximum correction.  0.4 is a conservative midpoint that
+# prevents noisy long sessions from dominating without over-penalizing
+# genuinely rich sessions.
+_LN_SLOPE: float = 0.4
+_LN_PIVOT: float = 175.0
+
+
+def _length_penalty(doc_text: str, slope: float = _LN_SLOPE, pivot: float = _LN_PIVOT) -> float:
+    """Pivoted length normalization multiplier (BM25-style).
+
+    Returns a value > 1 for documents shorter than *pivot* (mild boost) and
+    < 1 for documents longer than *pivot* (mild penalty).  Documents of exactly
+    *pivot* characters are returned unchanged (multiplier = 1.0).
+    """
+    length = max(1, len(doc_text))
+    return 1.0 / (1.0 - slope + slope * (length / pivot))
+
 
 def _rank_matches(query_vec: np.ndarray, cmd_vecs: np.ndarray) -> List[int]:
     """Pick the command indices that best match the query.
@@ -97,7 +117,8 @@ def search(
     results: List[SearchResult] = []
     for (session, score), (start, end) in zip(sessions, spans):
         matched_indices = _rank_matches(qv, cmd_vecs[start:end])
-        results.append(SearchResult(session=session, score=score, matched_indices=matched_indices))
+        adj_score = score * _length_penalty(session.doc_text or "")
+        results.append(SearchResult(session=session, score=adj_score, matched_indices=matched_indices))
 
     results.sort(key=lambda r: r.score, reverse=True)
     return results
