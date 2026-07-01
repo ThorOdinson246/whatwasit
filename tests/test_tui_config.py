@@ -42,7 +42,7 @@ def test_config_defaults_without_file(monkeypatch: pytest.MonkeyPatch, tmp_path:
     config = Config.default()
     assert config.output_mode == "tui"
     assert config.tui_page_size == 5
-    assert config.use_daemon is False
+    assert config.use_daemon is True
 
 
 def test_config_file_overrides_defaults(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
