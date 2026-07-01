@@ -13,7 +13,7 @@ from pathlib import Path
 SCHEMA_VERSION = 1
 """Bumped whenever the on-disk SQLite schema changes. Stored in the ``meta`` table."""
 
-DEFAULT_MODEL_NAME = "BAAI/bge-small-en-v1.5"
+DEFAULT_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 DEFAULT_EMBEDDING_DIM = 384
 DEFAULT_LOW_CONFIDENCE_THRESHOLD = 0.40
 DEFAULT_SESSION_WINDOW_SECONDS = 300  # 5 minutes
