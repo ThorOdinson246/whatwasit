@@ -63,6 +63,12 @@ def apply_file_overrides(config: "Config") -> "Config":
         except (TypeError, ValueError):
             pass
 
+    if "low_confidence_threshold" in data:
+        try:
+            config.low_confidence_threshold = float(data["low_confidence_threshold"])
+        except (TypeError, ValueError):
+            pass
+
     if "use_daemon" in data:
         config.use_daemon = bool(data["use_daemon"])
 

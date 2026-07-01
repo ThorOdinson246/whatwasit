@@ -91,12 +91,30 @@ def test_render_results_defaults_console_when_omitted() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_main_no_args_prints_help_and_returns_zero(capsys: pytest.CaptureFixture) -> None:
+def test_main_no_args_launches_repl(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: List[dict] = []
+
+    def fake_run_repl(*_args, **_kwargs):
+        calls.append({"repl": True})
+
+    monkeypatch.setattr(cli, "run_repl", fake_run_repl)
+
+    def fake_default():
+        from hist.config import Config
+        from pathlib import Path
+        import tempfile
+
+        data_dir = Path(tempfile.mkdtemp())
+        data_dir.mkdir(parents=True, exist_ok=True)
+        (data_dir / "hist.db").touch()
+        return Config(data_dir=data_dir)
+
+    monkeypatch.setattr(cli.Config, "default", staticmethod(fake_default))
+
     rc = cli.main([])
 
     assert rc == 0
-    captured = capsys.readouterr()
-    assert "usage" in captured.out.lower()
+    assert calls == [{"repl": True}]
 
 
 def test_main_help_flag_prints_help_and_returns_zero(capsys: pytest.CaptureFixture) -> None:

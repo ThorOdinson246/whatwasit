@@ -136,4 +136,9 @@ def display_results(
 
     from .tui import run_tui
 
-    run_tui(results, query, page_size=config.tui_page_size)
+    run_tui(
+        results,
+        query,
+        page_size=config.tui_page_size,
+        low_confidence_threshold=config.low_confidence_threshold,
+    )

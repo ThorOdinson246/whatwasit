@@ -26,6 +26,7 @@ from .embedder import is_model_cached
 from .indexer import build_index_from_history
 from .output import display_results
 from .search import search
+from .tui import run_repl
 
 PROG = "hist"
 
@@ -89,6 +90,33 @@ def _run_index(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_repl() -> int:
+    """Launch the persistent interactive REPL."""
+    config = Config.default()
+
+    if not config.db_path.exists():
+        print(
+            "No index found. Run `hist index` first to build a search index "
+            "from your shell history."
+        )
+        return 1
+
+    def do_search(query: str):
+        results = None
+        if config.use_daemon:
+            results = daemon_search(config, query)
+        if results is None:
+            results = search(config, query)
+        return results
+
+    run_repl(
+        do_search,
+        page_size=config.tui_page_size,
+        low_confidence_threshold=config.low_confidence_threshold,
+    )
+    return 0
+
+
 def _run_query(
     query: str,
     top_k: Optional[int],
@@ -132,7 +160,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     parser = _build_parser()
 
-    if not argv or argv[0] in ("-h", "--help"):
+    if not argv:
+        return _run_repl()
+
+    if argv[0] in ("-h", "--help"):
         _print_help(parser)
         return 0
 

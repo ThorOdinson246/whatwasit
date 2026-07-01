@@ -50,6 +50,7 @@ class Config:
     # Output / TUI
     output_mode: str = "tui"  # "tui" | "plain"
     tui_page_size: int = 5
+    low_confidence_threshold: float = 0.40
     use_daemon: bool = True
 
     # Schema (read-only constant exposed for convenience)
