@@ -58,10 +58,29 @@ _KW_TOKEN_RE = re.compile(r"[a-z0-9_.-]+")
 _HYBRID_KW_MIN_SCORE: float = 0.05
 
 
+def _strip_hints(doc_text: str) -> str:
+    """Return doc_text without the semantic hint expansion line.
+
+    The "context: ..." line added by Session.to_document() is useful for
+    semantic embeddings but must NOT be used for keyword scoring: its
+    natural-language phrases create spurious overlap with intent-paraphrase
+    queries, breaking the separation between the two signals.
+    """
+    return "\n".join(
+        line for line in doc_text.split("\n") if not line.startswith("context: ")
+    )
+
+
 def _keyword_score(query: str, doc_text: str) -> float:
-    """Jaccard token-overlap similarity between query and document text."""
+    """Jaccard token-overlap similarity between query and raw command text.
+
+    Uses only the raw-command portion of doc_text (hints stripped) so that
+    the keyword signal reflects actual command/flag/tool-name presence rather
+    than the natural-language expansions added for semantic search.
+    """
+    raw  = _strip_hints(doc_text)
     qtoks = set(_KW_TOKEN_RE.findall(query.lower()))
-    dtoks = set(_KW_TOKEN_RE.findall(doc_text.lower()))
+    dtoks = set(_KW_TOKEN_RE.findall(raw.lower()))
     if not qtoks or not dtoks:
         return 0.0
     inter = len(qtoks & dtoks)
