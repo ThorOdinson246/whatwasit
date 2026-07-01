@@ -55,7 +55,7 @@ _KW_TOKEN_RE = re.compile(r"[a-z0-9_.-]+")
 # (which avoid tool names) produce scores near 0; exact-keyword queries
 # (tool names, flags, error codes) easily exceed this threshold.
 # Value chosen empirically: intent queries score < 0.04; keyword queries > 0.08.
-_HYBRID_KW_MIN_SCORE: float = 0.05
+_HYBRID_KW_MIN_SCORE: float = 0.20
 
 
 def _strip_hints(doc_text: str) -> str:
