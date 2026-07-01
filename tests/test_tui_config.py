@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List
 
 import pytest
-from textual.widgets import Static
+from textual.widgets import ListView, Static
 
 from hist.config import Config
 from hist.config_loader import apply_file_overrides, config_file_path
@@ -42,6 +42,7 @@ def test_config_defaults_without_file(monkeypatch: pytest.MonkeyPatch, tmp_path:
     config = Config.default()
     assert config.output_mode == "tui"
     assert config.tui_page_size == 5
+    assert config.low_confidence_threshold == 0.40
     assert config.use_daemon is True
 
 
@@ -158,20 +159,24 @@ def test_display_results_plain_uses_lines_when_not_tty(monkeypatch: pytest.Monke
 
 
 @pytest.mark.asyncio
-async def test_tui_smoke_navigate_and_expand() -> None:
+async def test_tui_smoke_navigate_and_copy() -> None:
     results = _make_results(6)
     app = HistTUI(results, "docker build", page_size=5)
+    copied: list[str] = []
+    app.copy_to_clipboard = lambda text: copied.append(text)  # type: ignore[method-assign]
 
     async with app.run_test() as pilot:
         header = pilot.app.query_one("#header", Static)
         assert "docker build" in str(header.render())
         await pilot.press("j")
+        list_view = pilot.app.query_one("#results", ListView)
+        assert list_view.index == 1
+        assert "git status 1" in str(list_view.children[1].query_one(Static).render())
         await pilot.press("enter")
-        detail = pilot.app.query_one("#detail", Static)
-        assert "git status" in str(detail.render())
+        assert copied == ["git status 1"]
         await pilot.press("n")
         header_text = str(pilot.app.query_one("#header", Static).render())
-        assert "6/6" in header_text or "showing 6" in header_text.lower()
+        assert "6/6" in header_text
 
 
 def test_config_file_path_uses_xdg(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
