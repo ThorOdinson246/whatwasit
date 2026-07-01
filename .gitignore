@@ -28,3 +28,6 @@ htmlcov/
 
 # Worktrees (created during the build, not part of the package)
 /.worktrees/
+
+# Local-only notes, not for version control
+/FINAL_REPORT.md
