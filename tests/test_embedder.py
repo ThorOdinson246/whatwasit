@@ -77,7 +77,8 @@ def test_build_embedder_uses_config_defaults() -> None:
     config = Config.default()
     built = build_embedder(config)
 
-    assert isinstance(built, AsymmetricOnnxEmbedder)
+    assert isinstance(built, OnnxEmbedder)
+    assert not isinstance(built, AsymmetricOnnxEmbedder)
     assert built.dim == config.embedding_dim
 
 

@@ -175,6 +175,7 @@ def test_main_query_joins_args_and_calls_search(monkeypatch: pytest.MonkeyPatch,
         config = Config(data_dir=tmp_path)
         config.ensure_data_dir()
         config.db_path.touch()
+        config.use_daemon = False
         return config
 
     monkeypatch.setattr(cli.Config, "default", staticmethod(fake_default))
@@ -206,6 +207,7 @@ def test_main_query_supports_top_k_flag(monkeypatch: pytest.MonkeyPatch, tmp_pat
         config = Config(data_dir=tmp_path)
         config.ensure_data_dir()
         config.db_path.touch()
+        config.use_daemon = False
         return config
 
     monkeypatch.setattr(cli.Config, "default", staticmethod(fake_default))
