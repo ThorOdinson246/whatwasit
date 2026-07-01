@@ -45,12 +45,19 @@ class Config:
     top_k: int = DEFAULT_TOP_K
     hybrid_search: bool = True
 
+    # Output / TUI
+    output_mode: str = "tui"  # "tui" | "plain"
+    tui_page_size: int = 5
+    use_daemon: bool = False  # stub until daemon workstream lands
+
     # Schema (read-only constant exposed for convenience)
     schema_version: int = SCHEMA_VERSION
 
     @classmethod
     def default(cls) -> "Config":
-        return cls()
+        from .config_loader import apply_file_overrides
+
+        return apply_file_overrides(cls())
 
     @property
     def db_path(self) -> Path:
