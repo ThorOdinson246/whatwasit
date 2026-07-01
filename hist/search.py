@@ -202,9 +202,10 @@ def search(
     qv = np.asarray(qvec, dtype=np.float32)
 
     results: List[SearchResult] = []
+    use_length_penalty = not hasattr(embedder, "encode_query")
     for (session, score), (start, end) in zip(sessions, spans):
         matched_indices = _rank_matches(qv, cmd_vecs[start:end])
-        adj_score = score * _length_penalty(session.doc_text or "")
+        adj_score = score * _length_penalty(session.doc_text or "") if use_length_penalty else score
         results.append(SearchResult(session=session, score=adj_score, matched_indices=matched_indices))
 
     results.sort(key=lambda r: r.score, reverse=True)
