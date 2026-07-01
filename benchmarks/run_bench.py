@@ -145,8 +145,8 @@ def _write_md(rows, ann) -> None:
     md.append("# Benchmarks\n")
     md.append(
         "Measured on a laptop CPU (no GPU), fully offline, embedding model "
-        "`all-MiniLM-L6-v2` (384-dim int8 ONNX via fastembed), vector store "
-        "`usearch`.\n"
+        "`all-MiniLM-L6-v2` (384-dim ONNX via onnxruntime + tokenizers), vector "
+        "store `usearch`.\n"
     )
     md.append(f"- Machine: `{cpu}`, Python `{platform.python_version()}`, "
               f"{os.cpu_count()} logical CPUs\n")
