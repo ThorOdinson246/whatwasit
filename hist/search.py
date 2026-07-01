@@ -8,7 +8,8 @@ output layer can highlight which specific commands made the session relevant.
 
 from __future__ import annotations
 
-from typing import List, Optional
+import re
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -30,6 +31,62 @@ MATCH_SCORE_MARGIN = 0.05
 # genuinely rich sessions.
 _LN_SLOPE: float = 0.4
 _LN_PIVOT: float = 175.0
+
+
+# ---------------------------------------------------------------------------
+# Hybrid search: Reciprocal Rank Fusion (RRF) of semantic + keyword signals.
+#
+# RRF is chosen over a weighted linear sum because it requires no score
+# calibration between the two signals (cosine similarity vs. Jaccard
+# overlap have different dynamic ranges).  The single tunable constant k=60
+# is the standard literature value; it dampens the influence of top-ranked
+# results so neither signal dominates.
+#
+# The keyword scorer runs over the semantic candidates already retrieved from
+# the ANN index, so no separate keyword index is needed.  For production
+# indexes, set top_k high enough (or use a "recall budget") so that
+# keyword-specific sessions are included in the candidate set.
+# ---------------------------------------------------------------------------
+_RRF_K = 60
+_KW_TOKEN_RE = re.compile(r"[a-z0-9_.-]+")
+
+
+def _keyword_score(query: str, doc_text: str) -> float:
+    """Jaccard token-overlap similarity between query and document text."""
+    qtoks = set(_KW_TOKEN_RE.findall(query.lower()))
+    dtoks = set(_KW_TOKEN_RE.findall(doc_text.lower()))
+    if not qtoks or not dtoks:
+        return 0.0
+    inter = len(qtoks & dtoks)
+    union = len(qtoks | dtoks)
+    return inter / union if union > 0 else 0.0
+
+
+def _rrf_merge(
+    sem_ranked: List[Tuple[int, float]],
+    kw_ranked: List[Tuple[int, float]],
+    k: int = _RRF_K,
+) -> List[Tuple[int, float]]:
+    """Merge two ranked lists via Reciprocal Rank Fusion.
+
+    Each list is a sequence of *(session_id, score)* pairs already sorted
+    best-first.  Returns a new list of *(session_id, rrf_score)* sorted by
+    descending RRF score.  Sessions absent from one list are penalised with
+    rank = len(that_list) + 1.
+    """
+    sem_rank = {sid: i + 1 for i, (sid, _) in enumerate(sem_ranked)}
+    kw_rank  = {sid: i + 1 for i, (sid, _) in enumerate(kw_ranked)}
+    sem_default = len(sem_ranked) + 1
+    kw_default  = len(kw_ranked) + 1
+
+    all_ids = {sid for sid, _ in sem_ranked} | {sid for sid, _ in kw_ranked}
+    merged = [
+        (sid, 1.0 / (k + sem_rank.get(sid, sem_default))
+               + 1.0 / (k + kw_rank.get(sid, kw_default)))
+        for sid in all_ids
+    ]
+    merged.sort(key=lambda x: x[1], reverse=True)
+    return merged
 
 
 def _length_penalty(doc_text: str, slope: float = _LN_SLOPE, pivot: float = _LN_PIVOT) -> float:
@@ -121,4 +178,26 @@ def search(
         results.append(SearchResult(session=session, score=adj_score, matched_indices=matched_indices))
 
     results.sort(key=lambda r: r.score, reverse=True)
+
+    if config.hybrid_search:
+        # Keyword-score every semantic candidate and merge via RRF.
+        # The keyword signal boosts sessions whose doc_text has exact token
+        # overlap with the query (tool names, flags, error codes), without
+        # discarding any session already retrieved by the ANN.
+        sem_ranked = [(r.session.id, r.score) for r in results]
+        kw_pairs   = [
+            (r.session.id, _keyword_score(query, r.session.doc_text or ""))
+            for r in results
+        ]
+        kw_ranked = sorted(kw_pairs, key=lambda x: x[1], reverse=True)
+        merged = _rrf_merge(sem_ranked, kw_ranked)
+
+        id_to_result = {r.session.id: r for r in results}
+        results = []
+        for sid, rrf_score in merged:
+            if sid in id_to_result:
+                r = id_to_result[sid]
+                r.score = rrf_score
+                results.append(r)
+
     return results
