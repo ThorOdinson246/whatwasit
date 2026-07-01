@@ -3,9 +3,14 @@
 Runs fully offline against the locally cached
 sentence-transformers/all-MiniLM-L6-v2 model. Make sure HF_HUB_OFFLINE=1 and
 TRANSFORMERS_OFFLINE=1 are set in the environment before invoking pytest.
+
+BGE asymmetric integration tests run only when BAAI/bge-small-en-v1.5 is already
+in the local Hugging Face cache (optional opt-in model).
 """
 
 from __future__ import annotations
+
+import os
 
 import numpy as np
 import pytest
@@ -18,6 +23,32 @@ from hist.embedder import (
     build_embedder,
 )
 from hist.interfaces import Embedder
+
+_BGE_MODEL = "BAAI/bge-small-en-v1.5"
+_BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
+
+
+def _offline_mode() -> bool:
+    return os.environ.get("HF_HUB_OFFLINE", "").lower() in ("1", "true", "yes")
+
+
+def _bge_available_offline() -> bool:
+    """True when BGE ONNX weights are present locally (or network is allowed)."""
+    if not _offline_mode():
+        return True
+    try:
+        from huggingface_hub import try_to_load_from_cache
+    except ImportError:
+        return False
+    if try_to_load_from_cache(_BGE_MODEL, "onnx/model.onnx") is None:
+        return False
+    return try_to_load_from_cache(_BGE_MODEL, "tokenizer.json") is not None
+
+
+requires_bge = pytest.mark.skipif(
+    not _bge_available_offline(),
+    reason=f"{_BGE_MODEL} not in local HF cache (offline mode)",
+)
 
 
 @pytest.fixture(scope="module")
@@ -91,14 +122,50 @@ def test_build_embedder_symmetric_for_minilm() -> None:
     assert not isinstance(built, AsymmetricOnnxEmbedder)
 
 
+def test_build_embedder_asymmetric_for_bge() -> None:
+    config = Config.default()
+    config.model_name = _BGE_MODEL
+    built = build_embedder(config)
+
+    assert isinstance(built, AsymmetricOnnxEmbedder)
+    assert built._query_prefix == _BGE_QUERY_PREFIX
+
+
+def test_asymmetric_prefix_routing_without_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Query vs passage prefix behavior without loading ONNX weights."""
+    captured: list[list[str]] = []
+
+    def fake_encode(self, texts):  # noqa: ANN001
+        captured.append(list(texts))
+        return np.zeros((len(texts), 384), dtype=np.float32)
+
+    monkeypatch.setattr(OnnxEmbedder, "encode", fake_encode)
+
+    embedder = AsymmetricOnnxEmbedder(
+        model_name=_BGE_MODEL,
+        query_prefix=_BGE_QUERY_PREFIX,
+    )
+    embedder.encode_query(["reload nginx"])
+    assert captured[-1] == [f"{_BGE_QUERY_PREFIX}reload nginx"]
+
+    embedder.encode_passage(["reload nginx"])
+    assert captured[-1] == ["reload nginx"]
+
+    embedder.encode(["reload nginx"])
+    assert captured[-1] == ["reload nginx"]
+
+
 @pytest.fixture(scope="module")
 def asymmetric_embedder() -> AsymmetricOnnxEmbedder:
+    if not _bge_available_offline():
+        pytest.skip(f"{_BGE_MODEL} not in local HF cache (offline mode)")
     return AsymmetricOnnxEmbedder(
-        model_name="BAAI/bge-small-en-v1.5",
-        query_prefix="Represent this sentence for searching relevant passages: ",
+        model_name=_BGE_MODEL,
+        query_prefix=_BGE_QUERY_PREFIX,
     )
 
 
+@requires_bge
 def test_asymmetric_query_differs_from_passage(asymmetric_embedder: AsymmetricOnnxEmbedder) -> None:
     text = "reload nginx configuration"
     q = asymmetric_embedder.encode_query([text])[0]
@@ -107,6 +174,7 @@ def test_asymmetric_query_differs_from_passage(asymmetric_embedder: AsymmetricOn
     assert not np.allclose(q, p)
 
 
+@requires_bge
 def test_asymmetric_encode_defaults_to_passage(asymmetric_embedder: AsymmetricOnnxEmbedder) -> None:
     text = "systemctl restart nginx"
     batch = asymmetric_embedder.encode([text])
