@@ -79,4 +79,6 @@ def test_build_embedder_uses_config_defaults() -> None:
 def test_lazy_load_does_not_load_model_on_init() -> None:
     e = FastEmbedEmbedder()
 
-    assert e._model is None
+    # The ONNX session and tokenizer are only built on first encode().
+    assert e._session is None
+    assert e._tokenizer is None

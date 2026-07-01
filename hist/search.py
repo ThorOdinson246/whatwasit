@@ -23,18 +23,16 @@ MAX_MATCHED_INDICES = 3
 MATCH_SCORE_MARGIN = 0.05
 
 
-def _matched_indices(query_vec: np.ndarray, command_texts: List[str], embedder: Embedder) -> List[int]:
-    """Rank a session's commands by similarity to the query vector.
+def _rank_matches(query_vec: np.ndarray, cmd_vecs: np.ndarray) -> List[int]:
+    """Pick the command indices that best match the query.
 
     Returns up to :data:`MAX_MATCHED_INDICES` indices, best first, restricted
     to commands within :data:`MATCH_SCORE_MARGIN` of the best-matching command.
     """
-    if not command_texts:
+    if cmd_vecs.shape[0] == 0:
         return []
 
-    cmd_vecs = embedder.encode(command_texts)
     sims = cmd_vecs @ np.asarray(query_vec, dtype=np.float32)
-
     order = np.argsort(sims)[::-1]
     best = float(sims[order[0]])
 
@@ -74,16 +72,32 @@ def search(
 
     conn = db.connect(config.db_path)
     try:
-        results: List[SearchResult] = []
+        sessions = []
         for session_id, score in hits:
             session = db.get_session(conn, session_id)
             if session is None:
                 continue
-            command_texts = [c.raw_cmd for c in session.commands]
-            matched_indices = _matched_indices(qvec, command_texts, embedder)
-            results.append(SearchResult(session=session, score=score, matched_indices=matched_indices))
+            sessions.append((session, score))
     finally:
         conn.close()
+
+    # Embed every command of every returned session in ONE batch, then slice
+    # per session, so highlighting costs a single encode call (not one per
+    # session). This keeps query latency dominated by the tiny ANN search.
+    all_texts: List[str] = []
+    spans: List[tuple] = []  # (start, end) into all_texts for each session
+    for session, _ in sessions:
+        start = len(all_texts)
+        all_texts.extend(c.raw_cmd for c in session.commands)
+        spans.append((start, len(all_texts)))
+
+    cmd_vecs = embedder.encode(all_texts) if all_texts else np.empty((0, embedder.dim), np.float32)
+    qv = np.asarray(qvec, dtype=np.float32)
+
+    results: List[SearchResult] = []
+    for (session, score), (start, end) in zip(sessions, spans):
+        matched_indices = _rank_matches(qv, cmd_vecs[start:end])
+        results.append(SearchResult(session=session, score=score, matched_indices=matched_indices))
 
     results.sort(key=lambda r: r.score, reverse=True)
     return results

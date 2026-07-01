@@ -36,30 +36,38 @@ Python also wins on iteration speed and ecosystem (`fastembed`, `usearch`,
 faster cold start, but offers no help meeting the latency targets, which are
 already met. Rust is noted in `FUTURE_IDEAS.md` as a future distribution path.
 
-## Decision 2: Embedding model & runtime -- all-MiniLM-L6-v2 via fastembed
+## Decision 2: Embedding model & runtime -- all-MiniLM-L6-v2 on onnxruntime
 
-**Chosen: `sentence-transformers/all-MiniLM-L6-v2` (384-dim) running on
-`fastembed` (ONNX Runtime, int8-quantized), on CPU, fully offline.**
+**Chosen: `sentence-transformers/all-MiniLM-L6-v2` (384-dim) run as an ONNX
+graph directly through `onnxruntime` + `tokenizers`, on CPU, fully offline.**
 
 The model itself is confirmed as the right choice for short, terse command-line
 text:
 
-- 384 dimensions, ~22-90MB on disk, sub-millisecond-to-few-ms CPU encode.
+- 384 dimensions, ~90MB ONNX on disk, single-digit-ms CPU encode when batched.
 - General-purpose semantic similarity model that handles short text well, which
   matches our session documents (a handful of command lines plus the directory
   name).
 
-The notable decision is the **runtime**: the spec named `sentence-transformers`,
-which depends on PyTorch (200MB+ even CPU-only). That undercuts the "lightweight,
-22MB model" promise and bloats `pip install`. `fastembed` (by Qdrant) runs the
-exact same model as a quantized ONNX graph via `onnxruntime`, with no PyTorch
-dependency, giving a much smaller install and faster cold start while producing
-equivalent embeddings.
+**Runtime decision and the reason it changed.** The spec named
+`sentence-transformers`, which depends on PyTorch (200MB+ even CPU-only) and
+undercuts the lightweight promise. We first adopted `fastembed` (same model,
+ONNX, no PyTorch). However, **measured on the target CPU fastembed delivered
+only ~28 texts/sec**, which blew the budgets (indexing 10k commands took ~34s vs
+the 30s limit, and a query took ~2-3s vs the 1s limit). Profiling showed the
+same ONNX graph driven *directly* through `onnxruntime` -- with
+`graph_optimization_level=ORT_ENABLE_ALL` and `intra_op_num_threads = cpu_count`
+-- runs at **~600 texts/sec (~20x faster)** and produces **bit-for-bit identical
+vectors (cosine 1.0)**. So the embedder now drives onnxruntime itself:
+`tokenizers` for tokenization, the ONNX `model.onnx` for inference, mask-weighted
+mean pooling, then L2 normalization (exactly matching all-MiniLM-L6-v2). The
+ONNX weights + tokenizer are fetched once via `huggingface_hub` and cached.
 
-Both are hidden behind the `Embedder` ABC (`encode(texts) -> np.ndarray`, rows
-L2-normalized), so swapping back to `sentence-transformers`, or forward to an
-instruction-tuned asymmetric model (e5/bge), is a one-class change that touches
-no calling code.
+This is precisely the payoff of hiding the model behind the `Embedder` ABC
+(`encode(texts) -> np.ndarray`, rows L2-normalized): the runtime was swapped with
+zero changes to the indexer, search, or CLI. Swapping forward to an
+instruction-tuned asymmetric model (e5/bge) remains a one-class change. See
+`BENCHMARKS.md` for the before/after numbers.
 
 Known limitation: queries are natural language ("how did I fix the nginx issue")
 while documents are commands. MiniLM is roughly symmetric and works well enough
