@@ -1,20 +1,23 @@
-"""Rich-formatted rendering of search results for the CLI.
+"""Rendering search results for plain and interactive output modes.
 
-Turns a list of :class:`hist.models.SearchResult` into a readable terminal
-report: one panel per result, with the matched command(s) highlighted and
-the surrounding commands dimmed for context.
+Plain mode prints Rich panels (or line-oriented text when not a TTY).
+TUI mode delegates to :mod:`hist.tui`.
 """
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
 from .models import SearchResult
+
+if TYPE_CHECKING:
+    from .config import Config
 
 
 def format_timestamp(ts: Optional[int]) -> str:
@@ -84,3 +87,53 @@ def render_results(
         body = _render_commands(session, result.matched_indices)
 
         console.print(Panel(body, title=header, border_style="bright_black"))
+
+
+def render_plain_lines(
+    results: List[SearchResult],
+    query: str,
+    *,
+    file=None,
+) -> None:
+    """Line-oriented plain output suitable for piping."""
+    out = file if file is not None else sys.stdout
+    if not results:
+        print(f'No results found for: "{query}"', file=out)
+        return
+
+    print(f'Results for: "{query}"', file=out)
+    for rank, result in enumerate(results, start=1):
+        session = result.session
+        print(
+            f"#{rank}\tscore={result.score:.2f}\t"
+            f"{format_timestamp(session.start_ts)}\t{session.cwd or '?'}",
+            file=out,
+        )
+        matched = set(result.matched_indices)
+        for i, command in enumerate(session.commands):
+            marker = ">" if i in matched else " "
+            print(f"  {marker} {command.raw_cmd}", file=out)
+        print(file=out)
+
+
+def display_results(
+    results: List[SearchResult],
+    query: str,
+    config: "Config",
+    *,
+    force_plain: bool = False,
+    console: Optional[Console] = None,
+) -> None:
+    """Render *results* using the configured output mode."""
+    use_plain = force_plain or config.output_mode == "plain"
+
+    if use_plain:
+        if console is not None or sys.stdout.isatty():
+            render_results(results, query, console=console)
+        else:
+            render_plain_lines(results, query)
+        return
+
+    from .tui import run_tui
+
+    run_tui(results, query, page_size=config.tui_page_size)
