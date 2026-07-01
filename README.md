@@ -52,7 +52,10 @@ hist index --rebuild
 # Adjust session grouping window (default: 300 seconds)
 hist index --window 600
 
-# Search by intent (interactive TUI by default)
+# Interactive REPL (default when run with no arguments)
+hist
+
+# One-shot search by intent (TUI with pre-fetched results)
 hist "that time I set up passwordless ssh"
 
 # Plain / headless output (Rich panels on a TTY, line-oriented when piped)
@@ -63,14 +66,38 @@ hist "nginx config" --headless
 hist "docker volume that wouldn't persist" -k 20
 ```
 
+### TUI / REPL
+
+Running ``hist`` with no arguments opens a persistent REPL with a bottom input
+bar. Type a natural-language query and press Enter to search; results update in
+place with matched commands highlighted. Directory and timestamp appear as dim
+secondary metadata under each result. Ranks (#1, #2, …) and qualitative
+confidence badges (``strong`` / ``medium`` / ``weak``) replace raw similarity
+scores. When the top result is below the low-confidence threshold (default
+0.40), a soft warning banner appears without hiding results.
+
+| Key / command | Action |
+|---------------|--------|
+| ``j`` / ``k`` or arrows | Navigate results |
+| Enter (on a result) | Copy matched command(s) to clipboard |
+| ``n`` or ``/more`` | Show more results |
+| ``/help`` | Show help |
+| ``/quit`` or ``q`` | Quit |
+
+One-shot ``hist "query"`` still opens the TUI with the same result layout.
+Use ``--plain`` or ``--headless`` for non-interactive output.
+
 **Configuration** (`~/.config/hist/config.toml`):
 
 ```toml
 # Output mode: "tui" (default) or "plain"
 output_mode = "tui"
 
-# Number of results shown initially in the TUI; ``n`` loads more
+# Number of results shown initially in the TUI; ``n`` or ``/more`` loads more
 tui_page_size = 5
+
+# Banner when top-1 score is below this value (does not suppress results)
+low_confidence_threshold = 0.40
 
 # Reserved for a future background daemon (not yet implemented)
 use_daemon = false
