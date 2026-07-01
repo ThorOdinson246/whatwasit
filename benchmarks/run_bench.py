@@ -32,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np
 
 from hist.config import Config
-from hist.embedder import build_embedder
+from hist.embedder import build_embedder, encode_queries
 from hist.index import UsearchIndex, build_index
 from hist.indexer import index_commands
 from hist.search import search
@@ -89,7 +89,7 @@ def bench_pure_ann(n_sessions: int, embedder, dim: int = 384) -> dict:
     idx.add(keys, vecs)
     build_elapsed = time.perf_counter() - t0
 
-    qvecs = embedder.encode(QUERIES)
+    qvecs = encode_queries(embedder, QUERIES)
     latencies = []
     for qv in qvecs:
         t0 = time.perf_counter()

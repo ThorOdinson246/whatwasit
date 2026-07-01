@@ -14,7 +14,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 
 from .config import Config
-from .embedder import build_embedder
+from .embedder import build_embedder, encode_passages, encode_query_one
 from .index import build_index
 from .interfaces import Embedder, VectorIndex
 from . import db
@@ -168,7 +168,7 @@ def search(
     if len(index) == 0:
         return []
 
-    qvec = embedder.encode_one(query)
+    qvec = encode_query_one(embedder, query)
     hits = index.search(qvec, k or config.top_k)
     if not hits:
         return []
@@ -194,13 +194,18 @@ def search(
         all_texts.extend(c.raw_cmd for c in session.commands)
         spans.append((start, len(all_texts)))
 
-    cmd_vecs = embedder.encode(all_texts) if all_texts else np.empty((0, embedder.dim), np.float32)
+    cmd_vecs = (
+        encode_passages(embedder, all_texts)
+        if all_texts
+        else np.empty((0, embedder.dim), np.float32)
+    )
     qv = np.asarray(qvec, dtype=np.float32)
 
     results: List[SearchResult] = []
+    use_length_penalty = not hasattr(embedder, "encode_query")
     for (session, score), (start, end) in zip(sessions, spans):
         matched_indices = _rank_matches(qv, cmd_vecs[start:end])
-        adj_score = score * _length_penalty(session.doc_text or "")
+        adj_score = score * _length_penalty(session.doc_text or "") if use_length_penalty else score
         results.append(SearchResult(session=session, score=adj_score, matched_indices=matched_indices))
 
     results.sort(key=lambda r: r.score, reverse=True)

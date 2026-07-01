@@ -11,7 +11,12 @@ import numpy as np
 import pytest
 
 from hist.config import Config
-from hist.embedder import FastEmbedEmbedder, build_embedder
+from hist.embedder import (
+    AsymmetricOnnxEmbedder,
+    FastEmbedEmbedder,
+    OnnxEmbedder,
+    build_embedder,
+)
 from hist.interfaces import Embedder
 
 
@@ -72,8 +77,41 @@ def test_build_embedder_uses_config_defaults() -> None:
     config = Config.default()
     built = build_embedder(config)
 
-    assert isinstance(built, Embedder)
+    assert isinstance(built, AsymmetricOnnxEmbedder)
     assert built.dim == config.embedding_dim
+
+
+def test_build_embedder_symmetric_for_minilm() -> None:
+    config = Config.default()
+    config.model_name = "sentence-transformers/all-MiniLM-L6-v2"
+    built = build_embedder(config)
+
+    assert isinstance(built, OnnxEmbedder)
+    assert not isinstance(built, AsymmetricOnnxEmbedder)
+
+
+@pytest.fixture(scope="module")
+def asymmetric_embedder() -> AsymmetricOnnxEmbedder:
+    return AsymmetricOnnxEmbedder(
+        model_name="BAAI/bge-small-en-v1.5",
+        query_prefix="Represent this sentence for searching relevant passages: ",
+    )
+
+
+def test_asymmetric_query_differs_from_passage(asymmetric_embedder: AsymmetricOnnxEmbedder) -> None:
+    text = "reload nginx configuration"
+    q = asymmetric_embedder.encode_query([text])[0]
+    p = asymmetric_embedder.encode_passage([text])[0]
+
+    assert not np.allclose(q, p)
+
+
+def test_asymmetric_encode_defaults_to_passage(asymmetric_embedder: AsymmetricOnnxEmbedder) -> None:
+    text = "systemctl restart nginx"
+    batch = asymmetric_embedder.encode([text])
+    passage = asymmetric_embedder.encode_passage([text])
+
+    assert np.allclose(batch, passage)
 
 
 def test_lazy_load_does_not_load_model_on_init() -> None:

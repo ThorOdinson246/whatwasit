@@ -30,7 +30,20 @@ from hist.interfaces import Embedder
 # ONNX export (model.onnx + tokenizer.json).
 _ONNX_REPOS: Dict[str, str] = {
     "sentence-transformers/all-MiniLM-L6-v2": "qdrant/all-MiniLM-L6-v2-onnx",
+    "BAAI/bge-small-en-v1.5": "BAAI/bge-small-en-v1.5",
 }
+
+# HuggingFace repos whose ONNX weights live under onnx/ (tokenizer at repo root).
+_NESTED_ONNX_REPOS = frozenset({"BAAI/bge-small-en-v1.5"})
+
+# Models that require different prefixes for queries vs indexed passages.
+_ASYMMETRIC_MODELS: Dict[str, str] = {
+    "BAAI/bge-small-en-v1.5": (
+        "Represent this sentence for searching relevant passages: "
+    ),
+}
+
+_META_MODEL_NAME = "model_name"
 
 _DEFAULT_BATCH_SIZE = 256
 _DEFAULT_MAX_LENGTH = 256
@@ -38,9 +51,21 @@ _MODEL_JSON = "model.json"
 _META_ONNX_MODEL_DIR = "onnx_model_dir"
 
 
+def _resolve_onnx_paths(root: Path | str) -> Optional[tuple[Path, Path]]:
+    """Return ``(tokenizer.json, model.onnx)`` paths for a HF snapshot layout."""
+    p = Path(root)
+    tok = p / "tokenizer.json"
+    flat = p / "model.onnx"
+    if tok.is_file() and flat.is_file():
+        return tok, flat
+    nested = p / "onnx" / "model.onnx"
+    if tok.is_file() and nested.is_file():
+        return tok, nested
+    return None
+
+
 def _is_valid_model_dir(path: Path | str) -> bool:
-    p = Path(path)
-    return (p / "tokenizer.json").is_file() and (p / "model.onnx").is_file()
+    return _resolve_onnx_paths(path) is not None
 
 
 def _model_cache_path(data_dir: Path) -> Path:
@@ -155,14 +180,21 @@ class OnnxEmbedder(Embedder):
                 return cached
 
         t0 = time.perf_counter()
+        dl_kwargs: Dict[str, object] = {"cache_dir": self._cache_dir}
+        if self._onnx_repo in _NESTED_ONNX_REPOS:
+            dl_kwargs["allow_patterns"] = [
+                "tokenizer.json",
+                "tokenizer_config.json",
+                "onnx/model.onnx",
+            ]
         try:
             model_dir = snapshot_download(
                 self._onnx_repo,
-                cache_dir=self._cache_dir,
                 local_files_only=True,
+                **dl_kwargs,
             )
         except Exception:
-            model_dir = snapshot_download(self._onnx_repo, cache_dir=self._cache_dir)
+            model_dir = snapshot_download(self._onnx_repo, **dl_kwargs)
 
         if not _is_valid_model_dir(model_dir):
             raise RuntimeError(f"Invalid ONNX model directory: {model_dir}")
@@ -184,9 +216,10 @@ class OnnxEmbedder(Embedder):
 
         t_total = time.perf_counter()
         model_dir = self._resolve_model_dir()
+        tok_path, onnx_path = _resolve_onnx_paths(model_dir)
 
         t0 = time.perf_counter()
-        tokenizer = Tokenizer.from_file(os.path.join(model_dir, "tokenizer.json"))
+        tokenizer = Tokenizer.from_file(str(tok_path))
         tokenizer.enable_truncation(max_length=self._max_length)
         tokenizer.enable_padding()
         self._tokenizer = tokenizer
@@ -197,7 +230,7 @@ class OnnxEmbedder(Embedder):
         opts.intra_op_num_threads = self._threads
         opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         self._session = ort.InferenceSession(
-            os.path.join(model_dir, "model.onnx"),
+            str(onnx_path),
             opts,
             providers=["CPUExecutionProvider"],
         )
@@ -240,14 +273,74 @@ class OnnxEmbedder(Embedder):
         return (vectors / norms).astype(np.float32)
 
 
+class AsymmetricOnnxEmbedder(OnnxEmbedder):
+    """ONNX embedder with separate query vs passage prefix conventions.
+
+    Used for retrieval-tuned models (e.g. BGE) where queries receive an
+    instruction prefix and indexed session documents are embedded raw.
+    """
+
+    def __init__(
+        self,
+        model_name: str,
+        query_prefix: str,
+        **kwargs,
+    ) -> None:
+        super().__init__(model_name=model_name, **kwargs)
+        self._query_prefix = query_prefix
+
+    def _with_prefix(self, texts: Sequence[str], prefix: str) -> List[str]:
+        return [f"{prefix}{t}" for t in texts]
+
+    def encode_query(self, texts: Sequence[str]) -> np.ndarray:
+        """Encode user queries with the retrieval instruction prefix."""
+        return super().encode(self._with_prefix(list(texts), self._query_prefix))
+
+    def encode_passage(self, texts: Sequence[str]) -> np.ndarray:
+        """Encode indexed session documents without a prefix."""
+        return super().encode(texts)
+
+    def encode(self, texts: Sequence[str]) -> np.ndarray:
+        """Default to passage encoding (indexing path)."""
+        return self.encode_passage(texts)
+
+    def encode_one(self, text: str) -> np.ndarray:
+        """Encode a single passage (session document or command)."""
+        return self.encode_passage([text])[0]
+
+
+def encode_queries(embedder: Embedder, texts: Sequence[str]) -> np.ndarray:
+    """Encode texts as search queries (asymmetric prefix when supported)."""
+    fn = getattr(embedder, "encode_query", embedder.encode)
+    return fn(texts)
+
+
+def encode_passages(embedder: Embedder, texts: Sequence[str]) -> np.ndarray:
+    """Encode texts as indexed passages (raw session docs / commands)."""
+    fn = getattr(embedder, "encode_passage", embedder.encode)
+    return fn(texts)
+
+
+def encode_query_one(embedder: Embedder, text: str) -> np.ndarray:
+    """Encode a single query vector."""
+    return encode_queries(embedder, [text])[0]
+
+
 # Backwards-compatible alias: the public factory and historical name.
 FastEmbedEmbedder = OnnxEmbedder
 
 
 def build_embedder(config: Config) -> Embedder:
     """Construct the configured :class:`Embedder` implementation."""
-    return OnnxEmbedder(
-        model_name=config.model_name,
+    model_name = config.model_name
+    common = dict(
+        model_name=model_name,
         dim=config.embedding_dim,
         data_dir=config.data_dir,
     )
+    if model_name in _ASYMMETRIC_MODELS:
+        return AsymmetricOnnxEmbedder(
+            query_prefix=_ASYMMETRIC_MODELS[model_name],
+            **common,
+        )
+    return OnnxEmbedder(**common)
