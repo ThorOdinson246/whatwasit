@@ -50,6 +50,13 @@ _LN_PIVOT: float = 175.0
 _RRF_K = 60
 _KW_TOKEN_RE = re.compile(r"[a-z0-9_.-]+")
 
+# Only activate the keyword signal when at least one candidate session
+# reaches this Jaccard score against the query.  Intent-paraphrase queries
+# (which avoid tool names) produce scores near 0; exact-keyword queries
+# (tool names, flags, error codes) easily exceed this threshold.
+# Value chosen empirically: intent queries score < 0.04; keyword queries > 0.08.
+_HYBRID_KW_MIN_SCORE: float = 0.05
+
 
 def _keyword_score(query: str, doc_text: str) -> float:
     """Jaccard token-overlap similarity between query and document text."""
@@ -180,24 +187,29 @@ def search(
     results.sort(key=lambda r: r.score, reverse=True)
 
     if config.hybrid_search:
-        # Keyword-score every semantic candidate and merge via RRF.
-        # The keyword signal boosts sessions whose doc_text has exact token
-        # overlap with the query (tool names, flags, error codes), without
-        # discarding any session already retrieved by the ANN.
-        sem_ranked = [(r.session.id, r.score) for r in results]
+        # Keyword-score every semantic candidate and merge via RRF, but only
+        # when keyword signal is strong enough to be informative.  Pure
+        # intent-paraphrase queries produce Jaccard scores near 0 for all
+        # sessions; incorporating that noise via RRF degrades semantic
+        # rankings.  We therefore gate on the maximum keyword score: if no
+        # candidate clears _HYBRID_KW_MIN_SCORE, the pure-semantic order is
+        # returned unchanged.
         kw_pairs   = [
             (r.session.id, _keyword_score(query, r.session.doc_text or ""))
             for r in results
         ]
-        kw_ranked = sorted(kw_pairs, key=lambda x: x[1], reverse=True)
-        merged = _rrf_merge(sem_ranked, kw_ranked)
+        max_kw = max((sc for _, sc in kw_pairs), default=0.0)
+        if max_kw >= _HYBRID_KW_MIN_SCORE:
+            sem_ranked = [(r.session.id, r.score) for r in results]
+            kw_ranked = sorted(kw_pairs, key=lambda x: x[1], reverse=True)
+            merged = _rrf_merge(sem_ranked, kw_ranked)
 
-        id_to_result = {r.session.id: r for r in results}
-        results = []
-        for sid, rrf_score in merged:
-            if sid in id_to_result:
-                r = id_to_result[sid]
-                r.score = rrf_score
-                results.append(r)
+            id_to_result = {r.session.id: r for r in results}
+            results = []
+            for sid, rrf_score in merged:
+                if sid in id_to_result:
+                    r = id_to_result[sid]
+                    r.score = rrf_score
+                    results.append(r)
 
     return results
