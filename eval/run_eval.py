@@ -297,6 +297,50 @@ def run() -> int:
         "per_query": per_query,
     }
 
+    # --- optional keyword-heavy breakout ----------------------------
+    kh_path = EVAL_DIR / "queries_keyword_heavy.jsonl"
+    if kh_path.exists():
+        kh_queries = load_jsonl(kh_path)
+        print(f"Running {len(kh_queries)} keyword-heavy queries ...", flush=True)
+        kh_rows_sem: List[dict] = []
+        kh_rows_kw:  List[dict] = []
+        kh_per_query: List[dict] = []
+        for kq in kh_queries:
+            query  = kq["query"]
+            gold   = kq["correct_session_id"]
+            topic  = kq["topic"]
+            kh_results_ = search(config, query, k=n_sessions, embedder=embedder, index=index)
+            kh_sem_ids   = [db_to_str.get(r.session.id, f"?{r.session.id}") for r in kh_results_]
+            kh_sem_sc    = {db_to_str.get(r.session.id, f"?{r.session.id}"): float(r.score) for r in kh_results_}
+            kh_kw_scored = baseline.rank(query, corpus)
+            kh_kw_ids    = [sid for sid, _ in kh_kw_scored]
+            kh_kw_sc     = {sid: float(sc) for sid, sc in kh_kw_scored}
+            sem_m = metrics.per_query_metrics(kh_sem_ids, gold)
+            kw_m  = metrics.per_query_metrics(kh_kw_ids, gold)
+            kh_rows_sem.append(sem_m); kh_rows_kw.append(kw_m)
+            kh_per_query.append({
+                "query": query, "topic": topic, "gold": gold,
+                "semantic": {"rank": metrics.rank_of(kh_sem_ids, gold),
+                             "top3": [(sid, round(kh_sem_sc.get(sid, 0.0), 4))
+                                      for sid in kh_sem_ids[:3]],
+                             "metrics": sem_m},
+                "keyword":  {"rank": metrics.rank_of(kh_kw_ids, gold),
+                             "top3": [(sid, round(kh_kw_sc.get(sid, 0.0), 4))
+                                      for sid in kh_kw_ids[:3]],
+                             "metrics": kw_m},
+            })
+        kh_agg = {"semantic": metrics.aggregate(kh_rows_sem),
+                  "keyword":  metrics.aggregate(kh_rows_kw)}
+        summary["keyword_heavy"] = {
+            "n_queries": len(kh_queries),
+            "aggregate": kh_agg,
+            "per_query": kh_per_query,
+        }
+        print(f"\n=== KEYWORD-HEAVY BREAKOUT (over {len(kh_queries)} queries) ===", flush=True)
+        print("method    " + "  ".join(f"{m:>7}" for m in metrics.METRIC_NAMES))
+        for method in ("semantic", "keyword"):
+            print(f"{method:<9} " + "  ".join(f"{kh_agg[method][m]:7.3f}" for m in metrics.METRIC_NAMES))
+
     # ---------------- write versioned artifacts ----------------
     v = next_version("results_raw", ".jsonl")
     raw_path = EVAL_DIR / f"results_raw_v{v}.jsonl"
@@ -378,6 +422,26 @@ def render_tables(summary: dict) -> str:
         st = p["semantic"]["top1"]
         kt = p["keyword"]["top1"]
         lines.append(f"| {q} | {st[0]}:{st[1]} | {kt[0]}:{kt[1]} |")
+
+    if "keyword_heavy" in summary:
+        kh = summary["keyword_heavy"]
+        lines.append("\n## Keyword-heavy queries breakout (exact tool names / flags)\n")
+        lines.append(f"*{kh['n_queries']} queries using exact keywords from target sessions "
+                     f"(opposite of the standard eval design). "
+                     f"Reported separately — not merged into the answerable aggregate.*\n")
+        lines.append("| Method | " + " | ".join(M) + " |")
+        lines.append("|---|" + "|".join(["---:"] * len(M)) + "|")
+        for method in ("semantic", "keyword"):
+            lines.append("| " + method + " | "
+                         + " | ".join(f"{kh['aggregate'][method][m]:.3f}" for m in M) + " |")
+        lines.append("\n| Query | Expected | Sem rank | Sem top-3 (id:score) | KW rank |")
+        lines.append("|---|---|--:|---|--:|")
+        for p in kh["per_query"]:
+            q = p["query"] if len(p["query"]) <= 70 else p["query"][:67] + "..."
+            sem_r = p["semantic"]["rank"] if p["semantic"]["rank"] else "NF"
+            kw_r  = p["keyword"]["rank"]  if p["keyword"]["rank"]  else "NF"
+            top3  = "<br>".join(f"{sid}:{sc}" for sid, sc in p["semantic"]["top3"])
+            lines.append(f"| {q} | {p['gold']} | {sem_r} | {top3} | {kw_r} |")
 
     return "\n".join(lines) + "\n"
 
