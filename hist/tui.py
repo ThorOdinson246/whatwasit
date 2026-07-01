@@ -7,7 +7,6 @@ from typing import List, Optional
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
 from textual.events import Key
 from textual.widgets import Footer, ListItem, ListView, Static
 
