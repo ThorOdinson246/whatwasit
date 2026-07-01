@@ -5,7 +5,7 @@ Generates a synthetic shell history with several distinct topic sessions
 *real* embedder, then runs a natural-language query for each topic and asserts
 the correct session comes back in the top 3 results.
 
-Uses the local ONNX MiniLM model from cache; runs fully offline.
+Uses the local ONNX BGE model from cache; runs fully offline.
 """
 
 from __future__ import annotations

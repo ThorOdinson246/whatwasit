@@ -39,7 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from hist import db
 from hist.config import Config
-from hist.embedder import build_embedder
+from hist.embedder import build_embedder, encode_passages, encode_query_one
 from hist.index import build_index
 from hist.models import Command, Session
 from hist.search import search
@@ -95,7 +95,7 @@ def index_sessions(config: Config, sessions: List[dict], embedder, index):
     conn.commit()
     conn.close()
 
-    vectors = embedder.encode(doc_texts)
+    vectors = encode_passages(embedder, doc_texts)
     index.add(db_ids, vectors)
     index.save()
     return str_to_db, db_to_str, corpus
@@ -142,7 +142,7 @@ def run() -> int:
 
         # --- semantic: component timings (query embed + ANN) ---
         t0 = time.perf_counter()
-        qv = embedder.encode_one(query)
+        qv = encode_query_one(embedder, query)
         t_embed = (time.perf_counter() - t0) * 1000.0
         t0 = time.perf_counter()
         _ = index.search(qv, n_sessions)

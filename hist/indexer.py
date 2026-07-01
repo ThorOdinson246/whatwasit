@@ -13,7 +13,7 @@ from typing import List, Optional
 
 from . import db
 from .config import Config
-from .embedder import build_embedder
+from .embedder import _META_MODEL_NAME, build_embedder, encode_passages
 from .index import build_index
 from .interfaces import Embedder, VectorIndex
 from .models import Command
@@ -71,11 +71,12 @@ def index_commands(
         session_ids.append(sid)
 
     if sessions:
-        vectors = embedder.encode(doc_texts)
+        vectors = encode_passages(embedder, doc_texts)
         if getattr(embedder, "model_dir", None):
             from .embedder import sync_model_dir_to_db
 
             sync_model_dir_to_db(conn, embedder.model_dir)
+        db.set_meta(conn, _META_MODEL_NAME, config.model_name)
         index.add(session_ids, vectors)
         index.save()
 
