@@ -43,6 +43,7 @@ class Config:
 
     # Search
     top_k: int = DEFAULT_TOP_K
+    hybrid_search: bool = True
 
     # Schema (read-only constant exposed for convenience)
     schema_version: int = SCHEMA_VERSION

@@ -1,0 +1,15 @@
+{"query": "cProfile pstats snakeviz profiling hotspot", "correct_session_id": "python_profiling", "topic": "python-profiling"}
+{"query": "python3 -m venv activate pip install requirements.txt", "correct_session_id": "python_venv_setup", "topic": "python-venv"}
+{"query": "git filter-branch --force git rm --cached secrets.env reflog gc prune", "correct_session_id": "git_large_file_purge", "topic": "git-history-scrub"}
+{"query": "git rebase origin/main --force-with-lease conflict", "correct_session_id": "git_rebase_conflict", "topic": "git-rebase"}
+{"query": "docker volume inspect pgdata postgres persist", "correct_session_id": "docker_volume_mount", "topic": "docker-volumes"}
+{"query": "alembic upgrade head revision migrate", "correct_session_id": "db_migration_run", "topic": "db-migrate-up"}
+{"query": "alembic downgrade revision rollback", "correct_session_id": "db_migration_rollback", "topic": "db-migrate-down"}
+{"query": "crontab -e cron.d */5 scheduled job", "correct_session_id": "cron_job_setup", "topic": "cron-setup"}
+{"query": "curl -v -s jq json api endpoint response", "correct_session_id": "curl_api_debug", "topic": "curl-debug"}
+{"query": "lsof -i kill -9 port 8080 process pid", "correct_session_id": "kill_process_on_port", "topic": "port-kill"}
+{"query": "tmux new-session attach-session detach", "correct_session_id": "tmux_session", "topic": "tmux"}
+{"query": "ssh-keygen authorized_keys ssh-copy-id id_rsa", "correct_session_id": "ssh_key_setup", "topic": "ssh-keys"}
+{"query": "gpg --symmetric --passphrase encrypt file decrypt", "correct_session_id": "gpg_encrypt_file", "topic": "gpg-encrypt"}
+{"query": "resolvectl flush-caches dns nameserver resolv.conf", "correct_session_id": "dns_cache_flush", "topic": "dns-flush"}
+{"query": "tar czf archive.tar.gz compress extract directory", "correct_session_id": "tar_backup", "topic": "tar-archive"}
