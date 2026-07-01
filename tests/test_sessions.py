@@ -46,6 +46,23 @@ def test_reconstruct_cwd_relative_cd():
     assert commands[4].cwd == "/home/user/project/tests"
 
 
+def test_reconstruct_cwd_home_relative_no_double_tilde():
+    commands = [make_cmd("cd ~/Downloads"), make_cmd("ls")]
+    reconstruct_cwd(commands, start_cwd="~")
+
+    assert commands[0].cwd == "~/Downloads"
+    assert commands[1].cwd == "~/Downloads"
+
+
+def test_reconstruct_cwd_cd_ignores_trailing_tokens():
+    # History can carry multi-token/backslash-joined entries; cd must only
+    # consume its first argument, not let later tokens leak into the path.
+    commands = [make_cmd("cd ~/Downloads wget https://example.com/x")]
+    reconstruct_cwd(commands, start_cwd="~")
+
+    assert commands[0].cwd == "~/Downloads"
+
+
 def test_reconstruct_cwd_cd_dash_swaps_oldpwd():
     commands = [
         make_cmd("cd /a"),

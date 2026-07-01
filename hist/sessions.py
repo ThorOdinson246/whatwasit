@@ -36,32 +36,47 @@ def _looks_unresolvable(target: str) -> bool:
     return bool(_UNRESOLVABLE_RE.search(target))
 
 
+def _first_arg(rest: str) -> str:
+    """Extract just the first argument of a cd/pushd (its target directory).
+
+    Shell ``cd`` takes a single path argument; history entries can carry extra
+    tokens (multi-command lines, trailing junk from backslash-joined entries),
+    which must not leak into the resolved directory. Honors simple quoting so a
+    quoted path containing spaces stays intact.
+    """
+    s = rest.strip()
+    if not s:
+        return ""
+    if s[0] in ("'", '"'):
+        quote = s[0]
+        end = s.find(quote, 1)
+        return s[1:end] if end != -1 else s[1:]
+    return s.split()[0]
+
+
 def _resolve_target(rest: str, current: str) -> Optional[str]:
     """Resolve the argument of a ``cd``/``pushd`` invocation.
 
     Returns the new absolute-ish path, or ``None`` if it can't be resolved
     statically (the caller should then leave the current directory alone).
     """
-    target = rest.strip()
+    target = _first_arg(rest)
     if target == "" or target == "~":
         return HOME
 
     if _looks_unresolvable(target):
         return None
 
-    if len(target) >= 2 and target[0] == target[-1] and target[0] in ("'", '"'):
-        inner = target[1:-1]
-        if _looks_unresolvable(inner):
-            return None
-        target = inner.strip() or HOME
+    # Home-relative paths ("~/sub") anchor under HOME without doubling the "~".
+    if target == "~" or target.startswith("~/"):
+        return posixpath.normpath(posixpath.join(HOME, target[2:]))
 
     if target.startswith("/"):
         return posixpath.normpath(target)
 
     if current == HOME:
         # Treat "~" as an opaque root; relative paths from home just nest
-        # under it textually (e.g. "~/sub") so later absolute lookups still
-        # make sense if the caller ever wants to display them.
+        # under it textually (e.g. "sub" -> "~/sub").
         return posixpath.normpath(posixpath.join(HOME, target))
 
     return posixpath.normpath(posixpath.join(current, target))
