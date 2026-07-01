@@ -52,12 +52,32 @@ hist index --rebuild
 # Adjust session grouping window (default: 300 seconds)
 hist index --window 600
 
-# Search by intent
+# Search by intent (interactive TUI by default)
 hist "that time I set up passwordless ssh"
+
+# Plain / headless output (Rich panels on a TTY, line-oriented when piped)
+hist "docker volume that wouldn't persist" --plain
+hist "nginx config" --headless
 
 # Return more results
 hist "docker volume that wouldn't persist" -k 20
 ```
+
+**Configuration** (`~/.config/hist/config.toml`):
+
+```toml
+# Output mode: "tui" (default) or "plain"
+output_mode = "tui"
+
+# Number of results shown initially in the TUI; ``n`` loads more
+tui_page_size = 5
+
+# Reserved for a future background daemon (not yet implemented)
+use_daemon = false
+```
+
+CLI flags override config file values. For example, ``--plain`` forces plain
+output even when ``output_mode = "tui"`` in the config file.
 
 **Data location:** `~/.local/share/hist/` (`hist.db` + `index.usearch`).
 

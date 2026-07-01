@@ -24,7 +24,7 @@ from .config import Config
 from .daemon import daemon_search, daemon_status, start_daemon, stop_daemon
 from .embedder import is_model_cached
 from .indexer import build_index_from_history
-from .output import render_results
+from .output import display_results
 from .search import search
 
 PROG = "hist"
@@ -89,7 +89,12 @@ def _run_index(args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_query(query: str, top_k: Optional[int]) -> int:
+def _run_query(
+    query: str,
+    top_k: Optional[int],
+    *,
+    force_plain: bool = False,
+) -> int:
     config = Config.default()
     if top_k is not None:
         config.top_k = top_k
@@ -101,10 +106,12 @@ def _run_query(query: str, top_k: Optional[int]) -> int:
         )
         return 1
 
-    results = daemon_search(config, query, k=top_k)
+    results = None
+    if config.use_daemon:
+        results = daemon_search(config, query, k=top_k)
     if results is None:
         results = search(config, query, k=top_k)
-    render_results(results, query)
+    display_results(results, query, config, force_plain=force_plain)
     return 0
 
 
@@ -137,9 +144,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         args = parser.parse_args(argv)
         return _run_daemon(args.action)
 
-    # Anything else is a natural-language query. Pull out -k/--top-k (which
-    # may appear anywhere) and treat the remaining tokens as the query text.
+    # Anything else is a natural-language query. Pull out -k/--top-k,
+    # --plain/--headless (which may appear anywhere) and treat the remaining
+    # tokens as the query text.
     top_k: Optional[int] = None
+    force_plain = False
     query_tokens: List[str] = []
     i = 0
     while i < len(argv):
@@ -155,6 +164,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 return 2
             i += 2
             continue
+        if token in ("--plain", "--headless"):
+            force_plain = True
+            i += 1
+            continue
         query_tokens.append(token)
         i += 1
 
@@ -163,7 +176,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         _print_help(parser)
         return 0
 
-    return _run_query(query, top_k)
+    return _run_query(query, top_k, force_plain=force_plain)
 
 
 if __name__ == "__main__":

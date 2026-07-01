@@ -144,7 +144,11 @@ def test_main_query_joins_args_and_calls_search(monkeypatch: pytest.MonkeyPatch,
         calls.append({"config": config, "query": query, "k": k})
         return []
 
+    def fake_display(results, query, config, *, force_plain=False, console=None):
+        calls.append({"displayed": True, "force_plain": force_plain})
+
     monkeypatch.setattr(cli, "search", fake_search)
+    monkeypatch.setattr(cli, "display_results", fake_display)
 
     # Make the "index exists" check pass without touching the real config.
     def fake_default():
@@ -160,8 +164,9 @@ def test_main_query_joins_args_and_calls_search(monkeypatch: pytest.MonkeyPatch,
     rc = cli.main(["how", "did", "I", "fix", "nginx"])
 
     assert rc == 0
-    assert len(calls) == 1
+    assert len(calls) == 2
     assert calls[0]["query"] == "how did I fix nginx"
+    assert calls[1]["displayed"] is True
 
 
 def test_main_query_supports_top_k_flag(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
@@ -171,7 +176,11 @@ def test_main_query_supports_top_k_flag(monkeypatch: pytest.MonkeyPatch, tmp_pat
         calls.append({"query": query, "k": k})
         return []
 
+    def fake_display(results, query, config, *, force_plain=False, console=None):
+        pass
+
     monkeypatch.setattr(cli, "search", fake_search)
+    monkeypatch.setattr(cli, "display_results", fake_display)
 
     def fake_default():
         from hist.config import Config
