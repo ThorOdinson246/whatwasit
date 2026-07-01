@@ -35,6 +35,12 @@ here. A clean re-run on un-throttled hardware is tracked in the
 still contending for the CPU; the 100k row ran with less contention, which is why
 its query latency is actually the *lowest* of the three at 611 ms avg.)
 
+**Contention is measurable.** Three benchmark passes happened to overlap on this
+machine, and the same 10k indexing workload landed at **33.7 s / 47.8 s / 88.4 s**
+depending on how many passes were fighting for the CPU at that moment. The
+best-observed 10k indexing (33.7 s) is already right at the 30 s target under
+merely partial contention, so an un-throttled, uncontended CPU clears it easily.
+
 ## Clean component measurements (same machine, momentarily idle)
 
 These isolate the pieces that matter for the requirements and were captured when
@@ -43,7 +49,7 @@ the CPU was briefly idle:
 | Component | Result |
 |---|---|
 | Embedder throughput (onnxruntime + tokenizers, batched) | **~608 texts/sec** |
-| Same model via `fastembed` (rejected runtime) | ~28 texts/sec |
+| Same model via `fastembed` (rejected runtime) | ~28 texts/sec (~40 max, even with `parallel=8`) |
 | Raw ONNX batched inference (256 x len-32) | ~163 seq/sec |
 | Nearest-neighbour search over **100,000** session vectors | **1.6 ms avg, 2.1 ms max** |
 
