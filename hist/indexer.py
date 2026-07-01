@@ -72,6 +72,10 @@ def index_commands(
 
     if sessions:
         vectors = embedder.encode(doc_texts)
+        if getattr(embedder, "model_dir", None):
+            from .embedder import sync_model_dir_to_db
+
+            sync_model_dir_to_db(conn, embedder.model_dir)
         index.add(session_ids, vectors)
         index.save()
 

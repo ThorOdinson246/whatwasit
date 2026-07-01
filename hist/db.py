@@ -75,6 +75,21 @@ def get_schema_version(conn: sqlite3.Connection) -> Optional[int]:
     return int(row["value"]) if row else None
 
 
+def get_meta(conn: sqlite3.Connection, key: str) -> Optional[str]:
+    """Return a value from the ``meta`` table, or ``None`` if absent."""
+    row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+    return row["value"] if row else None
+
+
+def set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
+    """Insert or replace a ``meta`` table entry."""
+    conn.execute(
+        "INSERT INTO meta(key, value) VALUES (?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (key, value),
+    )
+
+
 def reset(conn: sqlite3.Connection) -> None:
     """Drop all data tables (used for a full re-index) and recreate them."""
     conn.executescript(

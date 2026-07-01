@@ -82,3 +82,54 @@ def test_lazy_load_does_not_load_model_on_init() -> None:
     # The ONNX session and tokenizer are only built on first encode().
     assert e._session is None
     assert e._tokenizer is None
+
+
+def test_cached_model_dir_skips_snapshot_download(tmp_path, monkeypatch) -> None:
+    """When model.json points at valid ONNX files, no hub download runs."""
+    model_dir = tmp_path / "onnx"
+    model_dir.mkdir()
+    (model_dir / "tokenizer.json").write_text('{"version":"1.0","truncation":null,"padding":null,"added_tokens":[],"normalizer":null,"pre_tokenizer":null,"post_processor":null,"decoder":null,"model":{"type":"WordPiece","unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":100,"vocab":{}}}', encoding="utf-8")
+    (model_dir / "model.onnx").write_bytes(b"\x00")
+
+    from hist import embedder as emb_mod
+
+    emb_mod.persist_model_dir(tmp_path, emb_mod._ONNX_REPOS["sentence-transformers/all-MiniLM-L6-v2"], str(model_dir))
+
+    called = {"n": 0}
+
+    def fake_snapshot_download(*args, **kwargs):
+        called["n"] += 1
+        return str(model_dir)
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", fake_snapshot_download)
+
+    e = FastEmbedEmbedder(data_dir=tmp_path)
+    resolved = e._resolve_model_dir()
+
+    assert resolved == str(model_dir)
+    assert called["n"] == 0
+
+
+def test_resolve_model_dir_persists_after_hub_download(tmp_path, monkeypatch) -> None:
+    model_dir = tmp_path / "hub-cache"
+    model_dir.mkdir()
+    (model_dir / "tokenizer.json").write_text('{"version":"1.0","truncation":null,"padding":null,"added_tokens":[],"normalizer":null,"pre_tokenizer":null,"post_processor":null,"decoder":null,"model":{"type":"WordPiece","unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":100,"vocab":{}}}', encoding="utf-8")
+    (model_dir / "model.onnx").write_bytes(b"\x00")
+
+    def fake_snapshot_download(*args, **kwargs):
+        return str(model_dir)
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", fake_snapshot_download)
+
+    e = FastEmbedEmbedder(data_dir=tmp_path)
+    resolved = e._resolve_model_dir()
+
+    assert resolved == str(model_dir)
+    assert (tmp_path / "model.json").is_file()
+    assert emb_mod_load_cached(tmp_path) == str(model_dir)
+
+
+def emb_mod_load_cached(tmp_path):
+    from hist.embedder import _ONNX_REPOS, load_cached_model_dir
+
+    return load_cached_model_dir(tmp_path, _ONNX_REPOS["sentence-transformers/all-MiniLM-L6-v2"])
