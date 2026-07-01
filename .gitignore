@@ -22,12 +22,16 @@ venv/
 .coverage
 htmlcov/
 
-# Editor
+# Editor / IDE
 .idea/
 .vscode/
+.cursor/
 
-# Worktrees (created during the build, not part of the package)
+# Worktrees (created during development, not part of the package)
 /.worktrees/
+
+# Local temp (verification artifacts)
+.verify_tmp/
 
 # Local-only notes, not for version control
 /FINAL_REPORT.md

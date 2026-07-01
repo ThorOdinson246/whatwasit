@@ -1,8 +1,7 @@
 # Architecture
 
 This document records the architecture decisions for `hist` and the reasoning
-behind each one. It is the contract that the implementation (and the delegated
-subagents) must follow.
+behind each one. It is the contract that the implementation must follow.
 
 ## Goal recap
 
@@ -162,27 +161,21 @@ flowchart LR
   search["search: embed query -> ANN -> hydrate"] --> output["rich output: ts, cwd, highlighted match + context"]
 ```
 
-## Module boundaries (non-overlapping ownership)
+## Module boundaries
 
-- `hist/config.py`, `hist/models.py`, `hist/db.py`, `hist/interfaces.py` -- Wave 0
-  foundation (frozen contracts), owned by the lead.
-- `hist/parsers/{base,zsh,bash,atuin}.py` -- history-parser.
-- `hist/sessions.py` -- session-grouper (time + cwd reconstruction).
-- `hist/embedder.py` -- `FastEmbedEmbedder(Embedder)`.
-- `hist/index.py` -- `UsearchIndex(VectorIndex)`.
-- `hist/indexer.py` -- parse -> group -> persist -> embed -> index orchestration.
-- `hist/search.py` -- query -> embed -> ANN -> hydrate -> per-command match.
-- `hist/cli.py`, `hist/output.py` -- CLI entry point and rich formatting.
-- `tests/synthetic.py` -- synthetic multi-topic history generator (tests + bench).
-
-## Delegation
-
-Implementation is delegated to Claude Sonnet subagents, each working in its own
-git worktree/branch against the frozen contracts above, returning a structured
-summary (files changed, tests, pass/fail, blockers). The lead reviews and merges
-every branch and owns integration. Waves follow dependency order: parser +
-grouper + embedder + vector-index + synthetic-data first; then indexer + search;
-then cli/output + packaging.
+- `hist/config.py`, `hist/models.py`, `hist/db.py`, `hist/interfaces.py` —
+  configuration, data model, persistence, and swappable subsystem interfaces.
+- `hist/parsers/{base,zsh,bash,atuin}.py` — history file parsers.
+- `hist/sessions.py` — session grouping (time gap + cwd reconstruction).
+- `hist/embedder.py` — `OnnxEmbedder(Embedder)` (MiniLM via onnxruntime).
+- `hist/index.py` — `UsearchIndex(VectorIndex)`.
+- `hist/indexer.py` — parse → group → persist → embed → index orchestration.
+- `hist/search.py` — query → embed → ANN → length normalization → gated hybrid
+  RRF reranking → hydrate → per-command match highlighting.
+- `hist/cli.py`, `hist/output.py` — CLI entry point and rich formatting.
+- `tests/synthetic.py` — synthetic multi-topic history generator (tests + bench).
+- `eval/` — offline search-quality evaluation harness (not shipped in the wheel).
+- `benchmarks/` — performance benchmark script (not shipped in the wheel).
 
 ## Performance plan vs requirements
 
