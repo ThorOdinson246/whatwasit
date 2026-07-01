@@ -1,0 +1,96 @@
+{"query": "that time I was replaying my commits on top of the latest upstream and it stopped halfway with clashes", "correct_session_id": "git_rebase_conflict", "topic": "git-rebase"}
+{"query": "when I had to redo my branch history one commit at a time because of overlapping edits", "correct_session_id": "git_rebase_conflict", "topic": "git-rebase"}
+{"query": "sorting out the mess when pulling a teammate's work collided with my own changes", "correct_session_id": "git_merge_conflict", "topic": "git-merge"}
+{"query": "combining two lines of work where the same file got edited on both sides", "correct_session_id": "git_merge_conflict", "topic": "git-merge"}
+{"query": "the time I had to walk back a change I'd already saved into the project history", "correct_session_id": "git_undo_commit", "topic": "git-undo"}
+{"query": "digging through the record of what I did to get back to an earlier working state", "correct_session_id": "git_undo_commit", "topic": "git-undo"}
+{"query": "when I accidentally checked in something that should never have been tracked and had to scrub it from every past revision", "correct_session_id": "git_large_file_purge", "topic": "git-history-scrub"}
+{"query": "purging a sensitive file out of the entire project history everywhere", "correct_session_id": "git_large_file_purge", "topic": "git-history-scrub"}
+{"query": "why my container kept losing everything every time it restarted", "correct_session_id": "docker_volume_mount", "topic": "docker-volumes"}
+{"query": "making the data inside a container actually survive between runs", "correct_session_id": "docker_volume_mount", "topic": "docker-volumes"}
+{"query": "when two of my services couldn't reach each other until I wired them together", "correct_session_id": "docker_network_connect", "topic": "docker-networking"}
+{"query": "the container-to-container connectivity thing I had to set up", "correct_session_id": "docker_network_connect", "topic": "docker-networking"}
+{"query": "spinning up the whole multi-service stack from a single definition", "correct_session_id": "docker_compose_stack", "topic": "docker-compose"}
+{"query": "bringing all the pieces of the app online at once", "correct_session_id": "docker_compose_stack", "topic": "docker-compose"}
+{"query": "reclaiming the disk space eaten up by old images and dangling layers", "correct_session_id": "docker_disk_prune", "topic": "docker-cleanup"}
+{"query": "cleaning out all the leftover junk the containers piled up", "correct_session_id": "docker_disk_prune", "topic": "docker-cleanup"}
+{"query": "isolating a project's libraries so they don't pollute the whole system", "correct_session_id": "python_venv_setup", "topic": "python-venv"}
+{"query": "setting up a clean sandbox for a fresh script's packages", "correct_session_id": "python_venv_setup", "topic": "python-venv"}
+{"query": "when two libraries demanded incompatible versions of the same shared thing", "correct_session_id": "python_dependency_conflict", "topic": "python-depconflict"}
+{"query": "untangling the package version standoff that kept breaking my install", "correct_session_id": "python_dependency_conflict", "topic": "python-depconflict"}
+{"query": "chasing down why the interpreter swore a package wasn't there even though I installed it", "correct_session_id": "python_import_error", "topic": "python-import"}
+{"query": "that missing-module headache when running my code from the wrong place", "correct_session_id": "python_import_error", "topic": "python-import"}
+{"query": "figuring out which part of my script was dragging the whole thing down", "correct_session_id": "python_profiling", "topic": "python-profiling"}
+{"query": "hunting the slow function that was eating all the runtime", "correct_session_id": "python_profiling", "topic": "python-profiling"}
+{"query": "when the javascript package tree refused to install because requirements clashed", "correct_session_id": "npm_dependency_resolution", "topic": "npm-deps"}
+{"query": "forcing through the node module knot where nothing agreed on versions", "correct_session_id": "npm_dependency_resolution", "topic": "npm-deps"}
+{"query": "patching the flagged security holes in my node packages", "correct_session_id": "npm_audit_fix", "topic": "npm-audit"}
+{"query": "dealing with the reported vulnerabilities in my javascript dependencies", "correct_session_id": "npm_audit_fix", "topic": "npm-audit"}
+{"query": "when a corrupted local package store gave me phantom build failures", "correct_session_id": "npm_cache_clear", "topic": "npm-cache"}
+{"query": "wiping the download cache to get rid of bizarre install errors", "correct_session_id": "npm_cache_clear", "topic": "npm-cache"}
+{"query": "setting up passwordless login so I'd stop typing my password to connect to the box", "correct_session_id": "ssh_key_setup", "topic": "ssh-keys"}
+{"query": "the time I created credentials to get into a remote machine without a prompt", "correct_session_id": "ssh_key_setup", "topic": "ssh-keys"}
+{"query": "making my local identity usable from a jump host to reach a machine behind it", "correct_session_id": "ssh_agent_forwarding", "topic": "ssh-agent"}
+{"query": "when I needed my key to carry through to a second server down the line", "correct_session_id": "ssh_agent_forwarding", "topic": "ssh-agent"}
+{"query": "why the remote box kept rejecting me even though I had the right key", "correct_session_id": "ssh_permission_denied", "topic": "ssh-denied"}
+{"query": "troubleshooting getting locked out when logging into a server", "correct_session_id": "ssh_permission_denied", "topic": "ssh-denied"}
+{"query": "scheduling a script to run on its own every night", "correct_session_id": "cron_job_setup", "topic": "cron-setup"}
+{"query": "setting something up to fire automatically on a repeating timer", "correct_session_id": "cron_job_setup", "topic": "cron-setup"}
+{"query": "why my scheduled task silently never actually ran", "correct_session_id": "cron_job_debug", "topic": "cron-debug"}
+{"query": "chasing a background timer that just refused to trigger", "correct_session_id": "cron_job_debug", "topic": "cron-debug"}
+{"query": "rolling the database structure forward to the newest version", "correct_session_id": "db_migration_run", "topic": "db-migrate-up"}
+{"query": "applying the pending schema changes to my tables", "correct_session_id": "db_migration_run", "topic": "db-migrate-up"}
+{"query": "undoing a structural change to the database that broke everything", "correct_session_id": "db_migration_rollback", "topic": "db-migrate-down"}
+{"query": "walking the table layout back after a bad update", "correct_session_id": "db_migration_rollback", "topic": "db-migrate-down"}
+{"query": "when the system refused to run my script until I changed its access bits", "correct_session_id": "chmod_permission_error", "topic": "perm-chmod"}
+{"query": "fixing the you-are-not-allowed error trying to execute a file", "correct_session_id": "chmod_permission_error", "topic": "perm-chmod"}
+{"query": "reclaiming a bunch of files that ended up belonging to the wrong account", "correct_session_id": "sudo_ownership_fix", "topic": "perm-ownership"}
+{"query": "when everything was locked because the superuser grabbed my directory", "correct_session_id": "sudo_ownership_fix", "topic": "perm-ownership"}
+{"query": "why a domain name just wouldn't resolve to an address on my machine", "correct_session_id": "dns_debugging", "topic": "dns-resolve"}
+{"query": "chasing a name-lookup failure when trying to reach a site", "correct_session_id": "dns_debugging", "topic": "dns-resolve"}
+{"query": "when an old address kept sticking around long after it had changed", "correct_session_id": "dns_cache_flush", "topic": "dns-flush"}
+{"query": "clearing the machine's memory of name lookups to pick up new records", "correct_session_id": "dns_cache_flush", "topic": "dns-flush"}
+{"query": "that thing where the gateway wasn't picking up my configuration changes", "correct_session_id": "nginx_reverse_proxy", "topic": "nginx-proxy"}
+{"query": "when the front server kept routing to the old backend after I edited it", "correct_session_id": "nginx_reverse_proxy", "topic": "nginx-proxy"}
+{"query": "renewing the expiring secure certificate so the browser lock icon stopped complaining", "correct_session_id": "nginx_ssl_cert", "topic": "nginx-ssl"}
+{"query": "sorting out the https warning visitors were seeing on my site", "correct_session_id": "nginx_ssl_cert", "topic": "nginx-ssl"}
+{"query": "digging through the web server records to tally how often requests were failing", "correct_session_id": "log_parsing_grep", "topic": "log-parse"}
+{"query": "slicing a big log file to count the recurring errors", "correct_session_id": "log_parsing_grep", "topic": "log-parse"}
+{"query": "when runaway log files were quietly eating up all the disk", "correct_session_id": "log_rotation", "topic": "log-rotate"}
+{"query": "keeping the ever-growing application output from filling storage", "correct_session_id": "log_rotation", "topic": "log-rotate"}
+{"query": "tracking down what exactly was hogging all my storage when the drive filled up", "correct_session_id": "disk_space_cleanup", "topic": "disk-cleanup"}
+{"query": "hunting the culprit files that ate the free space on my machine", "correct_session_id": "disk_space_cleanup", "topic": "disk-cleanup"}
+{"query": "why a background service kept dying right after it started at boot", "correct_session_id": "systemd_service_debug", "topic": "systemd-debug"}
+{"query": "chasing a daemon that just would not stay running", "correct_session_id": "systemd_service_debug", "topic": "systemd-debug"}
+{"query": "bundling an entire folder into a single compressed file to move it elsewhere", "correct_session_id": "tar_backup", "topic": "tar-archive"}
+{"query": "packing up a directory into one archive for safekeeping", "correct_session_id": "tar_backup", "topic": "tar-archive"}
+{"query": "figuring out why a workload kept restarting over and over in the cluster", "correct_session_id": "kubectl_pod_debug", "topic": "kubectl-debug"}
+{"query": "chasing a crashing container managed by the orchestrator", "correct_session_id": "kubectl_pod_debug", "topic": "kubectl-debug"}
+{"query": "mirroring a directory up to a remote server while only sending what changed", "correct_session_id": "rsync_transfer", "topic": "rsync-sync"}
+{"query": "efficiently copying just the modified files over to another machine", "correct_session_id": "rsync_transfer", "topic": "rsync-sync"}
+{"query": "renaming one identifier across every file in the project in a single sweep", "correct_session_id": "find_replace_sed", "topic": "sed-replace"}
+{"query": "doing a bulk text swap through a whole codebase at once", "correct_session_id": "find_replace_sed", "topic": "sed-replace"}
+{"query": "when a program wasn't being found until I fixed where the shell looks for it", "correct_session_id": "env_var_debug", "topic": "env-path"}
+{"query": "getting an environment setting to stick around across new terminal sessions", "correct_session_id": "env_var_debug", "topic": "env-path"}
+{"query": "when my app couldn't reach the database and kept getting turned away at the door", "correct_session_id": "postgres_connection_refused", "topic": "postgres-conn"}
+{"query": "sorting out the data store refusing my local connections until I edited who was allowed in", "correct_session_id": "postgres_connection_refused", "topic": "postgres-conn"}
+{"query": "when something was already squatting on the address my server needed and I had to evict it", "correct_session_id": "kill_process_on_port", "topic": "port-kill"}
+{"query": "freeing up a busy network endpoint that a leftover process was still holding", "correct_session_id": "kill_process_on_port", "topic": "port-kill"}
+{"query": "poking at a web endpoint by hand to see what it was actually sending back", "correct_session_id": "curl_api_debug", "topic": "curl-debug"}
+{"query": "inspecting the raw reply from a remote service while it was misbehaving", "correct_session_id": "curl_api_debug", "topic": "curl-debug"}
+{"query": "keeping my remote work alive so it survived me getting disconnected", "correct_session_id": "tmux_session", "topic": "tmux"}
+{"query": "getting back into the exact same terminal workspace after logging out", "correct_session_id": "tmux_session", "topic": "tmux"}
+{"query": "locating files by how big or how old they were across a whole tree", "correct_session_id": "find_large_old_files", "topic": "find-files"}
+{"query": "tracking down specific files buried deep somewhere in a directory", "correct_session_id": "find_large_old_files", "topic": "find-files"}
+{"query": "locking a sensitive document behind a passphrase before handing it off", "correct_session_id": "gpg_encrypt_file", "topic": "gpg-encrypt"}
+{"query": "scrambling a file so only someone with the secret word could read it", "correct_session_id": "gpg_encrypt_file", "topic": "gpg-encrypt"}
+{"query": "when I set up the jenkins continuous integration pipeline", "correct_session_id": null, "topic": "ci-absent"}
+{"query": "configuring terraform to provision cloud infrastructure", "correct_session_id": null, "topic": "iac-absent"}
+{"query": "that time I fought the rust compiler's borrow checker", "correct_session_id": null, "topic": "rust-absent"}
+{"query": "tuning the elasticsearch cluster shard allocation", "correct_session_id": null, "topic": "search-absent"}
+{"query": "setting up the redis pub sub messaging channels", "correct_session_id": null, "topic": "redis-absent"}
+{"query": "writing the ansible playbook to configure the fleet", "correct_session_id": null, "topic": "ansible-absent"}
+{"query": "debugging the graphql resolver n plus one queries", "correct_session_id": null, "topic": "graphql-absent"}
+{"query": "enabling two factor authentication on my account", "correct_session_id": null, "topic": "2fa-absent"}
+{"query": "training the neural network on the gpu cluster", "correct_session_id": null, "topic": "ml-absent"}
+{"query": "configuring the bluetooth audio device pairing", "correct_session_id": null, "topic": "bt-absent"}

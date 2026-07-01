@@ -1,0 +1,10 @@
+chown -R john:john /path/to/directory
+cp *.log /path/to/backup/
+dstat -cdngy
+find . -type f -mtime -7
+iostat -dx 1
+lsof -p 1234
+netstat -tulnp | grep 8080
+sed -i 's/foo/bar/g' *.txt
+systemctl list-units --type=service
+tar -czvf backup.tar.gz /path/to/directory

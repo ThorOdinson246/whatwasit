@@ -1,0 +1,397 @@
+# ac
+# apropos
+# ar
+# arch
+# as
+# awk
+# b2sum
+# base32
+# base64
+# basename
+# basenc
+# bash
+# bc
+# bg
+# busctl
+# c99
+# cal
+# cat
+# cd
+# chattr
+# chfn
+# chgrp
+# chmod
+# chown
+# chroot
+# chrt
+# chsh
+# cksum
+# clear
+# cmp
+# colrm
+# column
+# comm
+# command
+# coredumpctl
+# cp
+# crontab
+# csplit
+# ctags
+# cups-config
+# curl
+# cut
+# dash
+# date
+# dd
+# delta
+# df
+# diff
+# diff3
+# dir
+# dircolors
+# dirname
+# dot
+# dpkg
+# dpkg-deb
+# dpkg-query
+# du
+# echo
+# ed
+# egrep
+# env
+# envsubst
+# ex
+# exec
+# exit
+# expand
+# expect
+# expr
+# fallocate
+# false
+# fc
+# fg
+# fgrep
+# file
+# find
+# flatpak
+# flock
+# fmt
+# fold
+# free
+# fuser
+# g++
+# gawk
+# gcc
+# gcov
+# gdb
+# getconf
+# getent
+# getfacl
+# getopt
+# git
+# git add
+# git am
+# git annotate
+# git apply
+# git archive
+# git bisect
+# git blame
+# git branch
+# git bugreport
+# git bundle
+# git cat-file
+# git check-attr
+# git check-ignore
+# git check-mailmap
+# git check-ref-format
+# git checkout
+# git checkout-index
+# git cherry
+# git cherry-pick
+# git clean
+# git clone
+# git column
+# git commit
+# git commit-graph
+# git commit-tree
+# git config
+# git count-objects
+# git credential
+# git credential-cache
+# git credential-store
+# git cvsexportcommit
+# git daemon
+# git describe
+# git diff
+# git diff-files
+# git difftool
+# git fetch
+# git for-each-repo
+# git format-patch
+# git fsck
+# git gc
+# git hash-object
+# git help
+# git init
+# git instaweb
+# git log
+# git ls-files
+# git ls-remote
+# git ls-tree
+# git mailinfo
+# git merge
+# git merge-base
+# git mergetool
+# git mv
+# git notes
+# git prune
+# git pull
+# git push
+# git range-diff
+# git rebase
+# git reflog
+# git remote
+# git repack
+# git replace
+# git request-pull
+# git reset
+# git restore
+# git rev-list
+# git rev-parse
+# git revert
+# git rm
+# git send-email
+# git shortlog
+# git show
+# git show-branch
+# git show-index
+# git show-ref
+# git stage
+# git stash
+# git status
+# git stripspace
+# git submodule
+# git svn
+# git switch
+# git symbolic-ref
+# git tag
+# git unpack-file
+# git update-index
+# git update-ref
+# git var
+# git verify-commit
+# git verify-tag
+# git whatchanged
+# git worktree
+# git-grep
+# git-maintenance
+# gitk
+# gpasswd
+# grep
+# groff
+# groups
+# head
+# hexdump
+# hostname
+# hostnamectl
+# htop
+# iconv
+# id
+# indent
+# install
+# iostat
+# ipcmk
+# ipcrm
+# ipcs
+# jobs
+# join
+# journalctl
+# keyctl
+# kill
+# killall
+# last
+# lastcomm
+# ld
+# ldapsearch
+# ldd
+# less
+# lex
+# link
+# ln
+# loadkeys
+# locale
+# localectl
+# locate
+# logger
+# login
+# loginctl
+# logname
+# look
+# lp
+# lpr
+# lpstat
+# ls
+# lsattr
+# ltrace
+# m4
+# mailx
+# make
+# man
+# manpath
+# mcookie
+# md5sum
+# mesg
+# mkdir
+# mkfifo
+# mktemp
+# more
+# mpstat
+# mv
+# namei
+# newgrp
+# nice
+# nl
+# nm
+# nohup
+# nsenter
+# objdump
+# od
+# oomctl
+# passwd
+# paste
+# patch
+# pathchk
+# pax
+# perf
+# pgrep
+# pidof
+# pidstat
+# pkill
+# pmap
+# pr
+# printenv
+# printf
+# prlimit
+# ps
+# pstree
+# pv
+# pwd
+# pwdx
+# quilt
+# quota
+# readelf
+# readlink
+# realpath
+# rename
+# renice
+# reset
+# resolvectl
+# rev
+# rm
+# rmdir
+# rsync
+# runcon
+# runuser
+# sar
+# scp
+# screen
+# script
+# scriptreplay
+# sdiff
+# sed
+# seq
+# set
+# setfacl
+# sftp
+# sh
+# sha1sum
+# sha224sum
+# sha256sum
+# sha384sum
+# sha512sum
+# shred
+# shuf
+# size
+# sleep
+# sort
+# split
+# ssh
+# ssh-add
+# ssh-agent
+# ssh-keygen
+# ssh-keyscan
+# sshfs
+# stat
+# strace
+# strings
+# strip
+# stty
+# su
+# sum
+# sync
+# systemctl
+# systemd-ac-power
+# systemd-analyze
+# systemd-cat
+# systemd-delta
+# systemd-firstboot
+# systemd-mount
+# systemd-notify
+# systemd-path
+# systemd-run
+# tac
+# tail
+# tar
+# taskset
+# tbl
+# tcpdump
+# tee
+# test
+# time
+# timedatectl
+# timeout
+# top
+# touch
+# tput
+# tr
+# trace-cmd
+# trap
+# troff
+# true
+# truncate
+# tsort
+# tty
+# type
+# ul
+# ulimit
+# umask
+# uname
+# unexpand
+# uniq
+# unlink
+# unshare
+# update-alternatives
+# updatedb
+# uptime
+# users
+# utmpdump
+# uudecode
+# uuencode
+# uuidgen
+# valgrind
+# vdir
+# vi
+# w
+# wait
+# wall
+# wc
+# wget
+# whatis
+# whereis
+# who
+# whoami
+# write
+# xargs
+# yacc
+# yes
+You are a linux expert. You understand what every Linux terminal command does and you reply with the explanation when asked.

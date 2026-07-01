@@ -1,0 +1,1500 @@
+# /etc/systemd/system/etc-backup.service
+#!/usr/bin/env bash
+#!/usr/bin/env bash\nlog=/var/log/apache2/access.log\nawk '{print $9}' "$log" |\n  sort | uniq -c |\n  awk '{printf "%s %s %s\n", $2, $1, sprintf("%*s", $1, "").gsub(/ /,"*")}'
+#!/usr/bin/env bash\nreplace_todo() {\n  dir="$1"\n  find "$dir" -type f -name "*.md" -mtime -2 -exec sed -i 's/TODO/DONE/g' {} +\n}\n# Usage: replace_todo /path/to/docs
+$ !git
+$ VERSION=1.2.3
+$ alias
+$ alias ll='ls -la'
+$ awk '{print $1}' access.log | sort -u
+$ awk -F, '{print $2}' data.csv
+$ cal
+$ cat file1.txt file2.txt > combined.txt
+$ cat readme.md
+$ cp report.pdf backups/
+$ curl -O https://example.com/file.zip
+$ date
+$ date -I
+$ dd if=/dev/zero of=dummy.bin bs=1M count=1024
+$ df -h
+$ echo "Done" >> log.txt
+$ echo "Hello World"
+$ echo "config" > settings.conf
+$ find . -type d -name '__pycache__' -exec rm -rf {} +
+$ find . -type d | wc -l
+$ find . -type f -mtime -1
+$ find . -type f -name '*.jpg'
+$ free -m | awk '/^Mem:/ {print $7}'
+$ git diff origin/master..HEAD --stat
+$ grep -R --include='*.py' TODO .
+$ grep -o 'word' file.txt | wc -l
+$ grep ERROR log.txt
+$ head data.csv
+$ history | tail -10
+$ history | tail -n3
+$ ip -br addr
+$ kill 1234
+$ last reboot | head -n1
+$ ln -s /opt/app/bin /usr/local/bin/app
+$ ls
+$ ls -lS
+$ ls -tr | head -n1
+$ lsof -i :8080
+$ lsusb
+$ md5sum image.iso
+$ mkdir backups
+$ mv draft.txt final.txt
+$ nproc
+$ pgrep nginx
+$ ping -c 3 google.com
+$ pwd
+$ rm old.log
+$ scp file.zip user@host:/tmp/
+$ sed -i 's/foo/bar/g' file.txt
+$ sed -n '5,15p' file.txt
+$ sed -n '5p' /etc/hosts
+$ sort names.txt
+$ ss -tulpn
+$ ssh user@192.168.1.10
+$ sudo !!
+$ sudo chown user:group file.txt
+$ sudo useradd -M deploy
+$ systemctl --failed
+$ tail -n 20 /var/log/syslog
+$ tar -cf - backup/ | xz -9 > backup.xz
+$ tar -czvf project.tar.gz project/
+$ tar -xzvf archive.tar.gz
+$ touch .env
+$ tr '[:upper:]' '[:lower:]' < file.txt > file_lower.txt
+$ uniq sorted.txt
+$ watch -n 2 df -h
+$ wc -l input.txt
+$ who
+$ whoami
+${EDITOR:-nano} notes.txt
+(crontab -l 2>/dev/null; echo "0 2 * * * /path/to/backup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * * /path/to/cleanup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * * /usr/local/bin/backup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * * /usr/local/bin/cleanup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * 0 /path/to/backup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * 0 /usr/local/bin/backup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * 0 /usr/local/bin/cleanup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 1 * * [ \$(awk '{print (\$1<0.5)}' /proc/loadavg) -eq 1 ] && /usr/local/bin/cleanup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 3 * * 0 /usr/local/bin/cleanup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "15 3 * * 0 /usr/bin/cleanup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "30 2 * * 0 /opt/backup.sh | mail -s \"Backup log\" root") | crontab -
+(crontab -l 2>/dev/null; echo \"0 2 * * 0 /usr/bin/env bash -c 'if (( $(awk \"{print ($1<0.5)}\" /proc/loadavg) )); then /opt/backup.sh; fi'\") | crontab -
+(crontab -l ; echo "*/5 * * * * /usr/local/bin/backup.sh") | crontab -
+(crontab -l ; echo "0 2 * * * /path/to/backup.sh") | crontab -
+(crontab -l ; echo "0 2 * * * /usr/local/bin/backup.sh") | crontab -
+(crontab -l ; echo "0 2 * * * /usr/local/bin/cleanup.sh") | crontab -
+(crontab -l ; echo "0 2 * * * /usr/local/bin/daily_backup.sh") | crontab -
+(crontab -l ; echo "0 2 * * 0 /usr/local/bin/backup.sh") | crontab -
+(crontab -l ; echo "0 3 * * * /usr/local/bin/cleanup.sh") | crontab -
+(crontab -l ; echo "15 * * * * /usr/bin/python3 /path/to/script.py >> /var/log/pyjob.log 2>&1") | crontab -
+(crontab -l ; echo "30 9 * * 1 /path/to/script.sh >> /var/log/weekly.log 2>&1") | crontab -
+(sleep 60; echo Done > done.txt) &
+* * * * * echo $(date '+\%Y-\%m-\%d \%H:\%M:\%S') >> /var/log/heartbeat.log
+./hello.sh > hello.log 2>&1 &
+0 0 1 * * /path/to/cleanup.sh
+0 2 * * * /path/to/backup.sh
+0 2 * * * /usr/local/bin/backup.sh
+0 2 * * * mysqldump prod | gzip > /backup/prod_$(date +\%F).sql.gz && ls -1t /backup/prod_*.sql.gz | tail -n +8 | xargs -r rm -f
+0 2 * * * mysqldump sales | gzip > /backup/sales_$(date +\%F).sql.gz || echo "Backup failed on $(date)" | mail -s 'MySQL Backup Failure' dba@example.com
+0 2 * * * tar -czf /backup/$(date +\%Y-\%m-\%d).tar.gz /path/to/directory
+0 2 1 * * /usr/local/bin/monthly_backup.sh | mail -s "Monthly Backup Log" admin@example.com
+15 3 1 * * root tar -czf /backup/etc_$(date +\%Y\%m\%d).tar.gz /etc && echo "Backup completed" | mailx -s "Monthly /etc backup" admin@example.com
+30 2 * * 0 root logrotate -f /etc/logrotate.d/myapp && tar -czf /var/backups/myapp_$(date +%Y%m%d).tgz /var/log/myapp/*.log.1 && echo "MyApp logs rotated" | mail -s "Log rotation" ops@example.com
+API_KEY=$(jq -r '.api_key // empty' config.json); if [[ -z $API_KEY ]]; then echo \"api_key not found in config.json\" >&2; else export API_KEY; fi #=> API_KEY exported if present
+Activate the Python virtual environment "venv"
+Activate the Python virtual environment "venv" in the current shell.
+Activate the Python virtual environment located at .venv
+Activate the swap file named 'swapfile'
+Activate the virtual environment "venv"
+Activate the virtual environment "venv" and install the packages from requirements.txt.
+Activate the virtual environment venv
+Add "/opt/bin" to the beginning of the PATH for the current session
+Add '/usr/local/bin' to the PATH for the current session
+Add /usr/local/bin to the PATH for the current session
+Add a cron job that runs "/usr/local/bin/cleanup.sh" every day at 3 AM
+Add a cron job that runs /usr/local/bin/cleanup.sh every Sunday at 3 am.
+Add a new DNS server to the system's configuration
+Add a new SSH key to the authorized keys file
+Add a new cron job
+Add a new cron job that runs every minute
+Add a new cron job to run /usr/local/bin/cleanup.sh daily at 3am
+Add a new disk to a RAID 1 array
+Add a new group with the name 'newgroup'
+Add a user 'user' to a group 'group'
+Add a user named 'example' to a group named 'example'
+Add a user named 'example' to a group named 'example_group'
+Add a user named 'example' to the 'example' group
+Add a user named 'example' to the 'sudo' group
+Add a user named 'existinguser' to a group named 'examplegroup'
+Add a user named 'john' to a group named 'admin'
+Add a user named 'john' to a group named 'staff'
+Add a user named 'john' to the 'sudo' group
+Add a user named 'user' to a group named 'group'
+Add a user named 'username' to a group named 'groupname'
+Add a user to a group
+Add alice to the sudo group
+Add all changes, commit with message "Update", and push to origin master
+Add all files in the current directory to a Git repository
+Add all files in the current directory to the repository
+Add all files to the staging area and commit with message 'Initial commit'
+Add an SSH key to the authorized keys file
+Add devuser to the sudo group
+Add devuser to the sudo group.
+Add the 'john' user to the 'sudo' group
+Add the current user to the 'newgroup' group
+Add the current user to the sudo group
+Add the public SSH key stored in "~/.ssh/id_rsa.pub" to the authorized keys of user "bob".
+Add the user "developer" to the sudo group
+Add the user "devuser" to the "sudo" group
+Add the user 'user1' to the group 'group1'
+Analyze system logs to detect potential security threats, using grep and awk
+Append 'Hello World' to a file named 'example.txt'
+Append 'Hello World' to a file named 'existingfile.txt'
+Append 'Hello World' to an existing file named 'example.txt'
+Append a line 'alias ll="ls -la"' to ~/.bashrc
+Append a new directory "/opt/tools" to the PATH variable for the current session
+Append a string 'example' to a file named 'example.txt'
+Append line to log.txt
+Append some text to a file named 'example.txt'
+Append the content 'Hello World' to a file called 'example.txt'
+Append the content 'Hello World' to a file named 'example.txt'
+Append the content 'Hello World' to a file named 'file.txt'
+Append the content 'Hello World' to an existing file named 'file.txt'
+Append the content 'Hello World' to the file 'file1'
+Append the contents 'Hello World' to a file named 'file.txt'
+Append the contents 'Hello World' to a file named 'test.txt'
+Append the contents of "new.log" to "combined.log" only if "new.log" is non‑empty.
+Append the contents of "new_entries.txt" to the end of "log.txt" without overwriting existing data.
+Append the contents of file2.txt to file1.txt only if file2.txt is not empty
+Append the current date and time to a log file "run.log".
+Append the current date and time to a log file /var/log/custom.log
+Append the current date and time to log.txt
+Append the current date and time to logfile.txt.
+Append the current date and time to the file "log.txt"
+Append the current date and time to the file "run.log".
+Append the current date and time to the file /var/log/maintenance.log.
+Append the current date to a file called timestamps.log
+Append the current date to a file diary.txt
+Append the current date to the file "history.log"
+Append the current date to the file "log.txt"
+Append the current date to the file "log.txt".
+Append the current date to the file notes.txt
+Append the current timestamp to a log file "run.log"
+Append the current timestamp to a log file /var/log/custom.log each time the script runs.
+Append the current timestamp to a log file named activity.log each time the script runs.
+Append the current timestamp to logfile.txt each time the script runs.
+Append the current timestamp to the end of "log.txt"
+Append the current timestamp to the end of log.txt each time the script runs.
+Append the current timestamp to the file "audit.log"
+Append the current timestamp to the file "log.txt"
+Append the current timestamp to the file "log.txt".
+Append the current timestamp to the file "run.log"
+Append the current timestamp to the file "run.log" each time the command is executed.
+Append the current timestamp to the file "run.log".
+Append the current timestamp to the file /var/log/heartbeat.log every minute using cron syntax.
+Append the current timestamp to the file audit.log without adding a newline before it.
+Append the current timestamp to the file log.txt.
+Append the current timestamp to the file timestamps.log
+Append the line "# Backup completed" to the end of "backup.log" only if it does not already exist
+Append the line "Done" to the end of log.txt
+Append the line "alias ll='ls -la'" to the end of "~/.bashrc"
+Append the line "alias ll='ls -la'" to the end of ~/.bashrc
+Append the line "alias ll='ls -la'" to your .bashrc file
+Append the line "alias ll='ls -la'" to ~/.bashrc
+Append the line "export PATH=$PATH:/opt/bin" to the end of ".bashrc" only if it does not already exist.
+Append the line "export PATH=$PATH:/opt/bin" to ~/.bashrc
+Append the line "export PATH=$PATH:/opt/tools" to the end of ~/.bashrc if it is not already present.
+Append the line 'alias ll="ls -la"' to ~/.bashrc
+Append the line 'export EDITOR=vim' to the end of ~/.bashrc
+Append the line 'export JAVA_HOME=/usr/lib/jvm/java-11-openjdk' to ~/.bashrc
+Append the line 'export PATH=$PATH:/opt/bin' to ~/.bashrc
+Append the output of "df -h" to a log file "disk_usage.log" with a timestamp prefix.
+Append the output of df -h to system_report.txt
+Append the output of the command "df -h" to the file system_report.txt without overwriting existing content.
+Append the output of the command "uname -a" to a log file called system_info.log.
+Append the output of the command "uname -a" to the file system_info.txt, creating the file if it does not exist.
+Append the string 'Hello World' to a file named 'file.txt'
+Append the text "Completed" to the end of "status.log"
+Append the text "Completed" to the end of the file "status.log".
+Append the text "Completed" to the file "status.log"
+Append the text "Completed" to the file "status.txt"
+Append the text "Done" to the end of the file "log.txt".
+Append the text "Hello World" to the end of "greeting.txt"
+Append the text "Hello World" to the end of "output.txt"
+Append the text 'Completed' to the end of the file notes.md
+Append the text 'Hello World' to the end of greetings.txt
+Apply the most recent stash and drop it
+Archive all .log files older than 30 days from /var/log/app into a tar.gz named with the current date, then securely delete the originals using shred.
+Archive all files in /var/www that have not been accessed in the last 180 days, preserving permissions, and delete the original files only after successful archive creation.
+Archive all files modified in the last 24 hours from /home/user/documents into a zip file named recent_$(date +%Y%m%d%H%M).zip, preserving directory structure.
+Archive all log files older than 30 days from /var/log into a gzipped tarball named logs_YYYYMMDD.tar.gz (date of archive), then delete the originals, ensuring the operation is atomic.
+Archive all modified Python (*.py) files in the last 7 days from ~/projects into a tar.gz named "recent_py_$(date +%F).tgz" while preserving directory structure.
+Archive the "logs" directory into a gzipped tarball named "logs.tar.gz".
+Archive the "src" folder into a gzipped tarball called "src.tar.gz"
+Assign an IP address '192.168.1.100' to a network interface named 'eth1'
+Automate the process of creating a new user, setting up their home directory, and assigning a password
+Automate the process of updating a package list, installing new packages, and cleaning up
+Backup MySQL database
+Batch convert PNG to JPEG
+Batch rename jpg to jpeg
+Batch rename with sequential numbers
+Batch resize images
+Bring a background job to the foreground
+Bring a background process to the foreground
+Bring down a network interface
+Bring down a network interface named 'eth1'
+Bring up a network interface
+Bring up a network interface named 'eth1'
+Build a Docker image from the Dockerfile in the current directory and tag it "myapp:latest"
+COUNT=$(ls -1 *.sh | wc -l)
+CUDA_VISIBLE_DEVICES=0 python train.py
+Calculate the MD5 checksum of "image.png"
+Calculate the MD5 checksum of all .iso files in the current directory and save the results to checksums.md5.
+Calculate the MD5 checksum of file.iso
+Calculate the MD5 checksum of the file "archive.tar.gz"
+Calculate the MD5 checksum of the file "image.iso" and display it.
+Calculate the MD5 checksum of the file "image.iso".
+Calculate the MD5 checksum of the file "installer.iso".
+Calculate the SHA‑256 checksum of archive.zip and save it to archive.sha256.
+Calculate the SHA‑256 checksum of the file archive.zip and save it to archive.sha256
+Change directory to 'Documents'
+Change into the 'mydir' directory
+Change into the home directory
+Change into the parent directory
+Change owner of file.txt to alice:alice.
+Change owner of file.txt to user:group
+Change owner recursively
+Change permissions of "script.sh" to be executable by the owner
+Change permissions of "script.sh" to be executable by the owner only
+Change permissions of a file to executable
+Change the current directory to '/home'
+Change the current directory to '/home/user'
+Change the current directory to 'example'
+Change the current directory to the home directory
+Change the current directory to the parent directory
+Change the current directory to the root directory
+Change the current working directory to '/home/user'
+Change the current working directory to '/path/to/new/directory'
+Change the current working directory to the home directory
+Change the current working directory to the parent directory
+Change the current working directory to the root directory
+Change the default shell of a user named 'john' to 'bash'
+Change the default shell of a user named 'john' to 'zsh'
+Change the directory to '/home/user'
+Change the directory to 'Documents'
+Change the directory to 'example'
+Change the directory to the parent directory
+Change the group of a file called 'example.txt' to 'group'
+Change the group of a file called 'file.txt' to a new group
+Change the group of a file named 'example.txt' to 'group'
+Change the group of a file named 'example.txt' to a group named 'group'
+Change the group of a file named 'example.txt' to a group named 'staff'
+Change the group of a file named 'file.txt' to 'group'
+Change the group of a file named 'file.txt' to a group named 'group'
+Change the group of a file named 'file.txt' to a new group
+Change the group of a file named 'test.txt' to a group named 'users'
+Change the group of the file 'example.txt' to the 'sudo' group
+Change the group of the file 'file1' to 'group1'
+Change the group ownership of a file
+Change the name of a group 'oldgroup' to 'newgroup'
+Change the owner of "data.db" to user "dbadmin" and group "dbgroup"
+Change the owner of a file called 'example.txt' to 'user'
+Change the owner of a file called 'file.txt' to a new user
+Change the owner of a file named 'example.txt' to 'user'
+Change the owner of a file named 'example.txt' to 'user' and the group to 'group'
+Change the owner of a file named 'example.txt' to a user named 'john'
+Change the owner of a file named 'example.txt' to a user named 'user'
+Change the owner of a file named 'file.txt' to 'newuser'
+Change the owner of a file named 'file.txt' to 'user'
+Change the owner of a file named 'file.txt' to a new user
+Change the owner of a file named 'file.txt' to a user named 'user'
+Change the owner of a file named 'file1.txt' to 'user1'
+Change the owner of a file named 'test.txt' to a user named 'john'
+Change the owner of data/ to user alice and group staff
+Change the owner of directory /opt/data to user bob and group staff
+Change the owner of the directory "data" and all its contents to user "bob" and group "staff".
+Change the owner of the file 'example.txt' to the 'john' user
+Change the owner of the file 'file1' to 'user1'
+Change the ownership of "project/" to user "devuser" and group "developers" recursively
+Change the ownership of a file
+Change the ownership of a file 'example.txt' to a user 'user' and a group 'group'
+Change the ownership of a file named 'example.txt' to 'example:user'
+Change the ownership of a file named 'example.txt' to 'user'
+Change the ownership of a file named 'example.txt' to a user named 'example'
+Change the ownership of a file named 'file.txt' to a user 'user'
+Change the ownership of a file named 'file.txt' to a user named 'newuser'
+Change the ownership of a file named 'file.txt' to a user named 'username'
+Change the ownership of a file named 'file.txt' to a user named 'username' and a group named 'groupname'
+Change the ownership of a file named 'file.txt' to the 'user' user and 'group' group
+Change the ownership of the directory "data" recursively to user "alice" and group "staff"
+Change the password for a user account
+Change the password for a user account called 'example'
+Change the password for a user called 'example'
+Change the password for a user named 'example'
+Change the password for a user named 'existinguser'
+Change the password for a user named 'john'
+Change the password for a user named 'user'
+Change the password for a user named 'username'
+Change the password for the 'john' user account
+Change the password for the 'user' user
+Change the password for the current user
+Change the password for user "bob" (interactive).
+Change the password for user "bob" (prompt will ask for the new password).
+Change the password for user "devuser" (prompt will appear for input)
+Change the password for user "devuser" interactively.
+Change the password for user bob (prompt will appear)
+Change the password for user devuser
+Change the password of a user 'user'
+Change the password of a user account
+Change the password of a user account named 'example'
+Change the password of a user account named 'john'
+Change the password of a user account named 'user'
+Change the password of a user called 'example'
+Change the password of a user named 'example'
+Change the password of a user named 'existinguser'
+Change the password of a user named 'john'
+Change the password of a user named 'user'
+Change the password of a user named 'user1'
+Change the password of a user named 'username'
+Change the permission of a file named 'example.txt' to readable, writable, and executable
+Change the permission of a file named 'file1.txt' to read-only
+Change the permissions of "script.sh" to be executable by the owner only
+Change the permissions of "script.sh" to be executable by the owner only.
+Change the permissions of a file
+Change the permissions of a file 'example.txt' to 'rwxr-x'
+Change the permissions of a file called 'example.txt' to read-only
+Change the permissions of a file called 'file.txt' to read-only
+Change the permissions of a file named 'example.txt' to '755'
+Change the permissions of a file named 'example.txt' to 'read-only'
+Change the permissions of a file named 'example.txt' to 'rwxr-x'
+Change the permissions of a file named 'example.txt' to read-only
+Change the permissions of a file named 'example.txt' to readable, writable, and executable for the owner
+Change the permissions of a file named 'file.txt' to '755'
+Change the permissions of a file named 'file.txt' to 'read, write, execute' for the owner
+Change the permissions of a file named 'file.txt' to 'read-only'
+Change the permissions of a file named 'file.txt' to 'read-only' for the owner
+Change the permissions of a file named 'file.txt' to 'rwxr-x'
+Change the permissions of a file named 'file.txt' to read-only
+Change the permissions of a file named 'file.txt' to readable, writable, and executable by the owner
+Change the permissions of a file named 'test.txt' to read-only
+Change the permissions of all ".sh" files in the current directory to be executable by the owner, group, and others.
+Change the permissions of all .sh files in the current directory to be executable by the owner, group and others.
+Change the permissions of script.sh to be executable by everyone
+Change the permissions of script.sh to be executable by the owner
+Change the permissions of script.sh to be executable by the owner only
+Change the permissions of script.sh to be executable by the owner only.
+Change the permissions of the directory /var/www to 750 recursively.
+Change the permissions of the file 'example.txt' to 'rwxr-x'
+Change the permissions of the file 'file1' to readable, writable, and executable by the owner
+Change the priority of a process with PID '1234' to '10'
+Change the system's hostname to 'example'
+Change the system's timezone to 'America/New_York'
+Change to the home directory
+Change to the parent directory
+Change to the root directory
+Check SSL cert expiry
+Check battery status
+Check if TCP port 8080 is open on localhost
+Check if a command 'git' exists in the PATH and print a message
+Check if a given port (e.g., 8080) is open on localhost using netcat.
+Check if host example.com is reachable.
+Check if host google.com is reachable
+Check if host is reachable
+Check if port 22 is listening on the local machine
+Check if port 22 is open on remote host example.com
+Check if port 3306 is open on localhost using netcat
+Check if port 8080 is listening on localhost
+Check if port 8080 is open on localhost
+Check if port 8080 is open on localhost using netcat
+Check if the command "ffmpeg" is installed; if not, print a warning message.
+Check if the command "git" exists in the PATH
+Check if the command "git" is available on the system and print a friendly message.
+Check if the command "git" is available on the system and print a message accordingly.
+Check if the command 'jq' is installed, and if not, install it on an Ubuntu system
+Check if the file "data.csv" exists and print a message
+Check if the port 8080 is currently in use.
+Check the CPU information
+Check the CPU usage of the system
+Check the HTTP status code of https://example.com
+Check the HTTP status code of https://example.org without downloading the body
+Check the MD5 checksum of file archive.zip
+Check the MD5 checksum of file.iso
+Check the SHA256 checksum of "download.iso"
+Check the SHA256 checksum of a file download.zip
+Check the SHA256 checksum of file.iso
+Check the SHA‑256 checksum of a file "download.iso"
+Check the SSL certificate expiration date for "https://example.com" using openssl.
+Check the current network configuration
+Check the current network connections
+Check the current system time
+Check the current system uptime
+Check the disk information
+Check the disk space usage
+Check the disk usage for all directories in the current directory
+Check the disk usage for the current directory
+Check the disk usage of a file system
+Check the disk usage of a specific directory
+Check the disk usage of the current directory
+Check the free disk space
+Check the free disk space of a file system
+Check the kernel logs
+Check the memory information
+Check the memory usage
+Check the memory usage of the system
+Check the network information
+Check the network usage of the system
+Check the status of the ssh service using systemd
+Check the status of the sshd service
+Check the syntax of a Bash script "deploy.sh" without executing it
+Check the syntax of a Bash script "script.sh" without executing it
+Check the syntax of an Nginx configuration file "/etc/nginx/nginx.conf"
+Check the syntax of an nginx configuration file
+Check the syntax of an nginx configuration file without reloading
+Check the syntax of the Bash script "deploy.sh" without executing it
+Check the syntax of the Bash script "deploy.sh" without executing it.
+Check the syntax of the Bash script deploy.sh without executing it
+Check the syntax of the Bash script install.sh without executing it.
+Check the syntax of the Bash script script.sh without executing it
+Check the syntax of the script test.sh without executing it.
+Check the system configuration
+Check the system information
+Check the system logs
+Check the system uptime
+Check whether port 22 is open on the remote host example.com using netcat.
+Check whether port 443 is listening on localhost using netcat.
+Check whether port 443 on remote host example.com is open.
+Check whether port 8080 is listening on the local machine.
+Check whether port 8080 is open on localhost using netcat.
+Check whether the port 22 is open on the remote host "example.com" using nc.
+Check whether the port 3306 is listening on the local machine.
+Check whether the port 8080 is listening on the local machine
+Check which ports are listening on the system
+Clean up the package cache
+Clear the Bash shell history
+Clear the shell history
+Clear the system log for a service named 'example'
+Clear the terminal screen
+Clone a Git repository from 'https://github.com/user/repo.git'
+Clone a remote Git repository https://github.com/user/repo.git into folder repo
+Clone a remote Git repository named 'example.git'
+Clone a repository from the URL 'https://github.com/example/repo.git'
+Clone the repository "https://github.com/example/repo.git" into a folder named "repo"
+Clone the repository https://github.com/example/repo.git into ~/repo
+Clone the repository https://github.com/user/repo.git and checkout the develop branch
+Combine the contents of all ".conf" files in "/etc/nginx/" into a single file "nginx_all.conf".
+Combine the contents of all ".md" files in "docs/" into a single file "all.md".
+Combine the contents of all .log files in logs/ into a single file combined.log, adding a filename header before each file's content.
+Combine the contents of all .log files in logs/ into a single file combined.log, preserving order by modification time.
+Combine the contents of file1.txt and file2.txt into a new file combined.txt, removing duplicate lines
+Combine the contents of file1.txt and file2.txt into a new file combined.txt, removing duplicate lines.
+Combine the contents of file1.txt and file2.txt into merged.txt
+Combine the contents of file1.txt and file2.txt into merged.txt, removing duplicate lines
+Combine the contents of fileA.txt and fileB.txt into combined.txt, removing duplicate lines
+Combine the output of "ls" and "pwd" into a single line separated by a colon.
+Commit all staged changes with the message "Fix bug"
+Commit changes in a Git repository with a message 'Initial commit'
+Commit changes to a Git repository
+Commit the changes with the message 'Initial commit'
+Compare the contents of two files named 'test.txt' and 'example.txt'
+Compare two files 'file1' and 'file2' and output the result in a side-by-side format
+Compare two files named 'file1.txt' and 'file2.txt' and print the differences
+Compress "largefile.log" with maximum gzip compression
+Compress "report.txt" using gzip, keeping the original file.
+Compress a directory "data/" using tar with bzip2 compression
+Compress a directory "logs/" into a zip file "logs.zip" preserving permissions
+Compress a directory 'logs' using zip preserving permissions
+Compress a directory called 'logs' into a zip file named logs_backup.zip, excluding *.tmp files.
+Compress a directory logs/ into a zip file logs.zip
+Compress a directory logs/ into logs.tar.bz2 using bzip2 compression
+Compress a directory named "project" into a zip archive with maximum compression.
+Compress a directory named project into a zip archive named project.zip
+Compress a directory named project/ into a zip file named project.zip, preserving the directory structure.
+Compress a directory using tar without compression (just archiving)
+Compress a file "report.txt" using bzip2 (creates report.txt.bz2)
+Compress a file named 'example.txt' using gzip
+Compress a file named 'file.txt' using gzip
+Compress a folder backup/ into backup.xz using maximum compression
+Compress a large file "video.mkv" using gzip and keep the original
+Compress a large log file "access.log" using gzip, keeping the original
+Compress a large log file using bzip2, keeping the original
+Compress a single file data.csv using gzip and keep the original
+Compress a string 'Hello World' using base64 encoding
+Compress all "*.log" files in the current directory into a single zip archive "logs.zip".
+Compress all ".log" files into a single gzip archive named "logs.gz"
+Compress all .log files in /var/log into a single gzip archive logs.tar.gz
+Compress all .log files in /var/log into a single gzip archive.
+Compress all .log files in /var/log into a single zip archive called logs.zip.
+Compress all .log files in /var/log into a single zip archive logs.zip
+Compress all .log files in /var/log into a single zip archive named logs.zip.
+Compress all .log files in /var/log into logs.tar.bz2
+Compress all .log files in /var/log into logs.tar.gz
+Compress all .log files in logs/ into a single gzip archive logs.tar.gz
+Compress all .log files in logs/ into logs.tar.gz using xargs
+Compress all .log files older than 7 days in /var/log into a single gzip archive named old_logs.tar.gz and delete the originals.
+Compress all .log files older than 7 days in /var/log to .gz using pigz (parallel gzip) with maximum CPU utilization, and delete the original .log files after successful compression.
+Compress all .png images in /pictures that are larger than 5 MiB using pngquant, keep originals, and generate a summary report of original vs compressed size.
+Compress all .png images in the folder images/ to 80 % quality using ImageMagick, overwriting the originals.
+Compress all log files older than 30 days in /var/log, preserving directory structure, into a single archive /backup/old_logs_$(date +%F).tar.bz2, then delete the original files.
+Compress all log files older than 30 days in /var/log/nginx into a single tar.gz archive named "nginx_logs_$(date +%Y%m).tar.gz" and delete the original files after successful compression.
+Compress all log files older than 30 days in /var/log/nginx, but keep the most recent compressed file for each log type (e.g., access.log, error.log).
+Compress folder with tar
+Compress folder with zip
+Compress multiple files "a.txt", "b.txt", "c.txt" into a zip archive "files.zip"
+Compress multiple files "a.txt", "b.txt", and "c.txt" into a zip archive "archive.zip"
+Compress multiple files "a.txt", "b.txt", and "c.txt" into a zip archive "archive.zip" without storing directory paths.
+Compress standard input using gzip and write to "output.gz"
+Compress standard input using gzip and write to output.gz
+Compress the "backup" folder into a gzipped tarball named "backup.tar.gz"
+Compress the contents of the directory "logs/" into a zip file named "logs.zip" without including the parent directory path.
+Compress the directory "logs" into a gzip archive "logs.tar.gz"
+Compress the directory "logs" into a gzipped tarball named "logs.tar.gz".
+Compress the directory "logs" into a tar.bz2 archive named "logs.tar.bz2"
+Compress the directory "logs" into a zip archive named "logs.zip" without storing directory paths.
+Compress the directory "logs" into a zip file "logs.zip"
+Compress the directory "logs" into a zip file named "logs.zip"
+Compress the directory "logs" into a zip file named "logs.zip" without preserving directory structure.
+Compress the directory "project" into a gzipped tarball named "project.tar.gz".
+Compress the directory backup/ into a gzip tarball named backup.tar.gz
+Compress the directory logs into a gzipped tarball named logs.tar.gz
+Compress the directory logs into logs.tar.bz2 using bzip2 compression
+Compress the directory logs/ into a bzip2 archive logs.tar.bz2
+Compress the directory logs/ into a zip file named logs.zip, preserving directory structure.
+Compress the directory logs/ into a zip file named logs.zip, preserving the directory structure.
+Compress the directory logs/ into logs.tar.bz2 using bzip2 compression
+Compress the directory logs/ into logs.tar.bz2 using bzip2 compression.
+Compress the directory logs/ into logs.zip using zip, preserving the directory hierarchy.
+Compress the directory logs/ into logs.zip without preserving the directory structure
+Compress the directory project/ into a gzipped tarball named project.tar.gz.
+Compress the file "data.csv" using bzip2 and keep the original file.
+Compress the file "large.log" using gzip and keep the original file.
+Compress the file "large.log" using gzip, keeping the original
+Compress the file "large.log" using gzip, keeping the original file.
+Compress the file "largefile.bin" using gzip and keep the original
+Compress the file "largefile.bin" using gzip with maximum compression
+Compress the file "largefile.bin" using xz with maximum compression
+Compress the file "report.pdf" using gzip, keeping the original file.
+Compress the file largefile.bin using gzip, keeping the original file.
+Compress the file largefile.bin using xz with maximum compression, keeping the original file.
+Compress the folder "backup" into a gzipped tarball named "backup.tar.gz"
+Compress the folder project/ into a gzipped tarball
+Compress the logs directory into a gzipped tarball named logs.tar.gz
+Compress the output of "mysqldump" on the fly and save to "backup.sql.gz"
+Compress the output of the command "du -sh *" using gzip and write it to du_report.gz.
+Compress the text file notes.txt using bzip2, keeping the original file.
+Concatenate all csv files into merged.csv without headers from second file onward.
+Concatenate file1.txt and file2.txt into combined.txt
+Concatenate file1.txt file2.txt and save as combined.txt
+Configure a static IP address on a network interface
+Configure the 'eth0' network interface with a static IP address
+Connect to a remote host using SSH
+Connect to a remote host using ssh
+Connect to a remote server named 'remote_server' using SSH
+Connect to a remote server using SSH
+Connect to a remote server using ssh
+Construct a Bash function that monitors a directory for new files using inotifywait, and when a new file appears, computes its MD5 hash and appends the filename and hash to hashes.log.
+Construct a Bash function that takes a directory path and a file extension, finds the N largest files with that extension, and prints their sizes and paths sorted descending. N defaults to 5.
+Construct a Bash one‑liner that lists all open network sockets owned by processes owned by the current user, groups them by remote IP, and shows the count per IP sorted descending.
+Construct a Bash script that backs up all MySQL databases, compresses each dump with xz, stores them in /backup/mysql/YYYY/MM/DD/, and rotates backups older than 30 days.
+Construct a one‑liner that prints the total number of lines of code (excluding blank lines and comments) for all .py files in the current repository, grouping the count by top‑level directory.
+Construct a pipeline that reads Apache access logs, extracts the request method and URL, counts how many times each URL was requested with GET, and shows the top 10 URLs.
+Construct a pipeline that reads JSON lines from logs.jsonl, filters entries where "level" is "error", extracts the "timestamp" and "message" fields, and writes them as CSV to errors.csv.
+Construct a pipeline that reads systemd journal entries for the last hour, filters for entries with priority "error", extracts the _PID and MESSAGE fields, and outputs a JSON array of objects.
+Continuously monitor /var/log/auth.log for failed SSH login attempts, and after every 10 failures, send an alert email to security@example.com with the offending IPs.
+Continuously monitor changes to /var/log/auth.log
+Convert CSV to TSV
+Convert DOS to Unix line endings
+Convert EOL to Unix
+Convert JSON to CSV with jq
+Convert a JSON file data.json to a pretty‑printed format using jq.
+Convert a Markdown file README.md to PDF using pandoc
+Convert a PDF "doc.pdf" to a series of PNG images using ImageMagick
+Convert a PDF file "doc.pdf" to a series of PNG images
+Convert a PDF file "doc.pdf" to a series of PNG images using ImageMagick
+Convert a PDF file "doc.pdf" to plain text "doc.txt" using pdftotext
+Convert a PDF file named document.pdf to a series of PNG images, one per page.
+Convert a PDF file report.pdf to a series of PNG images, one per page, using ImageMagick.
+Convert a PDF file report.pdf to plain text using pdftotext
+Convert a PDF file to text using pdftotext
+Convert a PDF to text using pdftotext
+Convert a PNG image image.png to a JPEG named image.jpg using ImageMagick
+Convert a Unix timestamp (e.g., 1679788800) to a human‑readable date.
+Convert a WAV audio file to MP3 with a bitrate of 192k using ffmpeg.
+Convert a space‑separated file data.txt to a comma‑separated file data.csv
+Convert a space‑separated file data.txt to a tab‑separated file data.tsv
+Convert a space‑separated file to tab‑separated using awk.
+Convert a string "2023-12-31" to Unix timestamp using date
+Convert a string "Hello World" to uppercase using bash builtins.
+Convert all ".wav" audio files in "music/" to MP3 at 192k bitrate using ffmpeg.
+Convert all ".wav" files in "audio/" to ".mp3" using ffmpeg
+Convert all ".wav" files in "samples" to "mp3" using ffmpeg, preserving the original filenames
+Convert all *.png images in the folder "images" to JPEG format using ImageMagick
+Convert all .png images in images/ to .jpg using ImageMagick
+Convert all .png images in images/ to .jpg using mogrify
+Convert all .png images in the images folder to .jpg format using ImageMagick
+Convert all .png images in the images/ folder to .jpg using ImageMagick
+Convert all .wav audio files in music/ to .mp3 using ffmpeg, preserving the original filenames.
+Convert all .wav audio files in the current folder to .mp3 using ffmpeg.
+Convert all .wav audio files in the music directory to .mp3 at 192k bitrate using ffmpeg.
+Convert all .wav files in music/ to .mp3 using ffmpeg
+Convert all .wav files in music/ to .mp3 using ffmpeg, keeping original filenames.
+Convert all .wav files in the current directory to .mp3 at 192k bitrate using ffmpeg.
+Convert all .wav files in the current directory to .mp3 using ffmpeg, preserving the original filenames
+Convert all Windows line endings to Unix in place.
+Convert all spaces at the beginning of lines in "script.sh" to tabs (assuming 4 spaces per tab).
+Convert all spaces in "file.txt" to tabs using expand.
+Convert all spaces to tabs in "data.txt" and overwrite the file
+Convert all spaces to tabs in "file.txt" using tr
+Convert all spaces to tabs in file data.txt and save to data_tab.txt
+Convert all spaces to tabs in file.txt and write to file_tab.txt
+Convert all spaces to tabs in the file "data.txt" and save the result to "data_tab.txt"
+Convert all spaces to tabs in the file "space.txt" and save as "tab.txt"
+Convert all uppercase letters to lowercase in "input.txt" and save to "output.txt"
+Convert all uppercase letters to lowercase in file.txt and save as file_lower.txt
+Convert all uppercase letters to lowercase in the file "names.txt" and overwrite the file.
+Convert encoding
+Convert epoch to human date
+Convert the JSON file "data.json" to a pretty‑printed format using jq
+Convert the JSON file "data.json" to a pretty‑printed format using jq.
+Convert the JSON file data.json into a pretty‑printed format using jq.
+Convert the PDF "doc.pdf" to a series of PNG images (one per page).
+Convert the PDF "report.pdf" to a series of PNG images
+Convert the PDF "report.pdf" to a series of PNG images, one per page
+Convert the PDF file "report.pdf" to a series of PNG images
+Convert the PDF report.pdf to a series of PNG images, one per page, stored in the folder images/.
+Convert the PDF report.pdf to a series of PNG images, one per page.
+Convert the file "data.csv" to tab‑separated values and save as "data.tsv".
+Convert the file "data.txt" from DOS line endings to Unix line endings.
+Convert the file "image.png" to "image.jpg" using ImageMagick.
+Convert the file "image.png" to JPEG format using ImageMagick
+Convert the file "image.png" to JPEG format with 85% quality using ImageMagick.
+Convert the file "image.png" to a JPEG image named "image.jpg" using ImageMagick.
+Convert the file "image.png" to a JPEG named "image.jpg" using ImageMagick
+Convert the file data.json to a pretty‑printed format using jq and overwrite the original file.
+Convert the file data.txt from DOS to Unix line endings
+Convert the file image.png to a JPEG image with 85% quality using ImageMagick.
+Convert the image "photo.png" to a JPEG with 80% quality using ImageMagick.
+Convert the image "photo.png" to a JPEG with 85% quality using ImageMagick.
+Convert the image picture.png to a JPEG with 80% quality
+Convert the line endings of "dosfile.txt" from CRLF to LF
+Convert the line endings of "windows.txt" from CRLF to LF
+Convert the line endings of file dosfile.txt from Windows (CRLF) to Unix (LF).
+Convert the string "2023-07-15" to epoch seconds using date.
+Convert the string '2026-03-24' to Unix timestamp
+Convert the text file data.txt to uppercase and save as data_upper.txt.
+Convert the text file data.txt to uppercase using tr and write the result to data_upper.txt.
+Convert video to MP4
+Copy "source.txt" to "backup.txt"
+Copy a directory named 'dir' to a remote server named 'server'
+Copy a directory tree "src" to "dest" preserving symbolic links
+Copy a directory tree src/ to dest/ preserving attributes
+Copy a directory tree src/ to dest/, preserving symbolic links, permissions, and timestamps.
+Copy a file called 'file.txt' to a new location
+Copy a file called 'source.txt' to 'destination.txt'
+Copy a file called 'test.txt' to a directory called 'example'
+Copy a file called 'test.txt' to a new location
+Copy a file from a remote server using scp
+Copy a file from one directory to another
+Copy a file from one location to another
+Copy a file named 'example.txt' to a directory named 'docs'
+Copy a file named 'example.txt' to a directory named 'example'
+Copy a file named 'example.txt' to a new directory
+Copy a file named 'example.txt' to a new directory 'test'
+Copy a file named 'example.txt' to a new directory named 'test'
+Copy a file named 'example.txt' to the 'test' directory
+Copy a file named 'file.txt' to a directory named 'destination'
+Copy a file named 'file.txt' to a directory named 'docs'
+Copy a file named 'file.txt' to a directory named 'example'
+Copy a file named 'file.txt' to a new directory 'mydir'
+Copy a file named 'file.txt' to a new location
+Copy a file named 'file.txt' to a remote server 'example.com'
+Copy a file named 'file.txt' to a remote server named 'server'
+Copy a file named 'file.txt' to the 'example' directory
+Copy a file named 'file1.txt' from a remote server using SCP
+Copy a file named 'file1.txt' to 'file2.txt'
+Copy a file named 'file1.txt' to a remote server using SCP
+Copy a file named 'source.txt' to 'destination.txt'
+Copy a file named 'test.txt' to a new location
+Copy all ".conf" files from /etc to the directory ~/configs preserving attributes
+Copy all ".sh" files from "scripts" to "/usr/local/bin" preserving attributes
+Copy all *.txt files from src/ to dest/ preserving attributes
+Copy all .conf files from /etc to a backup folder ~/etc_backup preserving attributes
+Copy all .conf files from /etc to ~/backup_conf preserving directory structure, creating any missing directories.
+Copy all .conf files from /etc/nginx to /backup/nginx preserving directory structure.
+Copy all .jpg files to the images folder, preserving attributes
+Copy all .txt files from src/ to dest/ preserving attributes
+Copy all .txt files from the current directory to /tmp/backups
+Copy directory "src" to "dst" preserving attributes
+Copy file "data.csv" to the directory "archive" preserving attributes
+Copy file "report.pdf" to the directory "archive" preserving attributes
+Copy file report.pdf to the directory /tmp
+Copy file1.txt to backup.txt.
+Copy local file report.pdf to remote host backup@192.168.1.100:/backups/ using scp
+Copy the SSH public key to a remote server
+Copy the contents of "source_dir" to "dest_dir" preserving attributes and showing progress.
+Copy the contents of a directory named 'example' to a directory named 'example2'
+Copy the contents of a directory named 'example' to a new location
+Copy the contents of file1.txt to file2.txt only if file1.txt is newer.
+Copy the directory "src" and its contents to "dst", preserving attributes.
+Copy the directory "src" to "backup/src" preserving attributes
+Copy the directory "src" to "backup/src_$(date +%F)" preserving attributes
+Copy the directory "src/" to remote host "user@remote:/home/user/" preserving attributes
+Copy the directory /var/www to /backup/www preserving permissions and timestamps.
+Copy the directory /var/www/html to /backup/www preserving permissions and timestamps.
+Copy the entire project directory to a backup location preserving attributes
+Copy the file "config.yaml" to the directory "/etc/myapp/" preserving attributes.
+Copy the file 'file1' to 'file2'
+Copy the file 'file1' to 'file2' and preserve the file metadata
+Copy the file secret.key to the remote host backup.example.com:/backups/ using scp with verbose output.
+Copy the file source.txt to destination.txt preserving attributes
+Copy the local directory "src" to the remote host "backup@example.com" under "/var/backups" using rsync over SSH
+Copy the local directory project/ to a remote server at /home/user/project using rsync over SSH
+Copy the local file report.pdf to the remote host /tmp directory using scp, preserving timestamps.
+Copy the public SSH key to a remote server
+Copy the public SSH key to a remote server named 'remote_server'
+Count files in current dir
+Count files in dir
+Count files in directory
+Count how many .py files are in the src directory
+Count how many .txt files are in the home directory
+Count how many files are in each subdirectory of the current folder and display the result.
+Count how many lines are in "log.txt".
+Count how many lines are in the file "data.csv"
+Count how many lines contain "FAIL" in results.log.
+Count how many lines contain the word "ERROR" in logfile.txt.
+Count how many lines contain the word "TODO" in all .c files recursively.
+Count how many lines contain the word 'TODO' in all *.py files
+Count how many lines in "access.log" contain a 404 status code.
+Count how many lines, words, and bytes are in the file README.md.
+Count how many lines, words, and characters are in "report.md"
+Count how many lines, words, and characters are in the file "data.csv".
+Count how many lines, words, and characters are in the file "report.md".
+Count how many regular files are in the /var/log directory.
+Count how many times each HTTP status code appears in an Apache access log /var/log/apache2/access.log, and display the counts sorted by most frequent.
+Count how many times each word appears in "document.txt" (case‑insensitive) and sort by frequency
+Count how many times the string "TODO" appears in "src/main.c".
+Count how many times the string "TODO" appears in all ".py" files in the current directory and subdirectories.
+Count how many times the string "TODO" appears in all ".py" files recursively from the current directory.
+Count how many times the string 'failed' appears in a file
+Count how many times the word "ERROR" appears in logs.txt, case‑insensitive.
+Count how many times the word "TODO" appears in all ".c" files recursively
+Count how many times the word "TODO" appears in all ".py" files recursively
+Count how many times the word "TODO" appears in all *.py files recursively.
+Count how many times the word "TODO" appears in all source files (*.c, *.h)
+Count how many times the word "error" appears in "system.log" (case‑insensitive)
+Count how many times the word "error" appears in "system.log" (case‑insensitive).
+Count how many times the word "error" appears in logfile.txt, case‑insensitive.
+Count how many times the word "error" appears in the file "system.log" (case‑insensitive).
+Count how many times the word "error" appears in the file report.txt (case‑insensitive)
+Count how many times the word "error" appears in the log file /var/log/syslog (case‑insensitive).
+Count how many times the word "error" appears in the syslog.
+Count how many times the word "error" appears in the system log file.
+Count how many times the word "fail" appears in the file "system.log" (case‑sensitive).
+Count how many times the word "failed" appears in "audit.log"
+Count how many times the word "failed" appears in "audit.txt"
+Count how many times the word "failed" appears in "auth.log".
+Count how many times the word "failed" appears in "system.log"
+Count how many times the word "failed" appears in "system.log" (case‑sensitive).
+Count how many times the word "failed" appears in syslog
+Count how many times the word "failed" appears in syslog.
+Count how many times the word "failure" appears in "system.log" (case‑insensitive)
+Count how many times the word "failure" appears in the file error.log (case‑insensitive).
+Count how many times the word "failure" appears in the log file system.log, case‑sensitive.
+Count how many times the word "success" appears in "log.txt"
+Count how many times the word "success" appears in "output.txt"
+Count how many times the word 'TODO' appears in all source files recursively
+Count how many times the word 'error' appears in logfile.log (case‑insensitive)
+Count how many times the word 'error' appears in the file /var/log/syslog
+Count how many times the word 'failed' appears in syslog
+Count how many times the word 'failure' appears in log.txt (case‑insensitive)
+Count how many words are in "document.txt"
+Count lines in data.csv.
+Count lines in file.txt
+Count occurrences of the word 'the' in article.txt case-insensitive.
+Count occurrences of word
+Count occurrences of word in file
+Count only the number of lines in "report.txt"
+Count processes per user
+Count running services
+Count the number of CPU cores available.
+Count the number of directories in the current path recursively
+Count the number of files (including hidden) in the directory "/tmp"
+Count the number of files in the current directory (excluding directories)
+Count the number of files in the current directory (excluding hidden files).
+Count the number of files in the current directory (excluding subdirectories).
+Count the number of files in the directory "images"
+Count the number of lines in /var/log/syslog
+Count the number of lines in a file named data.txt
+Count the number of lines in all .log files in /var/log
+Count the number of lines in data.log
+Count the number of lines in each .log file in /var/log and display the total sum.
+Count the number of lines in file data.csv
+Count the number of lines in file.txt
+Count the number of lines in input.txt
+Count the number of lines in the file /etc/passwd
+Count the number of lines, words and bytes in report.txt
+Count the number of lines, words, and characters in "data.csv"
+Count the number of lines, words, and characters in "data.csv".
+Count the number of lines, words, and characters in "document.md"
+Count the number of lines, words, and characters in "essay.txt"
+Count the number of lines, words, and characters in "report.md"
+Count the number of lines, words, and characters in "report.txt"
+Count the number of lines, words, and characters in a file
+Count the number of lines, words, and characters in file.txt
+Count the number of lines, words, and characters in report.md
+Count the number of lines, words, and characters in report.txt
+Count the number of lines, words, and characters in report.txt.
+Count the number of lines, words, and characters in the file "document.md".
+Count the number of running Docker containers.
+Count total files in directory
+Count unique IPs in access.log
+Count unique IPs in log
+Create 100 empty files named test1.txt to test100.txt.
+Create 1G empty file
+Create 1G test file
+Create Python venv
+Create RAM disk 1G
+Create a 1 GB file filled with zeros called dummy.bin
+Create a 100MB file filled with zeros named "zero.bin"
+Create a 100 MB file filled with zeros named "zero.bin"
+Create a 100 MB file filled with zeros named zero.bin
+Create a 100 MB file filled with zeros named zero.bin using dd.
+Create a 100 MB file filled with zeros named zero.bin.
+Create a 10‑MB file filled with zeros named zero.bin
+Create a 10 MB file filled with zeros named "zero.bin".
+Create a 1GB file named "bigfile.bin" filled with random data
+Create a 1‑GB file filled with zeros named bigfile.bin.
+Create a 1 GB file filled with random data named random.bin
+Create a 1 GB file filled with zeros named "bigfile.bin"
+Create a 1 GB file filled with zeros named "zero.bin".
+Create a 1 GB file filled with zeros named dummy.bin
+Create a 1 GB file filled with zeros named zero.bin using dd.
+Create a 1 GB file filled with zeros named zero.bin.
+Create a 1 GB file filled with zeros named zero.img.
+Create a 1 GB file named "bigfile" filled with zeros
+Create a 200 MB file filled with zeros named "zero.bin".
+Create a 5‑minute countdown timer that beeps when finished
+Create a 5‑second delay before executing the command "echo Done"
+Create a 5‑second delay before executing the next command
+Create a 5‑second pause in a script
+Create a 5 GB file filled with zeros named "bigfile.bin"
+Create a Bash alias "ll" for "ls -alF" and make it persistent for the user.
+Create a Bash alias "psmem" that lists all processes sorted by resident memory usage, showing PID, user, RSS (in MB), and command, formatted in columns.
+Create a Bash alias `gpush` that adds all changes, commits with a message passed as an argument, and pushes to the current branch, handling empty commit messages gracefully
+Create a Bash alias called ll that lists files in long format with human‑readable sizes, sorted by modification time descending.
+Create a Bash alias named 'lls' that lists files in long format, sorted by size descending, and colored output, only if the alias does not already exist.
+Create a Bash alias named ll that runs "ls -alF" and make it persistent for future sessions.
+Create a Bash array named "files" containing all ".conf" files in "/etc".
+Create a Bash array named "files" containing all ".sh" files in the current directory
+Create a Bash array named "files" containing all ".txt" files in the current directory
+Create a Bash array named "servers" containing "host1", "host2", and "host3"
+Create a Bash array named "servers" containing "host1", "host2", and "host3".
+Create a Bash array named "servers" containing three hostnames
+Create a Bash array named "servers" containing three hostnames and loop over them to ping each once.
+Create a Bash array named "servers" with three hostnames
+Create a Bash array named files containing all .txt files in the current directory.
+Create a Bash array named fruits containing "apple", "banana" and "cherry" and print the second element.
+Create a Bash array named fruits containing "apple", "banana", and "cherry"
+Create a Bash array named fruits containing "apple", "banana", and "cherry".
+Create a Bash array named fruits containing apple, banana, and cherry
+Create a Bash array named fruits containing apple, banana, cherry
+Create a Bash function `json_pretty` that reads a JSON string from stdin and pretty‑prints it using jq, handling invalid JSON with an error message
+Create a Bash function `parallel_exec` that takes a list of commands (as arguments) and runs up to 4 of them concurrently, waiting for all to finish before returning
+Create a Bash function `retry` that runs a command up to N times with exponential backoff starting at 1 second, and returns the command's exit status.
+Create a Bash function called "extract" that extracts archives based on their extension
+Create a Bash function called "extract" that extracts archives based on their extension (tar, tar.gz, zip).
+Create a Bash function called "extract" that extracts archives of various formats based on file extension.
+Create a Bash function called "mkcd" that creates a directory and immediately changes into it.
+Create a Bash function called "mkcd" that makes a directory and then changes into it.
+Create a Bash function called `retry` that runs a given command up to 5 times with exponential back‑off (1s, 2s, 4s, 8s) until it succeeds, printing each attempt to stdout
+Create a Bash function called greet that prints "Hello, $1!" and use it with the argument "World"
+Create a Bash function called greet that takes a name argument and prints "Hello, <name>!"
+Create a Bash function called greet that takes a name as an argument and prints "Hello, <name>!"
+Create a Bash function called json_merge that takes two JSON files and merges them into a single JSON array, preserving order, using jq.
+Create a Bash function called json_pretty that reads a JSON string from stdin and pretty-prints it using jq, handling invalid JSON with an error message.
+Create a Bash function called json_pretty that reads a compact JSON string from stdin and outputs a pretty‑printed version using jq, handling invalid JSON gracefully.
+Create a Bash function called json_pretty() that reads a JSON string from stdin and outputs a pretty‑printed version using jq, handling invalid JSON gracefully.
+Create a Bash function called retry that runs a given command up to 5 times with exponential backoff (1s, 2s, 4s, 8s) until it succeeds, returning the command's exit status.
+Create a Bash function called retry that runs a given command up to N times with a delay of D seconds between attempts, returning success if any attempt succeeds.
+Create a Bash function called retry that takes a command and a max retry count, executes the command, and retries with exponential backoff (2,4,8…) until success or limit reached.
+Create a Bash function called retry_cmd that takes a command string and a number N, runs the command, and if it fails, retries up to N times with exponential backoff starting at 1 second.
+Create a Bash function called rotate_logs that rotates logs in /var/log/myapp/, keeping the last 7 compressed archives and deleting older ones. The function should be safe to run via cron.
+Create a Bash function called rotate_logs that takes a directory and a max count N, compresses logs older than 7 days with gzip, keeps only the newest N compressed logs, and deletes the rest.
+Create a Bash function called rotate_logs that takes a log directory and a max count N, keeps the N most recent .log files (by modification time) and deletes older ones, printing each deletion
+Create a Bash function named "extract" that extracts archives based on file extension (zip, tar.gz, tar.bz2, 7z)
+Create a Bash function named "extract" that extracts archives based on their extension (tar, gz, zip).
+Create a Bash function named "extract" that extracts archives based on their extension (tar.gz, zip, rar).
+Create a Bash function named "extract" that extracts archives of various types (tar, zip, gz, bz2).
+Create a Bash function named "extract" that extracts archives of various types based on extension.
+Create a Bash function named "greet" that prints "Hello, $1!"
+Create a Bash function named "greet" that prints "Hello, $1!" and add it to the current session.
+Create a Bash function named "mkcd" that creates a directory and then changes into it.
+Create a Bash function named "mkcd" that makes a directory and then changes into it
+Create a Bash function named "mkcd" that makes a directory and then changes into it.
+Create a Bash function named "retry" that runs a given command up to 5 times with exponential back‑off (1s, 2s, 4s, 8s) until it succeeds, and returns the command's exit status.
+Create a Bash function named `monitor_cpu` that logs timestamps and CPU usage (>80%) to /var/log/cpu_spikes.log, runs in background, and stops after 5 minutes.
+Create a Bash function named backup_mysql that dumps all MySQL databases, encrypts the dump with GPG using a given key, compresses it with xz, and stores it in /backups with a timestamped filename.
+Create a Bash function named greet that prints "Hello, $1!"
+Create a Bash function named greet that prints "Hello, $1!" and call it with argument World
+Create a Bash function named mkcd that creates a directory and immediately changes into it.
+Create a Bash function that accepts a directory and creates a hierarchical tree view showing file counts and total size per subdirectory, similar to "du -h --max-depth=2" but formatted as JSON.
+Create a Bash function that accepts a directory and prints a tree view limited to depth 3, showing only directories and .conf files, with colors for directories.
+Create a Bash function that accepts a directory path and prints a tree of all symbolic links that point outside the given directory, showing the target absolute path.
+Create a Bash function that accepts a git repository URL, clones it into /tmp if not already present, pulls latest changes, and prints the latest commit hash.
+Create a Bash function that backs up a MySQL database, streams the dump through gzip, uploads it to a remote server via scp, and logs the transfer duration.
+Create a Bash function that monitors a directory for new files (using inotifywait) and automatically compresses each new file with gzip, preserving the original timestamp.
+Create a Bash function that monitors a given log file for the appearance of the string "FATAL", and when detected, extracts the surrounding 5 lines before and after, then sends them via email.
+Create a Bash function that takes a URL, downloads the file with curl showing a progress bar, verifies its MD5 checksum against a provided value, and returns success or failure.
+Create a Bash function that takes a directory and a file extension, calculates the total size of all files with that extension, and prints the size in megabytes with three decimal places.
+Create a Bash function that takes a directory and a pattern, searches for files matching the pattern, computes their line count, and returns the total lines across all matches.
+Create a Bash function that takes a directory and replaces all occurrences of the string "TODO" with "DONE" in all *.md files, but only if the file was modified in the last 2 days.
+Create a Bash function that takes a directory path and prints a tree of all files larger than 1 MiB, showing size in human‑readable form, and writes the tree to a log file.
+Create a Bash function that takes a directory path and prints the five largest files (by size) in that directory tree, showing size in human-readable form.
+Create a Bash function that takes a directory path and prints the top 5 largest files recursively, showing size in human‑readable format and sorting them descending.
+Create a Bash function that takes a git repository URL, clones it into /opt/repos if not present, pulls latest changes if it exists, and prints the latest commit hash.
+Create a Bash function that takes a process name pattern, finds the newest matching process, and prints its PID and start time.
+Create a Bash loop that iterates over all user accounts in /etc/passwd, and for each user with UID >=1000, creates a compressed archive of their home directory in /backups/users/<username>.tar.gz
+Create a Bash loop that pings a list of hosts from hosts.txt, logs the latency to ping.log, and triggers a webhook via curl if any host is unreachable for three consecutive checks.
+Create a Bash loop that prints numbers 1 through 5, each on a new line.
+Create a Bash one-liner that finds all duplicate files (by content) under /home, lists each set of duplicates on a separate line, and writes the result to duplicates.txt.
+Create a Bash one-liner that finds all processes consuming more than 500 MB RSS memory, sorts them by memory usage descending, and prints PID, user, and command.
+Create a Bash one-liner that prints the current git branch name and the number of uncommitted changes (added, modified, deleted) in the repository.
+Create a Bash one‑liner that backs up all MySQL databases, compresses each dump with gzip, names them with the DB name and date, and stores them in /backup/mysql, removing backups older than 30 days.
+Create a Bash one‑liner that checks the SSL certificate expiry date for a list of domains in domains.txt, and prints domain and days until expiry, sorted ascending.
+Create a Bash one‑liner that lists all TCP ports currently listening, groups them by the owning process name, and displays the count per process, sorted descending.
+Create a Bash one‑liner that lists all mounted filesystems, shows their mount point, total size, used percentage, and flags if usage exceeds 80%, using df and column for alignment.
+Create a Bash one‑liner that lists all processes consuming more than 200 MiB RSS, groups them by user, and prints a summary table with columns USER, COUNT, TOTAL_RSS_MB.
+Create a Bash one‑liner that lists all systemd services that failed to start in the last boot, showing service name and the timestamp of the failure.
+Create a Bash one‑liner that lists all users with UID >= 1000, their last login time from /var/log/lastlog, and sorts the list by most recent login.
+Create a Bash one‑liner that lists the top 10 IP addresses by number of connections in the last hour from the system's netstat output, ignoring IPv6 and showing counts.
+Create a Bash one‑liner that monitors CPU usage every 5 seconds and writes a warning to /var/log/cpu_warn.log if usage exceeds 90% for three consecutive checks.
+Create a Bash one‑liner that monitors the load average from /proc/loadavg, and writes a warning to /var/log/load_warn.log if the 1‑minute load exceeds the number of CPU cores by more than 2.
+Create a Bash one‑liner that prints the 5 most common file extensions in the current directory tree, ignoring case.
+Create a Bash one‑liner that prints the current Git branch name and the number of staged files, formatted as "branch (X staged)".
+Create a Bash one‑liner that prints the total number of TCP connections in each state (ESTABLISHED, LISTEN, TIME_WAIT, etc.) on the system.
+Create a Bash one‑liner that prints the total number of lines across all .py files in the current git repository, excluding lines that are only comments or whitespace.
+Create a Bash one‑liner that prints the total number of lines of code (excluding blank lines and comments) in all *.py files under the current directory.
+Create a Bash one‑liner that prints the total number of lines of code (excluding blanks and comments) for all .js files under src/, using grep and wc.
+Create a Bash one‑liner that reads a list of URLs from urls.txt, downloads each with curl (max 5 concurrent jobs), extracts the title tag using grep/sed, and writes URL and title pairs to titles.tsv.
+Create a Bash one‑liner that replaces all occurrences of the pattern "VERSION=\d+\.\d+" in *.env files with the current date in YYYYMMDD format, using sed.
+Create a Bash pipeline that reads a CSV file (data.csv), filters rows where column 3 > 100, converts the result to JSON array of objects with keys col1..colN, and writes to filtered.json.
+Create a Bash script named "hello.sh" that prints "Hello, World!" and make it executable.
+Create a Bash script that backs up MySQL databases (all) to /backup/mysql, compresses each dump with xz, and rotates backups keeping only the latest 7 days.
+Create a Bash script that backs up MySQL databases listed in /etc/db_list.conf (one per line), compresses each dump with gzip, and stores them in /backup/mysql with filenames dbname_YYYYMMDD.sql.gz.
+Create a Bash script that backs up MySQL databases listed in a file (one per line), compresses each dump with gzip, and uploads to an S3 bucket using awscli, retrying up to 3 times on failure.
+Create a Bash script that backs up MySQL databases: dump each database to a separate .sql file, compress them into a single tar.gz, and upload to an S3 bucket using aws cli.
+Create a Bash script that backs up a MySQL database named prod_db to /backups with a filename containing the current timestamp, compresses it with gzip, and logs the operation to backup.log.
+Create a Bash script that backs up a MySQL database named prod_db to /backups, compresses the dump with xz, and rotates backups keeping only the latest 7 archives.
+Create a Bash script that backs up a MySQL database, compresses the dump with pigz, encrypts it with GPG, and uploads to an FTP server using curl.
+Create a Bash script that checks if a given service (passed as argument) is active; if not, attempts to start it and logs the outcome to /var/log/service_monitor.log with timestamps
+Create a Bash script that monitors /var/log/syslog for the keyword 'kernel panic', writes the matching lines to panic.log, and restarts the system after logging 3 occurrences within 10 minutes.
+Create a Bash script that monitors CPU usage every 5 seconds, logs any reading above 80% to /var/log/high_cpu.log with a timestamp, and runs indefinitely
+Create a Bash script that monitors a directory for new files using inotifywait, computes their SHA256 hash, and appends filename‑hash pairs to hashes.log.
+Create a Bash script that monitors the size of /var/log/messages, and if it exceeds 100 MiB, rotates it by moving to /var/log/messages.1, compresses the old file with gzip, and restarts rsyslog.
+Create a Bash script that pings "google.com" every 5 seconds and logs the result to "ping.log".
+Create a Bash script that prints "Hello World" and make it executable in one line.
+Create a Bash script that prints "Hello, World!" and make it executable.
+Create a Bash script that reads a list of URLs from urls.txt, downloads each with curl (max 3 concurrent downloads), retries failed downloads up to 2 times, and logs successes and failures.
+Create a Bash script that reads a list of URLs from urls.txt, downloads each with curl showing a progress bar, retries up to 3 times on failure, and logs successes and failures to download.log.
+Create a Bash script that reads a list of hostnames from a file, pings each host concurrently (max 10 parallel jobs), and writes reachable hosts to reachable.txt and unreachable to unreachable.txt.
+Create a Bash script that reads a list of hostnames from hosts.txt, pings each concurrently (max 5 at a time), and writes reachable hosts to up.txt and unreachable to down.txt.
+Create a Bash script that reads a list of package names from packages.txt, checks if each is installed (apt), installs missing ones, and logs actions to /var/log/pkg_install.log.
+Create a Bash script that rotates logs: compress the current log file app.log to app.log.YYYYMMDD.gz, truncate the original, and send a signal USR1 to the process whose PID is stored in app.pid.
+Create a Bash script that watches /var/log/auth.log for failed SSH login attempts, extracts the offending IPs, counts occurrences, and bans any IP with >3 attempts using ufw.
+Create a Bash script that watches for new Docker containers starting, logs the container ID, image name, and start time to a CSV file, and rotates the log daily using logrotate syntax.
+Create a Docker container from image "nginx:latest" and map host port 8080 to container port 80
+Create a Docker container from image "nginx:latest" exposing port 8080
+Create a Docker container from the image "nginx:latest" and map host port 8080 to container port 80
+Create a Docker container from the image nginx:latest and map host port 8080 to container port 80
+Create a Docker container named "web" from the image "nginx:latest" and map host port 8080 to container port 80
+Create a Docker container named webapp from image nginx:latest and map host port 8080 to container port 80
+Create a Docker container named webapp from the image nginx:latest, map host port 8080 to container port 80, and run it in detached mode.
+Create a background job that runs the script long_task.sh and write its PID to a file pid.txt.
+Create a background process that runs "script.sh" and redirects output to "script.log"
+Create a backup archive
+Create a backup of file.txt
+Create a backup of the MySQL database "mydb" to "mydb.sql" using mysqldump
+Create a backup of the MySQL database named prod_db to prod_db.sql
+Create a backup tarball of src/
+Create a bash alias `gcmsg` that stages all changes, commits with a message passed as an argument, and pushes to the current branch, handling empty messages gracefully.
+Create a bash alias named llg that lists files in long format, sorted by modification time, and color‑highlights git‑tracked files differently using git ls-files.
+Create a bash array named "servers" containing "web1", "web2", and "db1"
+Create a bash function "retry" that runs a given command up to 5 times with exponential backoff (1s,2s,4s,8s) until it succeeds, returning the command's exit status.
+Create a bash function called "mkcd" that creates a directory and immediately changes into it.
+Create a bash function called "mkcd" that makes a directory and then changes into it.
+Create a bash function named "mkcd" that makes a directory and immediately changes into it.
+Create a bash function named 'mkcd' that makes a directory and changes into it
+Create a bash function named greet that prints 'Hello, $1!'
+Create a bash function named json_pretty that reads a JSON string from stdin and pretty‑prints it with colors using jq, handling invalid JSON gracefully.
+Create a bash function named safe_rm that moves files to a hidden .trash directory under the user's home, preserving directory structure, and logs each removal to ~/.trash.log.
+Create a bash function that takes a directory path and compresses all modified files (modified within last 24h) into a tar.gz, preserving permissions, and logs the operation to syslog.
+Create a bash script that checks every 30 seconds if a process named "myservice" is running; if not, start it and send an email alert using mailx.
+Create a bash script that monitors a MySQL replication slave, checks the Seconds_Behind_Master metric every minute, and alerts via Slack webhook if it exceeds 30 seconds.
+Create a bash script that prints "Hello" every 2 seconds, three times, then exits.
+Create a branch named "feature-x" and switch to it
+Create a branch named feature-x from the current HEAD
+Create a command pipeline that extracts all IPv6 addresses from /var/log/auth.log, counts their occurrences, and displays the top three most frequent ones.
+Create a command that extracts all IPv4 addresses from a mixed‑content log file, removes duplicates, sorts them numerically, and writes the result to /tmp/unique_ips.txt.
+Create a command that extracts all function definitions from a Bash script myscript.sh, including their names and line numbers, and outputs them in the format: line_number:function_name
+Create a command that finds all files larger than 1 GiB, moves them to /mnt/large_files preserving directory structure, and logs the original and new paths to /var/log/large_file_moves.log.
+Create a command that finds the 5 largest files in /var/lib/mysql, displays their sizes in human‑readable form, and writes the list to large_mysql_files.txt.
+Create a command that lists all Docker containers that have been exited for more than 2 days, and removes them.
+Create a command that lists all mounted filesystems, their mount points, and the percentage of used space, sorted descending by usage.
+Create a command that uses awk to parse /proc/meminfo, calculates total used memory percentage, and prints a warning if usage exceeds 85 %.
+Create a compressed archive "logs.tar.xz" containing all ".log" files in "/var/log" while excluding files larger than 10 MB.
+Create a compressed archive of all .log files in /var/log older than 7 days, naming it old_logs.tar.gz.
+Create a compressed archive of folder project into project.tar.xz.
+Create a compressed archive of the directory /var/www named www_backup.tar.bz2 using bzip2 compression.
+Create a compressed backup of MySQL database "sales" using mysqldump, encrypt it with GPG using recipient "admin@example.com", and store it in /backups with a timestamped filename
+Create a compressed backup of MySQL database "sales" using mysqldump, encrypt it with GPG using the recipient "admin@example.com", and store the result in /backups with a timestamped filename.
+Create a compressed bzip2 archive of the directory "data" named "data.tar.bz2".
+Create a compressed bzip2 archive of the folder "logs" named "logs.tar.bz2"
+Create a compressed gzip file "data.txt.gz" from "data.txt" without keeping the original file.
+Create a compressed gzip file from logs.txt
+Create a compressed tar archive named "backup.tar.gz" containing the directory "project" while preserving permissions.
+Create a compressed tar archive named "backup.tar.gz" containing the directory "project".
+Create a compressed tar archive named "backup.tar.gz" containing the directory "project/".
+Create a compressed tar archive named "backup.tar.gz" of the "project" directory.
+Create a compressed tar archive named "backup.tar.gz" of the "src" directory
+Create a compressed tar archive named "backup.tar.gz" of the directory "project"
+Create a compressed tar archive named "backup.tar.gz" of the directory "project".
+Create a compressed tar archive named "backup.tar.gz" of the folder "project"
+Create a compressed tar archive named backup.tar.gz containing the "project" directory.
+Create a compressed tar archive named backup.tar.gz containing the /etc directory.
+Create a compressed tar archive named backup.tar.gz containing the directory /etc and exclude the file /etc/hosts.
+Create a compressed tar archive named backup.tar.gz containing the directory /home/user/data.
+Create a compressed tar archive named backup.tar.gz containing the folder /etc
+Create a compressed tar archive named backup.tar.gz containing the folder /etc and /var/www
+Create a compressed tar archive named backup.tar.gz of the /etc directory
+Create a compressed tar archive named backup.tar.gz of the directory /etc
+Create a compressed tar archive named backup.tar.gz of the folder /etc
+Create a compressed tar archive named backup.tar.gz of the folder /home/user/data.
+Create a compressed tar archive named backup.tar.gz of the folder /var/www
+Create a compressed tar archive of the /opt/data directory.
+Create a compressed tar archive of the /var/log directory named logs.tar.gz
+Create a compressed tar archive of the folder src
+Create a compressed tarball named "backup.tar.gz" containing the directory "project" while preserving permissions.
+Create a compressed tarball named "backup.tar.gz" of the directory "project"
+Create a compressed tarball named "backup.tar.gz" of the folder "project"
+Create a compressed tarball named "project.tar.gz" containing the directory "project" while excluding any "node_modules" folders
+Create a compressed tarball named backup.tar.gz containing the directory /etc and all its contents.
+Create a compressed tarball named backup.tar.gz containing the directory /etc/nginx.
+Create a compressed tarball named backup.tar.gz of the /etc directory, preserving permissions.
+Create a compressed tarball named backup.tar.gz of the directory /etc/configs.
+Create a compressed tarball named backup.tar.gz of the directory /home/user/data
+Create a compressed tarball named backup.tar.gz of the directory /home/user/documents.
+Create a compressed tarball of the folder 'project'
+Create a compressed zip archive "backup.zip" containing the folder "mydata"
+Create a compressed zip archive "src.zip" containing only the "src" directory, preserving permissions.
+Create a compressed zip archive "src.zip" containing the contents of the directory "src"
+Create a compressed zip archive "src.zip" containing the directory "src" while preserving file permissions.
+Create a compressed zip archive named "project.zip" containing the "src" and "docs" directories, excluding any "*.tmp" files
+Create a compressed zip archive named "project.zip" containing the "src" directory
+Create a compressed zip archive named "project.zip" containing the folder "project/" while preserving permissions.
+Create a compressed zip archive named project.zip containing the contents of the directory project/
+Create a compressed zip archive named project.zip containing the folder project/
+Create a compressed zip archive named project.zip containing the src/ directory
+Create a compressed zip archive of the directory "docs" named "docs.zip" without storing directory paths.
+Create a compressed zip archive of the docs folder named docs.zip
+Create a compressed zip archive of the folder "src" named "src.zip"
+Create a cron entry that runs a script every Monday at 9:30 am and redirects both stdout and stderr to /var/log/weekly.log.
+Create a cron job that runs "/usr/local/bin/cleanup.sh" at 3 AM daily (edit crontab)
+Create a cron job that runs "/usr/local/bin/cleanup.sh" every Sunday at 3 AM.
+Create a cron job that runs "cleanup.sh" at midnight on the first day of each month (output the crontab line).
+Create a cron job that runs /usr/local/bin/cleanup.sh every Sunday at 2 am
+Create a cron job that runs a Python script every hour at minute 15 and logs output to /var/log/pyjob.log.
+Create a cron job that runs a backup script at 2 AM on the first day of each month, ensuring that any output is mailed to admin@example.com.
+Create a cron job that runs a script /opt/backup.sh at 2:30 AM every Sunday, ensuring that any output is mailed to root.
+Create a cron job that runs a script /usr/local/bin/cleanup.sh at 2 am on the first day of each month, but only if the system load average over the last 5 minutes is below 0.5.
+Create a cron job that runs at 02:30 every Sunday, rotates the logs in /var/log/myapp/*.log (keep 7 days), compresses the rotated logs, and sends a summary email to ops@example.com.
+Create a cron job that runs every day at 2 am, backs up MySQL database "sales" to /backup/sales_$(date +\%F).sql.gz, and emails the log to dba@example.com on failure.
+Create a cron job to run a Bash script every Sunday at 2am to update the system and clean up the package cache
+Create a cron-friendly command that rotates logs in /var/log/myapp/, keeping the last 7 compressed archives, and deletes older ones.
+Create a cron‑compatible one‑liner that backs up the MySQL database "prod" to /backup/prod_$(date +\%F).sql.gz, keeping only the last 7 backups.
+Create a cron‑compatible one‑liner that rotates logs in /var/log/myapp/, keeping only the most recent 7 compressed archives, and deletes any files older than 30 days.
+Create a directory called backup and copy all .conf files into it, preserving attributes.
+Create a directory hierarchy "project/src/tests" in one command.
+Create a directory hierarchy src/{app,tests,docs} in one command
+Create a directory named backup and its parent directories if needed
+Create a directory structure src/{app,tests,docs} in one command
+Create a directory structure src/{app,tests,docs} in one command.
+Create a directory structure src/{app,tests} and an empty __init__.py in each
+Create a directory structure src/{main,test} in one command.
+Create a directory tree "project/src/utils" in one command
+Create a directory tree /tmp/project/{src,bin,doc} in one command
+Create a directory tree ~/projects/{app,lib,tests} in one command
+Create a file "notes.txt" with the content "Meeting at 10am" using a single command
+Create a file named "empty.txt" if it does not exist, without modifying it if it does
+Create a file named "hello.txt" containing the text "Hello, World!" using a single command.
+Create a file named "notes.txt" with the content "Meeting at 10am" using a single command.
+Create a file named "report.txt" and write the current date and time as the first line.
+Create a file named data.txt with the text 'Sample data'
+Create a file with text "config"
+Create a function "backup_mysql" that dumps all MySQL databases, compresses the dump with gzip, encrypts it with OpenSSL AES‑256, and stores it in /var/backups with a date‑stamp.
+Create a function `backup_dir` that takes a directory path, creates a gzipped tarball named <dirname>_$(date +%F).tar.gz in /backup, and logs the operation with timestamp to /var/log/backup.log.
+Create a function `json_merge` that takes two JSON files and merges them into a single JSON object using jq, with the second file's keys overriding the first's on conflict
+Create a function called backup_dir that takes a directory path, creates a compressed snapshot named <dir>_YYYYMMDD.tar.gz in /backup, and logs success or failure to /var/log/backup.log.
+Create a function called backup_dir that takes a directory path, creates a tar.gz archive named <dir>_$(date +%F).tar.gz, and logs the operation to /var/log/backup.log with timestamp and exit status.
+Create a function called json_pretty that reads a JSON file and pretty‑prints it using jq, handling the case where jq is not installed.
+Create a function called safe_move that moves a file to a destination directory, creating the directory if it does not exist, and logs the operation to ~/move.log with timestamp.
+Create a function named "rotate_logs" that takes a directory and a max count N, compresses any *.log files older than 7 days, keeps only the N most recent compressed logs, and deletes the rest.
+Create a function that accepts a URL to a JSON API, fetches the data with curl, extracts the field "data.items[*].id" using jq, and writes each ID to a separate file named "id_<value>.txt" in /tmp.
+Create a function that accepts a directory and prints a tree view limited to depth 3, showing only directories and .conf files, with sizes in brackets.
+Create a function that monitors CPU usage every 5 seconds, logs a warning if usage exceeds 80%, and sends a desktop notification.
+Create a function that takes a git commit hash, shows the diff stats (files changed, insertions, deletions) in a pretty table, and writes the output to a markdown file named after the hash.
+Create a function to backup a MySQL database using mysqldump, then compress the backup file using gzip
+Create a function to backup a database, compress it, and upload to a cloud storage
+Create a function to backup a directory using tar and gzip, and schedule it to run daily using cron
+Create a function to download a file from a URL using curl, then verify the integrity of the file using sha256sum
+Create a function to parse an XML file, extract a specific attribute, and print its value using xmllint
+Create a gzipped tar archive of the directory project/ named project.tar.gz
+Create a hard link 'link' to a file 'example.txt'
+Create a hard link called "hardlink.txt" pointing to "original.txt".
+Create a hard link named "hardlink.txt" pointing to "original.txt"
+Create a hard link named "hardlink.txt" pointing to "original.txt".
+Create a hard link named "link.txt" to the file "original.txt"
+Create a hard link named link.txt pointing to original.txt
+Create a hard link to the file "report.pdf" named "report_link.pdf" in the same directory.
+Create a mini-script to automate system updates using apt-get and apt-cache
+Create a mini-script to automate the backup of a database, including the creation of a timestamped archive file and the upload of the archive to a remote server
+Create a mini-script to automate the deployment of a web application using Git, curl, and tar
+Create a monitoring loop that checks every 30 seconds whether the service nginx is active; if it stops, attempt to restart it and log the attempt with a timestamp to /var/log/nginx_monitor.log.
+Create a named pipe /tmp/logpipe, start a background process that tails /var/log/syslog into it, and simultaneously filter lines containing "error" and write them to /var/log/error.log.
+Create a named pipe called "myfifo" and read from it in the background.
+Create a named pipe called mypipe and read from it in the background, printing any data received.
+Create a named pipe that receives JSON logs from a running process, filters entries where "level" is "error" using jq, and writes them to /var/log/error_stream.log.
+Create a nested directory structure "project/src/utils"
+Create a new Bash function named greet that prints "Hello, $1!" and add it to ~/.bashrc.
+Create a new Git branch called "feature/login"
+Create a new Git branch called "feature/login" and switch to it
+Create a new Git branch called "feature/login" and switch to it.
+Create a new Git branch named "feature/login" and switch to it.
+Create a new Git branch named 'feature/login' and switch to it.
+Create a new Git branch named feature/login and switch to it
+Create a new Git branch named feature/login from the current HEAD and switch to it.
+Create a new Git repository
+Create a new Git repository in the current directory and make an initial commit
+Create a new Git tag "v1.2.3" on the current commit.
+Create a new LVM logical volume
+Create a new LVM volume group
+Create a new Python virtual environment in .venv
+Create a new RAID 1 array
+Create a new SSH connection to a server 'example.com'
+Create a new SSH connection to a server named 'server'
+Create a new SSH key pair
+Create a new SSH key pair named 'id_rsa'
+Create a new ZIP archive named 'example.zip'
+Create a new archive 'archive.tar' from a directory 'example'
+Create a new archive 'archive1.tar' from the files 'file1' and 'file2'
+Create a new archive 'archive1.zip' from the files 'file1' and 'file2'
+Create a new archive file named 'archive.tar' from a directory named 'mydir'
+Create a new archive file named 'archive.tar' from the 'example' directory
+Create a new archive named 'archive.tar' containing all files in the current directory
+Create a new archive named 'archive.tar.gz' from a directory named 'directory'
+Create a new archive of a directory named 'test'
+Create a new archive of the current directory
+Create a new branch called feature/login and switch to it in the same repository.
+Create a new branch called feature/login from the current HEAD
+Create a new branch in a Git repository
+Create a new branch in a Git repository named 'feature/new-feature'
+Create a new branch named 'feature/new-feature'
+Create a new branch named feature-x in a git repository
+Create a new bzip2 file called 'example.txt.bz2' with the contents of a file called 'example.txt'
+Create a new compressed archive 'archive.tar.gz' from a directory 'example'
+Create a new compressed archive 'archive1.tar.gz' from the files 'file1' and 'file2'
+Create a new compressed archive of the current directory
+Create a new compressed archive of the current directory using bzip2
+Create a new cron job that runs a command 'command' every day at 2am
+Create a new cron job that runs a command every minute
+Create a new cron job to run a command every day at 2am
+Create a new cron job to run a command every minute
+Create a new crontab entry that runs "/usr/local/bin/cleanup.sh" every Sunday at 03:00
+Create a new directory "project" and initialize an empty Git repository inside it.
+Create a new directory called "backup"
+Create a new directory called "backup" and move all ".conf" files into it
+Create a new directory called "backup_2023" and ensure all parent directories are created if they do not exist.
+Create a new directory called "backup_2023" inside the home directory.
+Create a new directory called "logs" and set its permissions to 750
+Create a new directory called "logs" and set its permissions to 750.
+Create a new directory called 'example'
+Create a new directory called 'llama'
+Create a new directory called 'test'
+Create a new directory called backups
+Create a new directory named "archive" and move all *.txt files into it
+Create a new directory named "backup" and move all ".log" files into it
+Create a new directory named "logs" and change into it
+Create a new directory named "project"
+Create a new directory named "project" and navigate into it
+Create a new directory named "project" and navigate into it.
+Create a new directory named 'backup' and navigate into it
+Create a new directory named 'backup' and set permissions to 750
+Create a new directory named 'docs'
+Create a new directory named 'example'
+Create a new directory named 'example' and all its parents if they do not exist
+Create a new directory named 'example' with the parents if they do not exist
+Create a new directory named 'mydir'
+Create a new directory named 'test'
+Create a new directory named backup with parent directories as needed
+Create a new directory named projects and change into it
+Create a new directory named projects and move into it
+Create a new directory structure "project/src/utils" in one command
+Create a new directory tree "project/src/utils" in one command.
+Create a new empty Git branch called "feature-x" based on the current HEAD.
+Create a new empty Git repository in the current directory
+Create a new empty directory named backup and set its permissions to 750
+Create a new empty directory named tmp and set its permissions to 700
+Create a new empty file
+Create a new empty file called "notes.txt" if it does not already exist.
+Create a new empty file called "notes.txt" only if it does not already exist.
+Create a new empty file called 'empty.txt'
+Create a new empty file called 'newfile.txt'
+Create a new empty file called 'test.txt'
+Create a new empty file named "TODO.txt" only if it does not already exist.
+Create a new empty file named "empty.txt" and set its permissions to read‑only for everyone.
+Create a new empty file named "empty.txt" or update its timestamp if it already exists.
+Create a new empty file named "notes.txt" if it does not already exist.
+Create a new empty file named "placeholder.txt"
+Create a new empty file named "placeholder.txt" only if it does not already exist
+Create a new empty file named "placeholder.txt" only if it does not already exist.
+Create a new empty file named 'empty.txt'
+Create a new empty file named 'example.txt'
+Create a new empty file named 'file.txt'
+Create a new empty file named empty.txt only if it does not exist
+Create a new empty file named notes.txt
+Create a new empty file named notes.txt if it does not exist
+Create a new empty file named placeholder.txt
+Create a new empty file named placeholder.txt only if it does not already exist.
+Create a new file "example.txt" with the text "Hello World" using a heredoc
+Create a new file "notes.txt" and open it in the default editor
+Create a new file called 'example.txt' with the content 'Hello World'
+Create a new file named 'example.txt'
+Create a new file named 'example.txt' and add 'Hello World' to it
+Create a new file named 'example.txt' and add some text to it
+Create a new file named 'example.txt' and write 'Hello World' to it
+Create a new file named 'example.txt' with a specific content
+Create a new file named 'example.txt' with the content 'Hello World'
+Create a new file named 'file.txt' with the content 'Hello World'
+Create a new file named 'file.txt' with the contents 'Hello World'
+Create a new file named 'file.txt' with the contents of a file named 'file2.txt'
+Create a new file named 'file.txt' with the contents of a file named 'file2.txt' and append the contents of a file named 'file3.txt'
+Create a new file named 'file1' with the content 'Hello World'
+Create a new file named 'file1' with the content 'Hello World' and set its permissions to readable, writable, and executable by the owner
+Create a new file named 'newfile.txt' and add 'Hello World' to it
+Create a new file named 'test.txt' with the contents 'Hello World'
+Create a new file named 'test.txt' with the contents of a file named 'example.txt'
+Create a new file named data.json with the content '{"key": "value"}'
+Create a new file named script.sh with executable permission and write a simple echo command into it
+Create a new file using touch command
+Create a new file with random data of size 10MB
+Create a new git branch called "feature-x" and switch to it.
+Create a new git branch called "feature/login" and switch to it
+Create a new git branch called feature/login and switch to it
+Create a new git branch called feature/login and switch to it.
+Create a new git branch called feature/login from the current HEAD and switch to it.
+Create a new git branch named "feature-x" and switch to it
+Create a new git branch named "feature/login"
+Create a new git branch named "feature/login" and switch to it.
+Create a new git branch named 'feature/login' and switch to it
+Create a new git branch named feature-x from the current HEAD
+Create a new git branch named feature/login and switch to it
+Create a new git repository in the current directory
+Create a new group
+Create a new group 'newgroup'
+Create a new group named 'admin'
+Create a new group named 'example'
+Create a new group named 'examplegroup'
+Create a new group named 'group'
+Create a new group named 'group1'
+Create a new group named 'groupname'
+Create a new group named 'newgroup'
+Create a new group named 'staff'
+Create a new gzip archive of a file named 'file.txt'
+Create a new gzip file called 'example.txt.gz' with the contents of a file called 'example.txt'
+Create a new hard link 'link' to a file 'file.txt'
+Create a new hard link 'link1' to 'file1'
+Create a new hard link named 'link' to a file named 'file.txt'
+Create a new hard link named 'link' to the file 'example.txt'
+Create a new hard link to a file named 'example.txt'
+Create a new hard link to a file named 'file.txt'
+Create a new hard link to a file named 'target.txt'
+Create a new md5sum file called 'example.txt.md5' with the contents of a file called 'example.txt'
+Create a new network interface named 'eth1'
+Create a new repository in the current directory
+Create a new screen session
+Create a new screen session named "dev" and attach to it.
+Create a new sha256sum file called 'example.txt.sha256' with the contents of a file called 'example.txt'
+Create a new swap file named 'swapfile' with a size of 1GB
+Create a new symbolic link
+Create a new symbolic link 'link' to a file 'file.txt'
+Create a new symbolic link 'link1' to 'file1'
+Create a new symbolic link named 'example' that points to a file named 'example.txt'
+Create a new symbolic link named 'link' to 'target'
+Create a new symbolic link named 'link' to a file named 'file.txt'
+Create a new symbolic link named 'link' to the file 'example.txt'
+Create a new symbolic link to a file named 'example.txt'
+Create a new symbolic link to a file named 'file.txt'
+Create a new symbolic link to a file named 'target.txt'
+Create a new symbolic link to a file named 'test.txt'
+Create a new system group named 'example'
+Create a new system service named 'service_name'
+Create a new systemd service file called myservice.service with a simple ExecStart
+Create a new tag named 'v1.0'
+Create a new tar archive called 'example.tar'
+Create a new tar archive named 'archive.tar'
+Create a new tar archive named 'archive.tar' from a directory named 'directory'
+Create a new tar archive named 'archive.tar' from a directory named 'docs'
+Create a new tar archive named 'example.tar'
+Create a new tar archive of a directory 'example'
+Create a new tar archive of a directory named 'dir'
+Create a new tar archive of a directory named 'example'
+Create a new tar archive of the current directory
+Create a new tar archive with the name 'example.tar'
+Create a new tar file called 'example.tar' with the contents of a directory called 'example'
+Create a new tmux session named "dev"
+Create a new tmux session named "dev" and attach to it.
+Create a new tmux session named dev
+Create a new tmux session named dev and attach to it
+Create a new user "alice" and set her password to "Secret123" (non‑interactive)
+Create a new user "alice" with a home directory and default shell "/bin/bash".
+Create a new user "bob" with a home directory and default shell "/bin/bash".
+Create a new user "bob" with a home directory and default shell /bin/bash.
+Create a new user "bob" without a home directory and with the shell set to /bin/false
+Create a new user "developer" with a home directory and default shell /bin/bash
+Create a new user "devuser" with a home directory and default shell /bin/bash.
+Create a new user "devuser" without a home directory
+Create a new user "devuser" without a password and add to sudo group
+Create a new user 'newuser' with a home directory
+Create a new user account
+Create a new user account called 'example'
+Create a new user account named 'example'
+Create a new user account named 'john'
+Create a new user account named 'newuser'
+Create a new user account named 'user'
+Create a new user account with the username 'newuser'
+Create a new user called "alice" with a home directory and default shell "/bin/bash".
+Create a new user called "devops" with a home directory and bash as the default shell.
+Create a new user called "devuser" with a home directory and add it to the "sudo" group.
+Create a new user called "devuser" with a home directory and add it to the sudo group.
+Create a new user called "devuser" with a home directory and add them to the sudo group.
+Create a new user called "devuser" with a home directory and add to the "sudo" group.
+Create a new user called "devuser" with a home directory and default shell /bin/bash
+Create a new user called "devuser" with a home directory at "/home/devuser"
+Create a new user called "devuser" with a home directory at /home/devuser and add them to the sudo group.
+Create a new user called "devuser" with a home directory.
+Create a new user called "devuser" without a home directory and with the shell set to "/bin/bash".
+Create a new user called 'example'
+Create a new user called alice with a home directory
+Create a new user called deploy with no home directory
+Create a new user called developer with a home directory
+Create a new user called developer with a home directory at /home/developer and add them to the sudo group.
+Create a new user called devuser with a home directory
+Create a new user called devuser with a home directory /home/devuser
+Create a new user called devuser with a home directory and bash shell
+Create a new user called devuser with a home directory and default shell /bin/bash.
+Create a new user called devuser with home directory /home/devuser
+Create a new user called devuser without a home directory and set its shell to /bin/bash
+Create a new user called devuser without a home directory and with /usr/sbin/nologin shell.
+Create a new user named "devuser" with a home directory and default shell /bin/bash.
+Create a new user named 'example'
+Create a new user named 'john'
+Create a new user named 'john' with a home directory
+Create a new user named 'newuser'
+Create a new user named 'newuser' with a home directory
+Create a new user named 'user'
+Create a new user named 'user' with a home directory
+Create a new user named 'user1'
+Create a new user named 'username'
+Create a new user named 'username' with a password 'password'
+Create a new user named alice with a home directory
+Create a new user named alice with a home directory and default shell /bin/bash
+Create a new user named alice with a home directory and default shell /bin/bash.
+Create a new user named devuser with a home directory and default shell /bin/bash.
+Create a new virtual environment named "venv" using Python 3
+Create a new virtual environment named "venv" using Python 3 and activate it.
+Create a new virtual environment named "venv" using Python 3.
+Create a new virtual environment named "venv" using Python 3.11.
+Create a new virtual environment named "venv" using python3 and activate it.
+Create a new zip archive called 'example.zip'
+Create a new zip archive named 'archive.zip'
+Create a new zip archive named 'archive.zip' from a directory named 'directory'
+Create a new zip archive of a directory 'example'
+Create a new zip archive of a directory named 'dir'
+Create a new zip archive of a directory named 'example'
+Create a new zip archive of a directory named 'test'
+Create a new zip archive with the name 'example.zip'
+Create a new zip file called 'example.zip' with the contents of a directory called 'example'
+Create a one-liner that extracts all URLs from a large text file urls.txt, deduplicates them, validates they start with https://, and writes the result to valid_urls.txt.
+Create a one-liner that finds all symbolic links in /usr/local/bin that point to non-existent files and removes them.
+Create a one-liner that lists all Docker containers that have been exited for more than 24 hours and removes them.
+Create a one-liner that lists all Docker containers that have been stopped for more than 24 hours.
+Create a one-liner that lists all open network sockets (TCP) along with the owning process name and PID, sorted by memory usage of the process.
+Create a one-liner that lists all users with UID >= 1000, their primary group name, and the number of processes they own, sorted by process count descending.
+Create a one-liner that prints the current CPU temperature (in Celsius) on a system with /sys/class/thermal/thermal_zone0/temp, rounding to one decimal place.
+Create a one-liner that prints the total number of lines across all .py files in the current git repository, excluding files in the .git directory.
+Create a one-liner that prints the total number of lines across all .py files in the current git repository, excluding test files (those ending with _test.py).
+Create a one‑liner that continuously monitors free disk space on /, and sends a desktop notification when free space drops below 10%.
+Create a one‑liner that extracts all URLs from a set of HTML files in /var/www/html, normalizes them (removing query strings and fragments), deduplicates, and writes to urls.txt.
+Create a one‑liner that extracts all URLs from an HTML file, filters out those ending with .pdf, and downloads the remaining files concurrently (max 5 at a time) to ./downloads.
+Create a one‑liner that finds all .sh files in the current repo that have been modified in the last commit, runs shellcheck on them, and prints any warnings prefixed with the filename.
+Create a one‑liner that finds all empty directories under /data, deletes them, and logs each deletion to /var/log/empty_dirs.log with a timestamp.
+Create a one‑liner that finds all symbolic links under /usr/lib that are broken, prints their paths, and deletes them after user confirmation.
+Create a one‑liner that lists all Docker containers that have been running for more than 30 days, showing container ID, name, and uptime in days.
+Create a one‑liner that lists all files in /opt/data larger than 100 MiB, computes their SHA256 checksum, and writes "checksum  filename" to checksums.txt.
+Create a one‑liner that lists all mounted filesystems, extracts those with ext4 type, and prints their mount point and used percentage sorted by usage descending.
+Create a one‑liner that lists the top 10 IP addresses by request count from an Apache access.log, showing the count and IP, sorted descending.
+Create a one‑liner that prints the current Git branch name for each repository under ~/projects (depth 1).
+Create a one‑liner that prints the current Git branch name, the number of staged files, and the number of unstaged changes.
+Create a one‑liner that prints the current Git branch name, the short commit hash, and whether there are uncommitted changes ("dirty" or "clean").
+Create a one‑liner that prints the current kernel version, the number of CPUs, and total memory in MB, all on one line separated by commas.
+Create a one‑liner that prints the number of lines, words, and characters in each .md file in the current directory, formatted as "filename: L lines, W words, C chars".
+Create a one‑liner that replaces all occurrences of the word "ERROR" with "WARN" in all ".log" files under /opt/app/logs, making a backup of each original file with a ".bak" extension.
+Create a one‑liner that replaces all occurrences of the word "ERROR" with "WARN" in all *.log files under /var/log, but only in files that contain the word "CRITICAL".
+Create a one‑liner that watches /var/log/auth.log for failed SSH login attempts, extracts the IP address, counts occurrences per IP, and displays the top 5 offenders in real time.
+Create a one‑liner that watches /var/log/auth.log for failed SSH login attempts, extracts the IP address, counts occurrences, and displays the top 3 offending IPs in real time.
+Create a one‑liner that watches /var/log/auth.log for failed SSH login attempts, extracts the source IP, and updates /etc/hosts.deny to block the IP if it appears more than 3 times within 10 minutes.
+Create a one‑liner that watches /var/log/auth.log in real time, counts failed SSH login attempts per source IP, and prints the top 5 offending IPs every minute.
+Create a one‑liner that watches /var/log/syslog for lines containing "ERROR" and appends them to ~/error.log with a timestamp prefix.
+Create a one‑liner that watches for new USB storage devices, mounts them under /mnt/usb-<serial>, and logs mount events to syslog.
+Create a password‑protected zip archive named secret.zip containing secret.txt with password "s3cr3t".
+Create a pipeline that extracts all IPv4 addresses from /var/log/nginx/access.log, counts occurrences per address, and outputs the top 10 IPs with their request counts, formatted as JSON array.
+Create a pipeline that reads JSON lines from a file events.log, filters events where "type" is "error", extracts the "timestamp" and "message" fields, and writes them as CSV to errors.csv.
+Create a pipeline that reads a CSV file users.csv (fields: id,name,email), filters rows where the email domain is "example.org", and writes a new CSV with only id and name columns.
+Create a pipeline that reads a CSV file users.csv, filters rows where the age column >30, converts the result to JSON objects (one per line) using jq, and writes to users_over_30.jsonl.
+Create a pipeline that reads a CSV file, filters rows where column 3 > 100, adds a new column with the SHA1 of column 2, and writes the result to a new CSV.
+Create a pipeline that reads a CSV file, filters rows where column 3 > 100, calculates the average of column 5, and prints the result.
+Create a pipeline that reads a CSV file, filters rows where column 3 > 100, converts the result to JSON array, and writes to output.json.
+Create a pipeline that reads a CSV file, filters rows where column 4 matches a regex "^ERROR", replaces spaces in column 2 with underscores, and writes the result to a new CSV.
+Create a pipeline that reads a CSV of user data, filters rows where age > 30, extracts the email column, removes duplicates, and writes them to emails.txt.
+Create a pipeline that reads a large CSV file, filters rows where column 3 matches a regex '^202[0-9]-', extracts columns 1 and 5, converts them to JSON objects, and writes to filtered.json.
+Create a pipeline that reads a large JSON array from data.json, extracts the field "user.id" from each object, sorts the IDs numerically, removes duplicates, and writes the result to ids.txt.
+Create a pipeline that reads a large log file, extracts JSON objects embedded in lines, pretty-prints them with jq, and writes to json_logs.txt, handling malformed JSON gracefully.
+Create a pipeline that reads lines from stdin, removes duplicate lines while preserving order, prefixes each line with its line number, and writes to output.txt.
+Create a pipeline that reads systemd journal entries for the last hour, filters for messages containing "OOM", extracts the unit name, and counts occurrences per unit.
+Create a ramdisk of 512M mounted at /mnt/ram.
+Create a random password of 16 characters and copy it to the clipboard (Linux with xclip)
+Create a script that backs up a MySQL database named "sales" to a gzipped file named sales_$(date +%F).sql.gz, then verifies the dump by attempting to list tables from the dump without importing.
+Create a script that monitors disk usage of /home, alerts via systemd-notify if usage exceeds 90%, and writes a JSON status file to /var/run/home_usage.json.
+Create a script that monitors free disk space on /, sends a desktop notification when usage exceeds 90%, and writes a timestamped entry to /var/log/disk_alert.log.
+Create a script that reads a CSV of hostnames and ports, checks each with nc for reachability, outputs a JSON array of reachable hosts, and logs failures.
+Create a script that reads a list of URLs from urls.txt, downloads each with curl (max 3 retries, 10s timeout), saves to ./downloads preserving original filenames, and logs failures to errors.log.
+Create a script that reads a list of URLs from urls.txt, downloads each with curl (retry up to 3 times), and logs successes and failures to separate files.
+Create a script that watches a directory for new .csv files, and for each new file, computes the column-wise sum (assuming numeric columns) and appends the result as a new row labeled "TOTAL".
+Create a script that watches a directory for new .mp4 files, transcodes them to H.265 using ffmpeg, moves the output to /media/processed, and logs the operation.
+Create a script that watches for changes in /etc/nginx/conf.d/ using inotifywait, and when a change is detected, validates the Nginx configuration and reloads Nginx if valid, logging the action.
+Create a script to automate the backup of a database, using mysqldump and gzip
+Create a script to backup a directory to a tarball every day at 2am
+Create a script to download a list of URLs using curl and save them to a specific directory
+Create a snapshot of the /home directory, excluding any hidden files or directories, using rsync over SSH to backup@example.com:/backups/home_$(date +%Y%m%d).
+Create a symbolic link "latest.log" pointing to "log_2023_03_24.txt"
+Create a symbolic link "latest.log" pointing to "log_2024_03_22.txt"
+Create a symbolic link 'link' to a file 'example.txt'
+Create a symbolic link from /opt/app/bin to /usr/local/bin/app
+Create a symbolic link lib.so pointing to /usr/lib/libreal.so.
+Create a symbolic link named "latest" pointing to "release_v2.3"
+Create a symbolic link named "latest" that points to "release-2.3"
+Create a symbolic link named "latest" that points to "release_v2.3"
+Create a symbolic link named "latest" that points to the directory "/var/backups/2026-03-20".
