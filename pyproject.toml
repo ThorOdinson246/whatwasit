@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "hist"
+name = "hist-search"
 version = "0.1.0"
 description = "Local-first semantic search for your shell history. Search by intent, not exact text. No cloud, no API keys."
 readme = "README.md"

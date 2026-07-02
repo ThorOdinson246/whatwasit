@@ -23,7 +23,13 @@ nginx`) weeks ago, even though you never typed "fix" or "issue".
 
 ## Install
 
-From source (PyPI publish coming soon):
+From PyPI:
+
+```bash
+pip install hist-search
+```
+
+From source:
 
 ```bash
 git clone https://github.com/ThorOdinson246/hist.git
@@ -39,6 +45,16 @@ pip install -e ".[dev]"
 
 **Requirements:** Python 3.9+, ~100 MB disk for the embedding model (downloaded
 once on first run).
+
+### Releasing
+
+1. Bump `version` in `pyproject.toml` and `hist/__init__.py`.
+2. Commit, push `main`, then `git tag v0.1.0 && git push origin v0.1.0`.
+3. GitHub → **Releases** → draft release for that tag → **Publish release**.
+
+CI publishes to PyPI automatically. One-time setup: [PyPI trusted publishing](https://docs.pypi.org/trusted-publishers/) for project **`hist-search`**, workflow `publish.yml`, environment `pypi`, owner `ThorOdinson246`, repo `hist`. Also create a **`pypi`** environment under GitHub repo Settings → Environments.
+
+> The PyPI name `hist` is taken by another package. This project publishes as **`hist-search`**; the CLI command is still `hist`.
 
 ## Usage
 
