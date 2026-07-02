@@ -4,12 +4,12 @@ name: Publish to PyPI
 #
 # One-time PyPI setup (trusted publishing — no API token in GitHub secrets):
 #   1. https://pypi.org/manage/account/publishing/
-#   2. Add publisher: PyPI project name hist-search, Owner ThorOdinson246, repo hist,
+#   2. Add publisher: PyPI project name whatwasit, Owner ThorOdinson246, repo whatwasit,
 #      workflow publish.yml, environment pypi
 #   3. GitHub repo → Settings → Environments → New environment "pypi"
 #
 # Release flow:
-#   1. Bump version in pyproject.toml and hist/__init__.py
+#   1. Bump version in pyproject.toml and whatwasit/__init__.py
 #   2. Commit, push main
 #   3. git tag v0.1.0 && git push origin v0.1.0
 #   4. GitHub → Releases → Draft new release → pick tag v0.1.0 → Publish release
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/hist-search
+      url: https://pypi.org/p/whatwasit
     steps:
       - uses: actions/checkout@v4
 

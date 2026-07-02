@@ -4,7 +4,7 @@ Model: `BAAI/bge-small-en-v1.5` (384-dim ONNX, query prefix only).
 Baseline: `sentence-transformers/all-MiniLM-L6-v2` from `eval/summary.json`.
 
 **Re-index required:** `model_name` meta is stamped on index; delete `index.usearch` and
-re-run `hist index` after switching models.
+re-run `whatwasit index` after switching models.
 
 ## Aggregate (86 answerable intent-paraphrase queries)
 

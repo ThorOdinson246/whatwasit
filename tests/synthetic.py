@@ -1,7 +1,7 @@
 """Synthetic multi-topic shell-history generator for tests.
 
 Produces realistic-looking zsh ``EXTENDED_HISTORY`` text and lists of
-:class:`hist.models.Command` objects, organized into distinct "topics"
+:class:`whatwasit.models.Command` objects, organized into distinct "topics"
 (nginx, docker, postgres, git rebase, python venv, ...). Each topic is a
 self-contained block of commands that starts with a ``cd`` into the
 topic's working directory, so downstream session-grouping logic has
@@ -10,7 +10,7 @@ time (tens of seconds apart) while different topics are separated by a
 large time jump (more than five minutes).
 
 This module is intentionally dependency-free (stdlib only) and only
-imports :class:`hist.models.Command` from the main package.
+imports :class:`whatwasit.models.Command` from the main package.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from __future__ import annotations
 import random
 from typing import Dict, List, Optional, Sequence
 
-from hist.models import Command
+from whatwasit.models import Command
 
 # ---------------------------------------------------------------------------
 # Topic templates
@@ -85,9 +85,9 @@ TOPICS: List[Dict[str, object]] = [
     },
     {
         "name": "git-rebase",
-        "cwd": "~/projects/hist",
+        "cwd": "~/projects/whatwasit",
         "cmds": [
-            "cd ~/projects/hist",
+            "cd ~/projects/whatwasit",
             "git fetch origin",
             "git log --oneline origin/main..HEAD",
             "git rebase -i origin/main",

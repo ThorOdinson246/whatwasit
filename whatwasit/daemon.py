@@ -12,14 +12,13 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from hist.config import Config
-from hist.embedder import build_embedder
-from hist.index import build_index
-from hist.models import Command, SearchResult, Session
-from hist.search import search
+from whatwasit.config import Config
+from whatwasit.embedder import build_embedder
+from whatwasit.index import build_index
+from whatwasit.models import Command, SearchResult, Session
+from whatwasit.brand import CLI_NAME, LEGACY_SOCKET_FILENAME, PID_FILENAME, SOCKET_FILENAME
+from whatwasit.search import search
 
-_PID_FILE = "daemon.pid"
-_SOCK_NAME = "daemon.sock"
 _CONNECT_TIMEOUT = 0.2
 _REQUEST_TIMEOUT = 30.0
 
@@ -34,16 +33,28 @@ def _xdg_runtime_dir() -> Optional[Path]:
 
 
 def socket_path(config: Optional[Config] = None) -> Path:
-    """Return the Unix socket path for the hist daemon."""
+    """Return the Unix socket path for the whatwasit daemon."""
     runtime = _xdg_runtime_dir()
     if runtime is not None:
-        return runtime / "hist.sock"
+        primary = runtime / SOCKET_FILENAME
+        legacy = runtime / LEGACY_SOCKET_FILENAME
+        if primary.exists():
+            return primary
+        if legacy.exists():
+            return legacy
+        return primary
     data_dir = (config or Config.default()).data_dir
-    return data_dir / _SOCK_NAME
+    primary = data_dir / SOCKET_FILENAME
+    legacy = data_dir / LEGACY_SOCKET_FILENAME
+    if primary.exists():
+        return primary
+    if legacy.exists():
+        return legacy
+    return primary
 
 
 def pid_path(config: Optional[Config] = None) -> Path:
-    return (config or Config.default()).data_dir / _PID_FILE
+    return (config or Config.default()).data_dir / PID_FILENAME
 
 
 def _search_result_to_dict(result: SearchResult) -> Dict[str, Any]:
@@ -203,7 +214,7 @@ def start_daemon(config: Optional[Config] = None) -> int:
         try:
             pid = int(pid_file.read_text(encoding="utf-8").strip())
             os.kill(pid, 0)
-            print(f"hist daemon already running (pid {pid})")
+            print(f"{CLI_NAME} daemon already running (pid {pid})")
             return 0
         except (OSError, ValueError):
             pid_file.unlink(missing_ok=True)
@@ -227,7 +238,7 @@ def stop_daemon(config: Optional[Config] = None) -> int:
     config = config or Config.default()
     pid_file = pid_path(config)
     if not pid_file.is_file():
-        print("hist daemon is not running")
+        print(f"{CLI_NAME} daemon is not running")
         return 1
     try:
         pid = int(pid_file.read_text(encoding="utf-8").strip())
@@ -235,12 +246,12 @@ def stop_daemon(config: Optional[Config] = None) -> int:
     except (OSError, ValueError):
         pid_file.unlink(missing_ok=True)
         socket_path(config).unlink(missing_ok=True)
-        print("hist daemon is not running")
+        print(f"{CLI_NAME} daemon is not running")
         return 1
     try:
         os.kill(pid, signal.SIGTERM)
     except OSError as exc:
-        print(f"hist daemon stop failed: {exc}")
+        print(f"{CLI_NAME} daemon stop failed: {exc}")
         pid_file.unlink(missing_ok=True)
         return 1
 
@@ -251,9 +262,9 @@ def stop_daemon(config: Optional[Config] = None) -> int:
         except OSError:
             pid_file.unlink(missing_ok=True)
             socket_path(config).unlink(missing_ok=True)
-            print("hist daemon stopped")
+            print(f"{CLI_NAME} daemon stopped")
             return 0
-    print("hist daemon did not exit in time")
+    print(f"{CLI_NAME} daemon did not exit in time")
     return 1
 
 
@@ -271,13 +282,13 @@ def daemon_status(config: Optional[Config] = None) -> int:
     config = config or Config.default()
     response = _rpc(config, {"id": 1, "method": "ping", "params": {}})
     if response and response.get("ok"):
-        print("hist daemon is running")
+        print(f"{CLI_NAME} daemon is running")
         return 0
     pid_file = pid_path(config)
     if pid_file.is_file():
-        print("hist daemon pid file present but socket unreachable")
+        print(f"{CLI_NAME} daemon pid file present but socket unreachable")
         return 1
-    print("hist daemon is not running")
+    print(f"{CLI_NAME} daemon is not running")
     return 1
 
 

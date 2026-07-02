@@ -1,4 +1,4 @@
-"""Benchmark hist indexing and query latency at 1k / 10k / 100k scale.
+"""Benchmark whatwasit indexing and query latency at 1k / 10k / 100k scale.
 
 Run:  python benchmarks/run_bench.py [--write-md]
 
@@ -31,11 +31,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import numpy as np
 
-from hist.config import Config
-from hist.embedder import build_embedder, encode_queries
-from hist.index import UsearchIndex, build_index
-from hist.indexer import index_commands
-from hist.search import search
+from whatwasit.config import Config
+from whatwasit.embedder import build_embedder, encode_queries
+from whatwasit.index import UsearchIndex, build_index
+from whatwasit.indexer import index_commands
+from whatwasit.search import search
 from tests import synthetic
 
 SCALES = [1_000, 10_000, 100_000]

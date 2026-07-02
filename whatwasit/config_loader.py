@@ -1,4 +1,4 @@
-"""Load user overrides from ``~/.config/hist/config.toml`` (XDG).
+"""Load user overrides from ``~/.config/whatwasit/config.toml`` (XDG).
 
 Uses :mod:`tomllib` on Python 3.11+ and :mod:`tomli` on 3.9–3.10.
 """
@@ -28,9 +28,12 @@ def _xdg_config_home() -> Path:
     return Path.home() / ".config"
 
 
+from .brand import resolve_config_file
+
+
 def config_file_path() -> Path:
-    """Return the XDG path for the hist config file."""
-    return _xdg_config_home() / "hist" / "config.toml"
+    """Return the XDG path for the whatwasit config file."""
+    return resolve_config_file(_xdg_config_home())
 
 
 def load_config_file() -> Mapping[str, Any]:

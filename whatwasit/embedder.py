@@ -23,8 +23,9 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
-from hist.config import Config
-from hist.interfaces import Embedder
+from whatwasit.brand import resolve_db_path
+from whatwasit.config import Config
+from whatwasit.interfaces import Embedder
 
 # Maps a logical sentence-transformers model name to the repo that hosts its
 # ONNX export (model.onnx + tokenizer.json).
@@ -85,9 +86,9 @@ def load_cached_model_dir(data_dir: Path, onnx_repo: str) -> Optional[str]:
             if model_dir and _is_valid_model_dir(model_dir):
                 return str(model_dir)
 
-    db_path = data_dir / "hist.db"
+    db_path = resolve_db_path(data_dir)
     if db_path.is_file():
-        from hist import db
+        from whatwasit import db
 
         conn = db.connect(db_path)
         try:
@@ -115,7 +116,7 @@ def persist_model_dir(data_dir: Path, onnx_repo: str, model_dir: str) -> None:
 
 def sync_model_dir_to_db(conn, model_dir: str) -> None:
     """Persist the ONNX model path into an open SQLite connection's meta table."""
-    from hist import db
+    from whatwasit import db
 
     db.set_meta(conn, _META_ONNX_MODEL_DIR, model_dir)
 

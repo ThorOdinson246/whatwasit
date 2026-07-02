@@ -1,4 +1,4 @@
-"""Groups parsed :class:`~hist.models.Command` objects into sessions.
+"""Groups parsed :class:`~whatwasit.models.Command` objects into sessions.
 
 A *session* is a contiguous run of commands the user ran while doing one
 thing. We split the command stream into sessions using two independent
@@ -21,8 +21,8 @@ import posixpath
 import re
 from typing import List, Optional, Tuple
 
-from hist.config import Config
-from hist.models import Command, Session
+from whatwasit.config import Config
+from whatwasit.models import Command, Session
 
 HOME = "~"
 """Sentinel representing the user's home directory in reconstructed paths."""

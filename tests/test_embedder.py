@@ -1,4 +1,4 @@
-"""Tests for hist.embedder.
+"""Tests for whatwasit.embedder.
 
 Runs fully offline against the locally cached
 sentence-transformers/all-MiniLM-L6-v2 model. Make sure HF_HUB_OFFLINE=1 and
@@ -15,14 +15,14 @@ import os
 import numpy as np
 import pytest
 
-from hist.config import Config
-from hist.embedder import (
+from whatwasit.config import Config
+from whatwasit.embedder import (
     AsymmetricOnnxEmbedder,
     FastEmbedEmbedder,
     OnnxEmbedder,
     build_embedder,
 )
-from hist.interfaces import Embedder
+from whatwasit.interfaces import Embedder
 
 _BGE_MODEL = "BAAI/bge-small-en-v1.5"
 _BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
@@ -198,7 +198,7 @@ def test_cached_model_dir_skips_snapshot_download(tmp_path, monkeypatch) -> None
     (model_dir / "tokenizer.json").write_text('{"version":"1.0","truncation":null,"padding":null,"added_tokens":[],"normalizer":null,"pre_tokenizer":null,"post_processor":null,"decoder":null,"model":{"type":"WordPiece","unk_token":"[UNK]","continuing_subword_prefix":"##","max_input_chars_per_word":100,"vocab":{}}}', encoding="utf-8")
     (model_dir / "model.onnx").write_bytes(b"\x00")
 
-    from hist import embedder as emb_mod
+    from whatwasit import embedder as emb_mod
 
     emb_mod.persist_model_dir(tmp_path, emb_mod._ONNX_REPOS["sentence-transformers/all-MiniLM-L6-v2"], str(model_dir))
 
@@ -237,6 +237,6 @@ def test_resolve_model_dir_persists_after_hub_download(tmp_path, monkeypatch) ->
 
 
 def emb_mod_load_cached(tmp_path):
-    from hist.embedder import _ONNX_REPOS, load_cached_model_dir
+    from whatwasit.embedder import _ONNX_REPOS, load_cached_model_dir
 
     return load_cached_model_dir(tmp_path, _ONNX_REPOS["sentence-transformers/all-MiniLM-L6-v2"])

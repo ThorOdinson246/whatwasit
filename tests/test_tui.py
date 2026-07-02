@@ -1,4 +1,4 @@
-"""Tests for hist.tui confidence badges, result rendering, and REPL behaviour."""
+"""Tests for whatwasit.tui confidence badges, result rendering, and REPL behaviour."""
 
 from __future__ import annotations
 
@@ -7,10 +7,10 @@ from typing import List
 import pytest
 from textual.widgets import Input, ListView, Static
 
-from hist.models import Command, SearchResult, Session
-from hist.tui import (
-    HistREPL,
-    HistTUI,
+from whatwasit.models import Command, SearchResult, Session
+from whatwasit.tui import (
+    WhatwasitREPL,
+    WhatwasitTUI,
     confidence_level,
     low_confidence_message,
     matched_commands_text,
@@ -87,7 +87,7 @@ def test_matched_commands_text_returns_highlighted_only() -> None:
 @pytest.mark.asyncio
 async def test_tui_shows_commands_and_banner() -> None:
     results = _make_results(2, base_score=0.35)
-    app = HistTUI(results, "docker build", page_size=5, low_confidence_threshold=0.40)
+    app = WhatwasitTUI(results, "docker build", page_size=5, low_confidence_threshold=0.40)
 
     async with app.run_test() as pilot:
         list_view = pilot.app.query_one("#results", ListView)
@@ -104,7 +104,7 @@ async def test_tui_shows_commands_and_banner() -> None:
 @pytest.mark.asyncio
 async def test_tui_navigate_and_load_more() -> None:
     results = _make_results(6)
-    app = HistTUI(results, "docker build", page_size=5)
+    app = WhatwasitTUI(results, "docker build", page_size=5)
 
     async with app.run_test() as pilot:
         await pilot.press("j")
@@ -118,7 +118,7 @@ async def test_tui_navigate_and_load_more() -> None:
 @pytest.mark.asyncio
 async def test_tui_copy_on_select() -> None:
     results = _make_results(1)
-    app = HistTUI(results, "git status", page_size=5)
+    app = WhatwasitTUI(results, "git status", page_size=5)
     copied: list[str] = []
     app.copy_to_clipboard = lambda text: copied.append(text)  # type: ignore[method-assign]
 
@@ -135,7 +135,7 @@ async def test_repl_query_and_slash_commands() -> None:
         queries.append(query)
         return _make_results(2)
 
-    app = HistREPL(fake_search, page_size=5)
+    app = WhatwasitREPL(fake_search, page_size=5)
 
     async with app.run_test() as pilot:
         prompt = pilot.app.query_one("#prompt", Input)

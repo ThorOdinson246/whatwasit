@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from hist.models import Command
+from whatwasit.models import Command
 
 from tests.synthetic import (
     TOPIC_QUERIES,

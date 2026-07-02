@@ -1,4 +1,4 @@
-"""Tests for hist.search.
+"""Tests for whatwasit.search.
 
 Uses a deterministic bag-of-keywords ``FakeEmbedder`` so these tests run
 fully offline with no model downloads, independent of the real
@@ -13,12 +13,12 @@ from typing import Sequence
 import numpy as np
 import pytest
 
-from hist import db
-from hist.config import Config
-from hist.index import UsearchIndex
-from hist.interfaces import Embedder
-from hist.models import Command, Session
-from hist.search import search
+from whatwasit import db
+from whatwasit.config import Config
+from whatwasit.index import UsearchIndex
+from whatwasit.interfaces import Embedder
+from whatwasit.models import Command, Session
+from whatwasit.search import search
 
 DIM = 16
 

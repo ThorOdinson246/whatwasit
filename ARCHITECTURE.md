@@ -1,6 +1,6 @@
 # Architecture
 
-This document records the architecture decisions for `hist` and the reasoning
+This document records the architecture decisions for `whatwasit` and the reasoning
 behind each one. It is the contract that the implementation must follow.
 
 ## Goal recap
@@ -31,7 +31,7 @@ fewer (and batched) encodes than the raw command count suggests.
 
 Python also wins on iteration speed and ecosystem (`fastembed`, `usearch`,
 `sentence-transformers`) and is effectively required by Hard Requirement #7
-(`pip install hist`). Rust would give a single static binary and marginally
+(`pip install whatwasit`). Rust would give a single static binary and marginally
 faster cold start, but offers no help meeting the latency targets, which are
 already met. Rust is noted in `FUTURE_IDEAS.md` as a future distribution path.
 
@@ -138,7 +138,7 @@ one time") while being honest about what the data actually contains.
 
 ## Data model
 
-SQLite (`hist.db`) holds metadata; `index.usearch` holds vectors keyed by
+SQLite (`whatwasit.db`) holds metadata; `index.usearch` holds vectors keyed by
 `session.id`.
 
 - `meta(key, value)` -- includes `schema_version`.
@@ -156,23 +156,23 @@ flowchart LR
   parser["parsers -> Command[]"] --> grouper
   grouper["sessions: time gap + cwd replay -> Session[]"] --> indexer
   indexer["indexer: persist + embed + add to index"] --> store["SQLite + index.usearch"]
-  query["hist 'natural language query'"] --> search
+  query["whatwasit 'natural language query'"] --> search
   store --> search
   search["search: embed query -> ANN -> hydrate"] --> output["rich output: ts, cwd, highlighted match + context"]
 ```
 
 ## Module boundaries
 
-- `hist/config.py`, `hist/models.py`, `hist/db.py`, `hist/interfaces.py` —
+- `whatwasit/config.py`, `whatwasit/models.py`, `whatwasit/db.py`, `whatwasit/interfaces.py` —
   configuration, data model, persistence, and swappable subsystem interfaces.
-- `hist/parsers/{base,zsh,bash,atuin}.py` — history file parsers.
-- `hist/sessions.py` — session grouping (time gap + cwd reconstruction).
-- `hist/embedder.py` — `OnnxEmbedder(Embedder)` (MiniLM via onnxruntime).
-- `hist/index.py` — `UsearchIndex(VectorIndex)`.
-- `hist/indexer.py` — parse → group → persist → embed → index orchestration.
-- `hist/search.py` — query → embed → ANN → length normalization → gated hybrid
+- `whatwasit/parsers/{base,zsh,bash,atuin}.py` — history file parsers.
+- `whatwasit/sessions.py` — session grouping (time gap + cwd reconstruction).
+- `whatwasit/embedder.py` — `OnnxEmbedder(Embedder)` (MiniLM via onnxruntime).
+- `whatwasit/index.py` — `UsearchIndex(VectorIndex)`.
+- `whatwasit/indexer.py` — parse → group → persist → embed → index orchestration.
+- `whatwasit/search.py` — query → embed → ANN → length normalization → gated hybrid
   RRF reranking → hydrate → per-command match highlighting.
-- `hist/cli.py`, `hist/output.py` — CLI entry point and rich formatting.
+- `whatwasit/cli.py`, `whatwasit/output.py` — CLI entry point and rich formatting.
 - `tests/synthetic.py` — synthetic multi-topic history generator (tests + bench).
 - `eval/` — offline search-quality evaluation harness (not shipped in the wheel).
 - `benchmarks/` — performance benchmark script (not shipped in the wheel).

@@ -7,10 +7,10 @@ import time
 
 import pytest
 
-from hist.config import Config
-from hist.daemon import DaemonState, daemon_search, serve
-from hist import daemon as daemon_mod
-from hist.indexer import index_commands
+from whatwasit.config import Config
+from whatwasit.daemon import DaemonState, daemon_search, serve
+from whatwasit import daemon as daemon_mod
+from whatwasit.indexer import index_commands
 from tests import synthetic
 
 
@@ -33,7 +33,7 @@ def test_daemon_handle_search(indexed_config):
 
 def test_daemon_search_round_trip(indexed_config, monkeypatch):
     monkeypatch.setattr(
-        "hist.daemon.socket_path",
+        "whatwasit.daemon.socket_path",
         lambda cfg=None: indexed_config.data_dir / "test.sock",
     )
 

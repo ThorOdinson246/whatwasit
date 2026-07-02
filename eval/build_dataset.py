@@ -1,4 +1,4 @@
-"""Build the labeled evaluation dataset for hist search-quality measurement.
+"""Build the labeled evaluation dataset for whatwasit search-quality measurement.
 
 This is the *authoring source* for two durable, version-controlled test assets:
 

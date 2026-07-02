@@ -18,12 +18,12 @@ os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 import pytest
 
-from hist.config import Config
-from hist.embedder import build_embedder
-from hist.index import build_index
-from hist.indexer import index_commands
-from hist.parsers.zsh import parse_zsh
-from hist.search import search
+from whatwasit.config import Config
+from whatwasit.embedder import build_embedder
+from whatwasit.index import build_index
+from whatwasit.indexer import index_commands
+from whatwasit.parsers.zsh import parse_zsh
+from whatwasit.search import search
 from tests import synthetic
 
 # A signature substring that appears only in each topic's commands, used to

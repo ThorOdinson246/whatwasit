@@ -9,11 +9,11 @@ from typing import List
 import pytest
 from textual.widgets import ListView, Static
 
-from hist.config import Config
-from hist.config_loader import apply_file_overrides, config_file_path
-from hist.models import Command, SearchResult, Session
-from hist.output import display_results, render_plain_lines
-from hist.tui import HistTUI
+from whatwasit.config import Config
+from whatwasit.config_loader import apply_file_overrides, config_file_path
+from whatwasit.models import Command, SearchResult, Session
+from whatwasit.output import display_results, render_plain_lines
+from whatwasit.tui import WhatwasitTUI
 
 
 def _cmd(raw_cmd: str) -> Command:
@@ -47,7 +47,7 @@ def test_config_defaults_without_file(monkeypatch: pytest.MonkeyPatch, tmp_path:
 
 
 def test_config_file_overrides_defaults(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    config_dir = tmp_path / "config" / "hist"
+    config_dir = tmp_path / "config" / "whatwasit"
     config_dir.mkdir(parents=True)
     (config_dir / "config.toml").write_text(
         'output_mode = "plain"\n'
@@ -64,7 +64,7 @@ def test_config_file_overrides_defaults(monkeypatch: pytest.MonkeyPatch, tmp_pat
 
 
 def test_config_ignores_invalid_output_mode(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    config_dir = tmp_path / "config" / "hist"
+    config_dir = tmp_path / "config" / "whatwasit"
     config_dir.mkdir(parents=True)
     (config_dir / "config.toml").write_text('output_mode = "fancy"\n', encoding="utf-8")
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
@@ -76,9 +76,9 @@ def test_config_ignores_invalid_output_mode(monkeypatch: pytest.MonkeyPatch, tmp
 def test_cli_plain_flag_overrides_config_file(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    from hist import cli
+    from whatwasit import cli
 
-    config_dir = tmp_path / "config" / "hist"
+    config_dir = tmp_path / "config" / "whatwasit"
     config_dir.mkdir(parents=True)
     (config_dir / "config.toml").write_text('output_mode = "tui"\n', encoding="utf-8")
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
@@ -96,7 +96,7 @@ def test_cli_plain_flag_overrides_config_file(
 
     data_dir = tmp_path / "data"
     data_dir.mkdir()
-    (data_dir / "hist.db").touch()
+    (data_dir / "whatwasit.db").touch()
 
     def fake_default():
         return Config(data_dir=data_dir, output_mode="tui")
@@ -131,8 +131,8 @@ def test_display_results_plain_uses_rich_when_tty(monkeypatch: pytest.MonkeyPatc
     def fake_render(results, query, console=None):
         calls.append({"query": query, "n": len(results)})
 
-    monkeypatch.setattr("hist.output.render_results", fake_render)
-    monkeypatch.setattr("hist.output.sys.stdout.isatty", lambda: True)
+    monkeypatch.setattr("whatwasit.output.render_results", fake_render)
+    monkeypatch.setattr("whatwasit.output.sys.stdout.isatty", lambda: True)
 
     config = Config(output_mode="plain")
     display_results(_make_results(1), "query", config)
@@ -145,8 +145,8 @@ def test_display_results_plain_uses_lines_when_not_tty(monkeypatch: pytest.Monke
     def fake_lines(results, query, *, file=None):
         calls.append({"query": query})
 
-    monkeypatch.setattr("hist.output.render_plain_lines", fake_lines)
-    monkeypatch.setattr("hist.output.sys.stdout.isatty", lambda: False)
+    monkeypatch.setattr("whatwasit.output.render_plain_lines", fake_lines)
+    monkeypatch.setattr("whatwasit.output.sys.stdout.isatty", lambda: False)
 
     config = Config(output_mode="plain")
     display_results(_make_results(1), "query", config)
@@ -161,7 +161,7 @@ def test_display_results_plain_uses_lines_when_not_tty(monkeypatch: pytest.Monke
 @pytest.mark.asyncio
 async def test_tui_smoke_navigate_and_copy() -> None:
     results = _make_results(6)
-    app = HistTUI(results, "docker build", page_size=5)
+    app = WhatwasitTUI(results, "docker build", page_size=5)
     copied: list[str] = []
     app.copy_to_clipboard = lambda text: copied.append(text)  # type: ignore[method-assign]
 
@@ -181,4 +181,4 @@ async def test_tui_smoke_navigate_and_copy() -> None:
 
 def test_config_file_path_uses_xdg(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
-    assert config_file_path() == tmp_path / "xdg" / "hist" / "config.toml"
+    assert config_file_path() == tmp_path / "xdg" / "whatwasit" / "config.toml"

@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "hist-search"
+name = "whatwasit"
 version = "0.1.0"
 description = "Local-first semantic search for your shell history. Search by intent, not exact text. No cloud, no API keys."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [{ name = "ThorOdinson246", email = "110178596+ThorOdinson246@users.noreply.github.com" }]
-keywords = ["shell", "history", "semantic-search", "embeddings", "cli", "local-first", "privacy"]
+keywords = ["shell", "history", "semantic-search", "embeddings", "cli", "local-first", "privacy", "whatwasit", "shell-history"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -45,15 +45,15 @@ dev = [
 ]
 
 [project.scripts]
-hist = "hist.cli:main"
+whatwasit = "whatwasit.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/ThorOdinson246/hist"
-Repository = "https://github.com/ThorOdinson246/hist"
-Issues = "https://github.com/ThorOdinson246/hist/issues"
+Homepage = "https://github.com/ThorOdinson246/whatwasit"
+Repository = "https://github.com/ThorOdinson246/whatwasit"
+Issues = "https://github.com/ThorOdinson246/whatwasit/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["hist"]
+packages = ["whatwasit"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

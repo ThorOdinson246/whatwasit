@@ -1,4 +1,4 @@
-"""Tests for hist.indexer.
+"""Tests for whatwasit.indexer.
 
 Uses a deterministic, fully offline fake embedder (no model loading, no
 network) so these tests stay fast and hermetic.
@@ -12,12 +12,12 @@ from typing import Sequence
 import numpy as np
 import pytest
 
-from hist import db
-from hist.config import Config
-from hist.index import UsearchIndex
-from hist.indexer import IndexStats, index_commands
-from hist.interfaces import Embedder
-from hist.models import Command
+from whatwasit import db
+from whatwasit.config import Config
+from whatwasit.index import UsearchIndex
+from whatwasit.indexer import IndexStats, index_commands
+from whatwasit.interfaces import Embedder
+from whatwasit.models import Command
 
 DIM = 16
 

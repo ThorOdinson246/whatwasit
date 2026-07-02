@@ -3,7 +3,7 @@
 Concrete parsers (zsh/bash/atuin) live in sibling modules. This module ties
 them together: it knows where each shell's history file conventionally
 lives, and how to combine whichever ones are actually present on disk into a
-single flat list of :class:`~hist.models.Command`.
+single flat list of :class:`~whatwasit.models.Command`.
 """
 
 from __future__ import annotations

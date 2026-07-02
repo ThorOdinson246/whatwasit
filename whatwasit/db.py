@@ -2,7 +2,7 @@
 
 This module owns the database schema and all low-level reads/writes for the
 ``meta``, ``commands``, and ``sessions`` tables. The vector data itself lives in
-a separate usearch file managed by ``hist.index``; this DB stores the session
+a separate usearch file managed by ``whatwasit.index``; this DB stores the session
 metadata and command text those vector keys point back to.
 """
 

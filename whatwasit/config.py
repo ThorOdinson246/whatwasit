@@ -1,4 +1,4 @@
-"""Central configuration for hist.
+"""Central configuration for whatwasit.
 
 All tunable values (session window, model name, storage paths, schema version)
 live here so nothing is scattered across the codebase as magic constants.
@@ -9,6 +9,8 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
+
+from .brand import resolve_data_dir, resolve_db_path
 
 SCHEMA_VERSION = 1
 """Bumped whenever the on-disk SQLite schema changes. Stored in the ``meta`` table."""
@@ -32,7 +34,7 @@ class Config:
     """Runtime configuration. Construct via :meth:`default` then override fields."""
 
     # Storage
-    data_dir: Path = field(default_factory=lambda: _xdg_data_home() / "hist")
+    data_dir: Path = field(default_factory=lambda: resolve_data_dir(_xdg_data_home()))
 
     # Session grouping
     session_window_seconds: int = DEFAULT_SESSION_WINDOW_SECONDS
@@ -50,7 +52,6 @@ class Config:
     # Output / TUI
     output_mode: str = "tui"  # "tui" | "plain"
     tui_page_size: int = 5
-    low_confidence_threshold: float = 0.40
     use_daemon: bool = True
 
     # Schema (read-only constant exposed for convenience)
@@ -64,7 +65,7 @@ class Config:
 
     @property
     def db_path(self) -> Path:
-        return self.data_dir / "hist.db"
+        return resolve_db_path(self.data_dir)
 
     @property
     def index_path(self) -> Path:

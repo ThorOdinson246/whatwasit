@@ -1,4 +1,4 @@
-"""Standard information-retrieval metrics for the hist search evaluation.
+"""Standard information-retrieval metrics for the whatwasit search evaluation.
 
 All metrics assume at most one relevant document per query (our ground truth is
 a single ``correct_session_id``), which simplifies the definitions:

@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from hist.config import Config
-from hist.index import UsearchIndex, build_index
+from whatwasit.config import Config
+from whatwasit.index import UsearchIndex, build_index
 
 DIM = 32
 N = 10

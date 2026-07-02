@@ -1,4 +1,4 @@
-# hist
+# whatwasit
 
 **Local-first semantic search for your shell history.**
 
@@ -6,7 +6,7 @@ Search by what you were *trying to do*, not the exact command you typed — and
 nothing ever leaves your machine.
 
 ```bash
-hist "how did I fix that nginx issue"
+whatwasit "how did I fix that nginx issue"
 ```
 
 Returns the session of commands you actually ran (`cd`, `vim`, `systemctl reload
@@ -26,14 +26,14 @@ nginx`) weeks ago, even though you never typed "fix" or "issue".
 From PyPI:
 
 ```bash
-pip install hist-search
+pip install whatwasit
 ```
 
 From source:
 
 ```bash
-git clone https://github.com/ThorOdinson246/hist.git
-cd hist
+git clone https://github.com/ThorOdinson246/whatwasit.git
+cd whatwasit
 pip install .
 ```
 
@@ -48,43 +48,41 @@ once on first run).
 
 ### Releasing
 
-1. Bump `version` in `pyproject.toml` and `hist/__init__.py`.
+1. Bump `version` in `pyproject.toml` and `whatwasit/__init__.py`.
 2. Commit, push `main`, then `git tag v0.1.0 && git push origin v0.1.0`.
 3. GitHub → **Releases** → draft release for that tag → **Publish release**.
 
-CI publishes to PyPI automatically. One-time setup: [PyPI trusted publishing](https://docs.pypi.org/trusted-publishers/) for project **`hist-search`**, workflow `publish.yml`, environment `pypi`, owner `ThorOdinson246`, repo `hist`. Also create a **`pypi`** environment under GitHub repo Settings → Environments.
-
-> The PyPI name `hist` is taken by another package. This project publishes as **`hist-search`**; the CLI command is still `hist`.
+CI publishes to PyPI automatically. One-time setup: [PyPI trusted publishing](https://docs.pypi.org/trusted-publishers/) for project **`whatwasit`**, workflow `publish.yml`, environment `pypi`, owner `ThorOdinson246`, repo `whatwasit`. Also create a **`pypi`** environment under GitHub repo Settings → Environments.
 
 ## Usage
 
 ```bash
 # Build or refresh the search index from your shell history
-hist index
+whatwasit index
 
 # Force a full rebuild
-hist index --rebuild
+whatwasit index --rebuild
 
 # Adjust session grouping window (default: 300 seconds)
-hist index --window 600
+whatwasit index --window 600
 
 # Interactive REPL (default when run with no arguments)
-hist
+whatwasit
 
 # One-shot search by intent (TUI with pre-fetched results)
-hist "that time I set up passwordless ssh"
+whatwasit "that time I set up passwordless ssh"
 
 # Plain / headless output (Rich panels on a TTY, line-oriented when piped)
-hist "docker volume that wouldn't persist" --plain
-hist "nginx config" --headless
+whatwasit "docker volume that wouldn't persist" --plain
+whatwasit "nginx config" --headless
 
 # Return more results
-hist "docker volume that wouldn't persist" -k 20
+whatwasit "docker volume that wouldn't persist" -k 20
 ```
 
 ### TUI / REPL
 
-Running ``hist`` with no arguments opens a persistent REPL with a bottom input
+Running ``whatwasit`` with no arguments opens a persistent REPL with a bottom input
 bar. Type a natural-language query and press Enter to search; results update in
 place with matched commands highlighted. Directory and timestamp appear as dim
 secondary metadata under each result. Ranks (#1, #2, …) and qualitative
@@ -100,10 +98,10 @@ scores. When the top result is below the low-confidence threshold (default
 | ``/help`` | Show help |
 | ``/quit`` or ``q`` | Quit |
 
-One-shot ``hist "query"`` still opens the TUI with the same result layout.
+One-shot ``whatwasit "query"`` still opens the TUI with the same result layout.
 Use ``--plain`` or ``--headless`` for non-interactive output.
 
-**Configuration** (`~/.config/hist/config.toml`):
+**Configuration** (`~/.config/whatwasit/config.toml`):
 
 ```toml
 # Output mode: "tui" (default) or "plain"
@@ -122,7 +120,7 @@ use_daemon = false
 CLI flags override config file values. For example, ``--plain`` forces plain
 output even when ``output_mode = "tui"`` in the config file.
 
-**Data location:** `~/.local/share/hist/` (`hist.db` + `index.usearch`).
+**Data location:** `~/.local/share/whatwasit/` (`whatwasit.db` + `index.usearch`).
 
 **Supported history sources:** `~/.zsh_history`, `~/.bash_history`, Atuin DB
 (if present). All are read non-destructively.
@@ -141,7 +139,7 @@ output even when ``output_mode = "tui"`` in the config file.
 
 ## Performance
 
-On an Intel i9-14900 (unthrottled), hist meets its design targets:
+On an Intel i9-14900 (unthrottled), whatwasit meets its design targets:
 
 | Scale | Index time | Query latency (avg) |
 |------:|-----------:|--------------------:|
@@ -170,7 +168,7 @@ MRR = 0.700) against a keyword baseline (P@1 = 0.291). See
 
 - All processing is local — no network calls after the one-time model download
 - Your shell history never leaves your machine
-- Index data stays in `~/.local/share/hist/`
+- Index data stays in `~/.local/share/whatwasit/`
 
 ## Development
 

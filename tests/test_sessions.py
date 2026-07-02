@@ -1,10 +1,10 @@
-"""Tests for hist.sessions: cwd reconstruction and session grouping."""
+"""Tests for whatwasit.sessions: cwd reconstruction and session grouping."""
 
 from __future__ import annotations
 
-from hist.config import Config
-from hist.models import Command
-from hist.sessions import group_commands, reconstruct_cwd
+from whatwasit.config import Config
+from whatwasit.models import Command
+from whatwasit.sessions import group_commands, reconstruct_cwd
 
 
 def make_cmd(raw_cmd, ts=None, cwd=None, source="zsh"):

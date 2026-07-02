@@ -1,6 +1,6 @@
 # Search quality evaluation
 
-Offline evaluation harness for measuring how well `hist` retrieves the right
+Offline evaluation harness for measuring how well `whatwasit` retrieves the right
 shell-history session from a natural-language query.
 
 ## Dataset
@@ -17,21 +17,21 @@ session.
 
 ## Latest results
 
-Measured against the shipping search path (`hist.search.search()`), including
+Measured against the shipping search path (`whatwasit.search.search()`), including
 length normalization, session doc enrichment, and gated hybrid RRF reranking.
 
 **Standard set (86 answerable queries)**
 
 | Method | P@1 | MRR | nDCG@5 |
 |--------|-----|-----|--------|
-| semantic (hist) | 0.535 | 0.700 | 0.751 |
+| semantic (whatwasit) | 0.535 | 0.700 | 0.751 |
 | keyword baseline | 0.291 | 0.415 | 0.427 |
 
 **Keyword-heavy breakout (15 queries)**
 
 | Method | P@1 | MRR | nDCG@5 |
 |--------|-----|-----|--------|
-| semantic (hist) | 1.000 | 1.000 | 1.000 |
+| semantic (whatwasit) | 1.000 | 1.000 | 1.000 |
 | keyword baseline | 0.933 | 0.967 | 0.975 |
 
 Full per-query breakdown: [`tables.md`](tables.md). Raw numbers:
@@ -47,6 +47,6 @@ python eval/build_dataset.py
 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python eval/run_eval.py
 ```
 
-The harness indexes all sessions through the real hist pipeline, runs both
+The harness indexes all sessions through the real whatwasit pipeline, runs both
 semantic search and a keyword/fuzzy baseline, and computes standard IR metrics
 (P@k, R@k, MRR, nDCG@k).

@@ -3,7 +3,7 @@
 Run:  python benchmarks/query_cold_warm.py
 
 Measures:
-  - cold: subprocess ``python -m hist.cli <query>`` (fresh process each run)
+  - cold: subprocess ``python -m whatwasit.cli <query>`` (fresh process each run)
   - warm: in-process ``search()`` reusing a loaded embedder
 
 Also checks that cached cold runs do not emit Hugging Face progress bars.
@@ -24,9 +24,9 @@ os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hist.config import Config
-from hist.embedder import build_embedder, is_model_cached
-from hist.search import search
+from whatwasit.config import Config
+from whatwasit.embedder import build_embedder, is_model_cached
+from whatwasit.search import search
 
 DEFAULT_QUERY = "nginx config"
 DEFAULT_RUNS = 5
@@ -38,7 +38,7 @@ def _has_hf_progress(stderr: str) -> bool:
 
 
 def bench_cold_subprocess(query: str, runs: int) -> dict:
-    from hist.daemon import stop_daemon
+    from whatwasit.daemon import stop_daemon
 
     stop_daemon()  # measure true cold in-process load, not daemon RPC
     times: list[float] = []
@@ -47,7 +47,7 @@ def bench_cold_subprocess(query: str, runs: int) -> dict:
     for _ in range(runs):
         t0 = time.perf_counter()
         proc = subprocess.run(
-            [sys.executable, "-m", "hist.cli", query],
+            [sys.executable, "-m", "whatwasit.cli", query],
             capture_output=True,
             text=True,
             env=env,
@@ -86,7 +86,7 @@ def bench_warm_inprocess(query: str, runs: int) -> dict:
 
 
 def bench_daemon_subprocess(query: str, runs: int) -> dict:
-    from hist.daemon import _wait_for_daemon, daemon_search, start_daemon, stop_daemon
+    from whatwasit.daemon import _wait_for_daemon, daemon_search, start_daemon, stop_daemon
 
     config = Config.default()
     stop_daemon()

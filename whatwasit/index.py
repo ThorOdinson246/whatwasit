@@ -1,4 +1,4 @@
-"""usearch-backed implementation of :class:`hist.interfaces.VectorIndex`."""
+"""usearch-backed implementation of :class:`whatwasit.interfaces.VectorIndex`."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from typing import List, Sequence, Tuple, Union
 import numpy as np
 from usearch.index import Index
 
-from hist.config import Config
-from hist.interfaces import VectorIndex
+from whatwasit.config import Config
+from whatwasit.interfaces import VectorIndex
 
 
 class UsearchIndex(VectorIndex):

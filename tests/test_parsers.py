@@ -5,9 +5,9 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from hist.parsers.atuin import parse_atuin
-from hist.parsers.bash import parse_bash
-from hist.parsers.zsh import parse_zsh
+from whatwasit.parsers.atuin import parse_atuin
+from whatwasit.parsers.bash import parse_bash
+from whatwasit.parsers.zsh import parse_zsh
 
 
 # --------------------------------------------------------------------------

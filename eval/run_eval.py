@@ -1,11 +1,11 @@
-"""Run the hist search-quality evaluation: semantic vs keyword baseline.
+"""Run the whatwasit search-quality evaluation: semantic vs keyword baseline.
 
 Pipeline:
   1. Load eval/sessions.jsonl and eval/queries.jsonl.
-  2. Index every session through hist's real components (SQLite + embedder +
+  2. Index every session through whatwasit's real components (SQLite + embedder +
      usearch), keeping a stable string-id <-> db-id map.
   3. For each query, retrieve with:
-       - semantic: hist.search.search() (the actual production search path)
+       - semantic: whatwasit.search.search() (the actual production search path)
        - keyword : eval.baseline.rank() over the same session documents
   4. Compute IR metrics (P@1/3/5, R@5/10, MRR, nDCG@5) per query and aggregate
      overall and per-topic.
@@ -37,12 +37,12 @@ os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hist import db
-from hist.config import Config
-from hist.embedder import build_embedder, encode_passages, encode_query_one
-from hist.index import build_index
-from hist.models import Command, Session
-from hist.search import search
+from whatwasit import db
+from whatwasit.config import Config
+from whatwasit.embedder import build_embedder, encode_passages, encode_query_one
+from whatwasit.index import build_index
+from whatwasit.models import Command, Session
+from whatwasit.search import search
 
 from eval import baseline, metrics
 
@@ -112,7 +112,7 @@ def run() -> int:
     embedder = build_embedder(config)
     index = build_index(config)
 
-    print(f"Indexing {n_sessions} sessions through the real hist pipeline ...", flush=True)
+    print(f"Indexing {n_sessions} sessions through the real whatwasit pipeline ...", flush=True)
     embedder.encode(["warmup"])  # load model, excluded from timings
     str_to_db, db_to_str, corpus = index_sessions(config, sessions, embedder, index)
 
@@ -148,7 +148,7 @@ def run() -> int:
         _ = index.search(qv, n_sessions)
         t_ann = (time.perf_counter() - t0) * 1000.0
 
-        # --- semantic: official ranking through hist's actual search() ---
+        # --- semantic: official ranking through whatwasit's actual search() ---
         t0 = time.perf_counter()
         results = search(config, query, k=n_sessions, embedder=embedder, index=index)
         t_total = (time.perf_counter() - t0) * 1000.0

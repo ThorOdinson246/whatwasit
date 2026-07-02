@@ -1,7 +1,7 @@
 """Rendering search results for plain and interactive output modes.
 
 Plain mode prints Rich panels (or line-oriented text when not a TTY).
-TUI mode delegates to :mod:`hist.tui`.
+TUI mode delegates to :mod:`whatwasit.tui`.
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ def render_results(
         console.print(
             Panel(
                 Text(f"No results found for: {query!r}", style="italic"),
-                title="hist",
+                title="whatwasit",
                 border_style="yellow",
             )
         )

@@ -9,6 +9,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import Footer, Input, ListItem, ListView, Static
 
+from .brand import CLI_NAME
 from .models import SearchResult
 from .output import format_timestamp
 
@@ -24,7 +25,7 @@ _CONFIDENCE_STYLES = {
 }
 
 _HELP_TEXT = """\
-hist REPL — search your shell history by intent
+whatwasit REPL — search your shell history by intent
 
 Type a natural-language query and press Enter.
 Results update in place; matched commands are highlighted.
@@ -176,7 +177,7 @@ class _ResultPanelMixin:
             return
         text = matched_commands_text(result)
         self.copy_to_clipboard(text)
-        self.notify("Copied to clipboard", title="hist", timeout=2)
+        self.notify("Copied to clipboard", title="whatwasit", timeout=2)
 
     def action_cursor_down(self) -> None:
         list_view = self.query_one("#results", ListView)
@@ -206,8 +207,8 @@ class _ResultPanelMixin:
         self.query_one("#banner", Static).display = False
 
 
-class HistTUI(_ResultPanelMixin, App[None]):
-    """Browse pre-fetched search results (one-shot ``hist "query"``)."""
+class WhatwasitTUI(_ResultPanelMixin, App[None]):
+    """Browse pre-fetched search results (one-shot ``whatwasit "query"``)."""
 
     CSS = """
     Screen {
@@ -271,8 +272,8 @@ class HistTUI(_ResultPanelMixin, App[None]):
         self._copy_selected()
 
 
-class HistREPL(_ResultPanelMixin, App[None]):
-    """Persistent interactive REPL launched by bare ``hist``."""
+class WhatwasitREPL(_ResultPanelMixin, App[None]):
+    """Persistent interactive REPL launched by bare ``whatwasit``."""
 
     CSS = """
     Screen {
@@ -321,7 +322,7 @@ class HistREPL(_ResultPanelMixin, App[None]):
         self._low_confidence_threshold = low_confidence_threshold
 
     def compose(self) -> ComposeResult:
-        yield Static("hist — type a query or /help", id="header")
+        yield Static(f"{CLI_NAME} — type a query or /help", id="header")
         yield Static("", id="banner")
         yield ListView(id="results")
         yield Input(placeholder="Search shell history…  (/help for commands)", id="prompt")
@@ -370,7 +371,7 @@ def run_tui(
     low_confidence_threshold: float = 0.40,
 ) -> None:
     """Launch the one-shot interactive TUI (blocking)."""
-    HistTUI(
+    WhatwasitTUI(
         results,
         query,
         page_size=page_size,
@@ -385,7 +386,7 @@ def run_repl(
     low_confidence_threshold: float = 0.40,
 ) -> None:
     """Launch the persistent REPL (blocking)."""
-    HistREPL(
+    WhatwasitREPL(
         search_fn,
         page_size=page_size,
         low_confidence_threshold=low_confidence_threshold,

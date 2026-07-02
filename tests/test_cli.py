@@ -1,7 +1,7 @@
-"""Tests for hist.cli and hist.output.
+"""Tests for whatwasit.cli and whatwasit.output.
 
-CLI routing tests monkeypatch ``hist.cli.search`` and
-``hist.cli.build_index_from_history`` with fakes so no model, network, or
+CLI routing tests monkeypatch ``whatwasit.cli.search`` and
+``whatwasit.cli.build_index_from_history`` with fakes so no model, network, or
 on-disk database is needed. Output tests render a hand-built ``SearchResult``
 through a recording ``rich.console.Console``.
 """
@@ -13,10 +13,10 @@ from typing import List, Optional
 import pytest
 from rich.console import Console
 
-from hist import cli
-from hist.indexer import IndexStats
-from hist.models import Command, SearchResult, Session
-from hist.output import format_timestamp, render_results
+from whatwasit import cli
+from whatwasit.indexer import IndexStats
+from whatwasit.models import Command, SearchResult, Session
+from whatwasit.output import format_timestamp, render_results
 
 
 def _cmd(raw_cmd: str) -> Command:
@@ -38,7 +38,7 @@ def _make_result() -> SearchResult:
 
 
 # ---------------------------------------------------------------------------
-# hist.output.format_timestamp
+# whatwasit.output.format_timestamp
 # ---------------------------------------------------------------------------
 
 
@@ -55,7 +55,7 @@ def test_format_timestamp_formats_epoch() -> None:
 
 
 # ---------------------------------------------------------------------------
-# hist.output.render_results
+# whatwasit.output.render_results
 # ---------------------------------------------------------------------------
 
 
@@ -87,7 +87,7 @@ def test_render_results_defaults_console_when_omitted() -> None:
 
 
 # ---------------------------------------------------------------------------
-# hist.cli.main routing
+# whatwasit.cli.main routing
 # ---------------------------------------------------------------------------
 
 
@@ -100,13 +100,13 @@ def test_main_no_args_launches_repl(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cli, "run_repl", fake_run_repl)
 
     def fake_default():
-        from hist.config import Config
+        from whatwasit.config import Config
         from pathlib import Path
         import tempfile
 
         data_dir = Path(tempfile.mkdtemp())
         data_dir.mkdir(parents=True, exist_ok=True)
-        (data_dir / "hist.db").touch()
+        (data_dir / "whatwasit.db").touch()
         return Config(data_dir=data_dir)
 
     monkeypatch.setattr(cli.Config, "default", staticmethod(fake_default))
@@ -170,7 +170,7 @@ def test_main_query_joins_args_and_calls_search(monkeypatch: pytest.MonkeyPatch,
 
     # Make the "index exists" check pass without touching the real config.
     def fake_default():
-        from hist.config import Config
+        from whatwasit.config import Config
 
         config = Config(data_dir=tmp_path)
         config.ensure_data_dir()
@@ -202,7 +202,7 @@ def test_main_query_supports_top_k_flag(monkeypatch: pytest.MonkeyPatch, tmp_pat
     monkeypatch.setattr(cli, "display_results", fake_display)
 
     def fake_default():
-        from hist.config import Config
+        from whatwasit.config import Config
 
         config = Config(data_dir=tmp_path)
         config.ensure_data_dir()
@@ -221,7 +221,7 @@ def test_main_query_supports_top_k_flag(monkeypatch: pytest.MonkeyPatch, tmp_pat
 
 def test_main_query_without_index_prints_hint(monkeypatch: pytest.MonkeyPatch, tmp_path, capsys) -> None:
     def fake_default():
-        from hist.config import Config
+        from whatwasit.config import Config
 
         return Config(data_dir=tmp_path / "does-not-exist")
 
@@ -231,4 +231,4 @@ def test_main_query_without_index_prints_hint(monkeypatch: pytest.MonkeyPatch, t
 
     assert rc != 0
     captured = capsys.readouterr()
-    assert "hist index" in captured.out
+    assert "whatwasit index" in captured.out

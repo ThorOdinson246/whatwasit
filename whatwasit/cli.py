@@ -1,11 +1,11 @@
-"""Command-line entry point for ``hist``.
+"""Command-line entry point for ``whatwasit``.
 
 Two modes:
 
-- ``hist index [--window N] [--rebuild]`` builds/refreshes the on-disk index
+- ``whatwasit index [--window N] [--rebuild]`` builds/refreshes the on-disk index
   from shell history.
-- ``hist <natural language query...>`` (the common case) searches the index
-  and renders the results with :mod:`hist.output`.
+- ``whatwasit <natural language query...>`` (the common case) searches the index
+  and renders the results with :mod:`whatwasit.output`.
 
 Implemented with :mod:`argparse`; the query subcommand is detected purely by
 position (``index`` is only ever a subcommand when it is the first token),
@@ -28,7 +28,9 @@ from .output import display_results
 from .search import search
 from .tui import run_repl
 
-PROG = "hist"
+from .brand import CLI_NAME
+
+PROG = CLI_NAME
 
 
 def _configure_hf_hub_when_cached() -> None:
@@ -96,7 +98,7 @@ def _run_repl() -> int:
 
     if not config.db_path.exists():
         print(
-            "No index found. Run `hist index` first to build a search index "
+            "No index found. Run `whatwasit index` first to build a search index "
             "from your shell history."
         )
         return 1
@@ -129,7 +131,7 @@ def _run_query(
 
     if not config.db_path.exists():
         print(
-            "No index found. Run `hist index` first to build a search index "
+            "No index found. Run `whatwasit index` first to build a search index "
             "from your shell history."
         )
         return 1

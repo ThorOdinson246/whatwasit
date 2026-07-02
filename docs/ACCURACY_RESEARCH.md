@@ -13,15 +13,15 @@ via `OnnxEmbedder` → P@1 **0.535** on 86 intent-paraphrase queries (`eval/READ
 
 ### Why swap is low-risk
 
-The `Embedder` ABC (`hist/interfaces.py`) requires only `dim` and
+The `Embedder` ABC (`whatwasit/interfaces.py`) requires only `dim` and
 `encode(texts) -> (n, dim)` with L2-normalized rows. `OnnxEmbedder`
-(`hist/embedder.py`) already parameterizes `model_name`, `dim`, and `onnx_repo`
+(`whatwasit/embedder.py`) already parameterizes `model_name`, `dim`, and `onnx_repo`
 via `_ONNX_REPOS`; swapping models is a one-class change plus config + full
 re-index. Indexer, search, and CLI stay untouched.
 
 **Re-index is mandatory for any model change.** Vectors live in incompatible
 semantic spaces even when dimension matches (384). Plan: bump a `model_name` meta
-field, delete `index.usearch`, re-run `hist index`.
+field, delete `index.usearch`, re-run `whatwasit index`.
 
 ### Comparison table
 
@@ -75,7 +75,7 @@ stored `doc_text`.
 ### Recommendation: evaluate **BAAI/bge-small-en-v1.5** first
 
 1. **Best retrieval fit** among 384-dim small models on MTEB retrieval tasks.
-2. **Explicit asymmetric encoding** matches hist's core mismatch: natural-language
+2. **Explicit asymmetric encoding** matches whatwasit's core mismatch: natural-language
    queries vs terse shell commands.
 3. **Same 384 dimensions** — no `usearch` index rebuild for dimension change,
    only vector replacement.
@@ -140,7 +140,7 @@ queries have top-1 scores in the 0.35–0.45 band (eval P@1 would collapse).
 ### TUI banner (top of results)
 
 ```
-┌─ hist ─────────────────────────────────────────────────────────────┐
+┌─ whatwasit ─────────────────────────────────────────────────────────────┐
 │  Query: "redo my branch history one commit at a time"                │
 │  ⚠ Low confidence — top match score 0.68; verify before re-running.  │
 └────────────────────────────────────────────────────────────────────┘
@@ -166,7 +166,7 @@ For the git-rebase case (0.68, margin over #2 ~0.09): badge `◐ maybe` because
 keyword overlap with `rebase` is 0 — triggers the combined rule even when score
 looks high.
 
-### Plain mode (`hist search --plain` / scripting)
+### Plain mode (`whatwasit search --plain` / scripting)
 
 Prefix uncertain lines so scripts can filter:
 
@@ -181,7 +181,7 @@ Rules:
 - `[?]` when badge would be `◐ maybe` or `○ weak`
 - No prefix when `● match`
 - If **all** results are `○ weak`, print banner text to stderr:
-  `hist: no confident matches (best score 0.28)`
+  `whatwasit: no confident matches (best score 0.28)`
 
 ### Why score-only thresholds are insufficient
 
@@ -201,7 +201,7 @@ cost.
 | Rank | Opportunity | Effort | Impact | Notes |
 |:---:|---|---|---|---|
 | 1 | **Matched-command focus in TUI** | Low | High | Today `output.py` shows full session with `>` on matched commands. Promote the top matched command to the panel header (one line, copyable). Users care about the *command*, not the session wrapper. |
-| 2 | **Keyword boost for query tokens** | Low | Medium–High | Hybrid RRF exists but is **gated at `_HYBRID_KW_MIN_SCORE = 0.20`** (`hist/search.py`). Intent-paraphrase queries score Jaccard **< 0.04** on all candidates, so hybrid **never fires** for the queries that need it most. Lower gate to ~0.05 for token overlap on *any* query token appearing in raw commands, or add a lightweight BM25 pre-filter. |
+| 2 | **Keyword boost for query tokens** | Low | Medium–High | Hybrid RRF exists but is **gated at `_HYBRID_KW_MIN_SCORE = 0.20`** (`whatwasit/search.py`). Intent-paraphrase queries score Jaccard **< 0.04** on all candidates, so hybrid **never fires** for the queries that need it most. Lower gate to ~0.05 for token overlap on *any* query token appearing in raw commands, or add a lightweight BM25 pre-filter. |
 | 3 | **Recency tie-break** | Low | Low–Medium | When semantic scores are within 0.05, prefer newer `start_ts`. Cheap, no re-index. Helps "that thing I did last week" disambiguation. |
 | 4 | **fzf re-filter on results** | Medium | High | Listed in `FUTURE_IDEAS.md`. Interactive narrowing of top-20 semantic results. High perceived magic; medium effort (TUI dependency). |
 | 5 | **Asymmetric embedder (bge/e5)** | Medium | High | See C1. One-class swap + full re-index. Targets the NL→command gap directly. |
@@ -238,10 +238,10 @@ the 0.20 gate prevents it.
 
 ## References
 
-- `hist/embedder.py` — `OnnxEmbedder`, `_ONNX_REPOS`, `build_embedder()`
-- `hist/interfaces.py` — `Embedder` ABC
-- `hist/search.py` — hybrid RRF, `_HYBRID_KW_MIN_SCORE`, `_rank_matches()`
-- `hist/models.py` — `Session.to_document()`, `_COMMAND_HINTS`
+- `whatwasit/embedder.py` — `OnnxEmbedder`, `_ONNX_REPOS`, `build_embedder()`
+- `whatwasit/interfaces.py` — `Embedder` ABC
+- `whatwasit/search.py` — hybrid RRF, `_HYBRID_KW_MIN_SCORE`, `_rank_matches()`
+- `whatwasit/models.py` — `Session.to_document()`, `_COMMAND_HINTS`
 - `eval/README.md`, `eval/summary.json`, `eval/tables.md` — baseline metrics
 - `BENCHMARKS.md` — encode throughput and latency budgets
 - `FUTURE_IDEAS.md` — asymmetric models, per-command index, fzf mode

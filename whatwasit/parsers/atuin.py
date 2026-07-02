@@ -1,7 +1,7 @@
 """Parser for atuin's SQLite history database.
 
 Atuin stores ``timestamp`` as nanoseconds since the epoch; everything else in
-``hist`` deals in whole seconds, so it is converted here. The database is
+``whatwasit`` deals in whole seconds, so it is converted here. The database is
 opened read-only so this module can never mutate the user's atuin history.
 """
 
