@@ -57,14 +57,14 @@ once on first run).
    - Name: `PYPI_API_TOKEN`
    - Value: paste the token
 
-**Each release**
+**Each release (auto on push)**
 
 1. Bump `version` in `pyproject.toml` and `whatwasit/__init__.py` (keep them identical).
-2. Commit, push `main`.
-3. `git tag v0.1.0 && git push origin v0.1.0`
-4. GitHub → **Releases** → **Draft new release** → select the tag → **Publish release**.
+2. Commit and push to `main`.
 
-The [publish workflow](.github/workflows/publish.yml) builds the wheel and uploads to PyPI as **`whatwasit`**. Users install with:
+The [publish workflow](.github/workflows/publish.yml) detects the version bump, uploads to PyPI, and creates git tag `vX.Y.Z`. No manual GitHub Release required (you can still create one from the tag if you want release notes).
+
+Alternatively, publishing a **GitHub Release** for tag `vX.Y.Z` also triggers the workflow.
 
 ```bash
 pip install whatwasit
