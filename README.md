@@ -46,13 +46,29 @@ pip install -e ".[dev]"
 **Requirements:** Python 3.9+, ~100 MB disk for the embedding model (downloaded
 once on first run).
 
-### Releasing
+### Releasing to PyPI
 
-1. Bump `version` in `pyproject.toml` and `whatwasit/__init__.py`.
-2. Commit, push `main`, then `git tag v0.1.0 && git push origin v0.1.0`.
-3. GitHub → **Releases** → draft release for that tag → **Publish release**.
+**One-time setup**
 
-CI publishes to PyPI automatically. One-time setup: [PyPI trusted publishing](https://docs.pypi.org/trusted-publishers/) for project **`whatwasit`**, workflow `publish.yml`, environment `pypi`, owner `ThorOdinson246`, repo `whatwasit`. Also create a **`pypi`** environment under GitHub repo Settings → Environments.
+1. Create a PyPI API token: [pypi.org/manage/account/token](https://pypi.org/manage/account/token/) → **Add API token**
+   - Token scope: **`whatwasit`** (project name; use “entire account” only if the project does not exist yet on first upload)
+   - Copy the token (`pypi-AgE...`) — it is shown only once
+2. Add it to GitHub: repo **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `PYPI_API_TOKEN`
+   - Value: paste the token
+
+**Each release**
+
+1. Bump `version` in `pyproject.toml` and `whatwasit/__init__.py` (keep them identical).
+2. Commit, push `main`.
+3. `git tag v0.1.0 && git push origin v0.1.0`
+4. GitHub → **Releases** → **Draft new release** → select the tag → **Publish release**.
+
+The [publish workflow](.github/workflows/publish.yml) builds the wheel and uploads to PyPI as **`whatwasit`**. Users install with:
+
+```bash
+pip install whatwasit
+```
 
 ## Usage
 

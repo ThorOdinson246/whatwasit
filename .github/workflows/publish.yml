@@ -1,25 +1,24 @@
 name: Publish to PyPI
 
-# Publishes when you create a GitHub Release (tag must be vX.Y.Z matching pyproject.toml).
+# Publishes when you publish a GitHub Release (tag vX.Y.Z must match pyproject.toml).
 #
-# One-time PyPI setup (trusted publishing — no API token in GitHub secrets):
-#   1. https://pypi.org/manage/account/publishing/
-#   2. Add publisher: PyPI project name whatwasit, Owner ThorOdinson246, repo whatwasit,
-#      workflow publish.yml, environment pypi
-#   3. GitHub repo → Settings → Environments → New environment "pypi"
+# One-time setup:
+#   1. PyPI → Account settings → API tokens → "Add API token"
+#      - Scope: project "whatwasit" (or entire account for the first upload)
+#      - Copy the token (pypi-AgE...); you only see it once
+#   2. GitHub repo → Settings → Secrets and variables → Actions → New repository secret
+#      - Name:  PYPI_API_TOKEN
+#      - Value: paste the PyPI token
 #
 # Release flow:
 #   1. Bump version in pyproject.toml and whatwasit/__init__.py
-#   2. Commit, push main
+#   2. Commit and push main
 #   3. git tag v0.1.0 && git push origin v0.1.0
-#   4. GitHub → Releases → Draft new release → pick tag v0.1.0 → Publish release
+#   4. GitHub → Releases → Draft new release → pick tag → Publish release
 
 on:
   release:
     types: [published]
-
-permissions:
-  id-token: write
 
 concurrency:
   group: pypi-${{ github.event.release.tag_name }}
@@ -29,9 +28,6 @@ jobs:
   publish:
     name: Build and publish
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/whatwasit
     steps:
       - uses: actions/checkout@v4
 
@@ -62,3 +58,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+          password: ${{ secrets.PYPI_API_TOKEN }}
