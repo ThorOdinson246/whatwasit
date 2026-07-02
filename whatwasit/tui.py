@@ -11,7 +11,11 @@ from textual.widgets import Footer, Input, ListItem, ListView, Static
 
 from .brand import CLI_NAME
 from .models import SearchResult
-from .output import format_timestamp
+from .timefmt import format_relative_time
+
+_FOOTER_HINTS = (
+    "↑↓ nav  ·  ⏎ copy  ·  Tab focus  ·  n more  ·  q quit"
+)
 
 # Confidence bands from docs/ACCURACY_RESEARCH.md (C2 per-result badges).
 _BADGE_STRONG_MIN = 0.50
@@ -19,9 +23,9 @@ _BADGE_WEAK_MAX = 0.35
 _STRONG_MARGIN_MIN = 0.08
 
 _CONFIDENCE_STYLES = {
-    "strong": ("strong", "bold green"),
-    "medium": ("medium", "yellow"),
-    "weak": ("weak", "dim red"),
+    "strong": ("strong", "bold"),
+    "medium": ("medium", "dim"),
+    "weak": ("weak", "dim italic"),
 }
 
 _HELP_TEXT = """\
@@ -95,23 +99,23 @@ def render_result_label(
     label, style = _CONFIDENCE_STYLES[level]
 
     text = Text()
-    text.append(f"#{rank}  ", style="bold")
+    text.append(f"#{rank} ", style="dim")
     text.append(f"[{label}] ", style=style)
     text.append("\n")
 
     matched = set(result.matched_indices)
     for i, command in enumerate(result.session.commands):
         if i in matched:
-            text.append("  > ", style="bold green")
-            text.append(f"{command.raw_cmd}\n", style="bold green")
+            text.append("  › ", style="bold")
+            text.append(f"{command.raw_cmd}\n", style="bold")
         else:
             text.append("    ", style="dim")
             text.append(f"{command.raw_cmd}\n", style="dim")
 
     session = result.session
     cwd = session.cwd or "?"
-    ts = format_timestamp(session.start_ts)
-    text.append(f"  {ts}  {cwd}", style="dim italic")
+    rel = format_relative_time(session.start_ts)
+    text.append(f"  {cwd}  ·  {rel}", style="dim italic")
     return text
 
 

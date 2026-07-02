@@ -7,7 +7,6 @@ TUI mode delegates to :mod:`whatwasit.tui`.
 from __future__ import annotations
 
 import sys
-from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
 
 from rich.console import Console
@@ -15,19 +14,10 @@ from rich.panel import Panel
 from rich.text import Text
 
 from .models import SearchResult
+from .timefmt import format_relative_time, format_timestamp
 
 if TYPE_CHECKING:
     from .config import Config
-
-
-def format_timestamp(ts: Optional[int]) -> str:
-    """Render a unix-epoch timestamp as a human-readable local datetime.
-
-    Returns ``"unknown"`` if ``ts`` is ``None``.
-    """
-    if ts is None:
-        return "unknown"
-    return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _render_commands(session, matched_indices: List[int]) -> Text:
@@ -80,9 +70,9 @@ def render_results(
         header.append(f"#{rank}  ", style="bold")
         header.append(f"score={result.score:.2f}", style="cyan")
         header.append("  ")
-        header.append(format_timestamp(session.start_ts), style="magenta")
+        header.append(format_relative_time(session.start_ts), style="dim")
         header.append("  ")
-        header.append(session.cwd or "?", style="bold blue")
+        header.append(session.cwd or "?", style="dim")
 
         body = _render_commands(session, result.matched_indices)
 
@@ -106,7 +96,7 @@ def render_plain_lines(
         session = result.session
         print(
             f"#{rank}\tscore={result.score:.2f}\t"
-            f"{format_timestamp(session.start_ts)}\t{session.cwd or '?'}",
+            f"{format_relative_time(session.start_ts)}\t{session.cwd or '?'}",
             file=out,
         )
         matched = set(result.matched_indices)
