@@ -13,6 +13,7 @@ name: Publish to PyPI
 #   → workflow detects the version bump, publishes, and creates tag vX.Y.Z
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -91,14 +92,25 @@ jobs:
             exit 0
           fi
 
-          PREVIOUS="$(git show HEAD~1:pyproject.toml 2>/dev/null | python - <<'PY' || true
-          import sys, tomllib
-          data = sys.stdin.buffer.read()
-          if not data:
-              raise SystemExit(0)
-          print(tomllib.loads(data)["project"]["version"])
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if curl -fsS "https://pypi.org/pypi/whatwasit/$CURRENT/json" >/dev/null; then
+              echo "Version $CURRENT already on PyPI; skipping publish"
+              echo "publish=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Manual publish requested for version $CURRENT"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PREVIOUS=""
+          if git show HEAD~1:pyproject.toml > /tmp/prev_pyproject.toml 2>/dev/null; then
+            PREVIOUS="$(python - <<'PY'
+          import tomllib
+          print(tomllib.load(open("/tmp/prev_pyproject.toml", "rb"))["project"]["version"])
           PY
           )"
+          fi
 
           if [ -z "$PREVIOUS" ]; then
             echo "No previous pyproject.toml on parent commit; skipping auto-publish"
@@ -145,7 +157,7 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Create release tag
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           TAG="v${VERSION}"
