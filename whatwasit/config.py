@@ -52,7 +52,7 @@ class Config:
     # Output / TUI
     output_mode: str = "tui"  # "tui" | "plain"
     tui_page_size: int = 5
-    tui_theme: str = "midnight"  # midnight | default | high-contrast
+    tui_theme: str = "midnight"  # midnight | default | high-contrast | github-dark | github-colorblind
     use_daemon: bool = True
 
     # Schema (read-only constant exposed for convenience)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Sequence
 
 # Shared layout rules; theme classes only override colors.
 BASE_CSS = """
@@ -35,7 +36,13 @@ ListView > ListItem {
 }
 """
 
-THEME_ORDER = ("midnight", "default", "high-contrast")
+THEME_ORDER = (
+    "midnight",
+    "default",
+    "high-contrast",
+    "github-dark",
+    "github-colorblind",
+)
 
 
 @dataclass(frozen=True)
@@ -48,7 +55,7 @@ class Theme:
 THEMES: dict[str, Theme] = {
     "midnight": Theme(
         name="midnight",
-        label="Midnight (iCommand)",
+        label="Midnight",
         css=BASE_CSS
         + """
 Screen.theme-midnight {
@@ -156,6 +163,108 @@ Screen.theme-high-contrast .row-warn {
 }
 """,
     ),
+    "github-dark": Theme(
+        name="github-dark",
+        label="GitHub dark",
+        css=BASE_CSS
+        + """
+Screen.theme-github-dark {
+    background: #0d1117;
+}
+Screen.theme-github-dark #prompt {
+    background: #161b22;
+    color: #e6edf3;
+    border: tall #30363d;
+}
+Screen.theme-github-dark #header,
+Screen.theme-github-dark #status {
+    color: #7d8590;
+}
+Screen.theme-github-dark #banner {
+    color: #d29922;
+}
+Screen.theme-github-dark #results {
+    background: #0d1117;
+    border: solid #30363d;
+}
+Screen.theme-github-dark ListView > ListItem {
+    background: #0d1117;
+    color: #e6edf3;
+}
+Screen.theme-github-dark ListView > ListItem.--highlight {
+    background: #161b22;
+}
+Screen.theme-github-dark .row-command {
+    color: #e6edf3;
+    text-style: bold;
+}
+Screen.theme-github-dark .row-meta {
+    color: #7d8590;
+}
+Screen.theme-github-dark .row-path,
+Screen.theme-github-dark .row-context {
+    color: #7d8590;
+}
+Screen.theme-github-dark .row-hint {
+    color: #484f58;
+    text-style: italic;
+}
+Screen.theme-github-dark .row-warn {
+    color: #d29922;
+}
+""",
+    ),
+    "github-colorblind": Theme(
+        name="github-colorblind",
+        label="GitHub dark (colorblind)",
+        css=BASE_CSS
+        + """
+Screen.theme-github-colorblind {
+    background: #0d1117;
+}
+Screen.theme-github-colorblind #prompt {
+    background: #161b22;
+    color: #e6edf3;
+    border: tall #30363d;
+}
+Screen.theme-github-colorblind #header,
+Screen.theme-github-colorblind #status {
+    color: #7d8590;
+}
+Screen.theme-github-colorblind #banner {
+    color: #966600;
+}
+Screen.theme-github-colorblind #results {
+    background: #0d1117;
+    border: solid #30363d;
+}
+Screen.theme-github-colorblind ListView > ListItem {
+    background: #0d1117;
+    color: #e6edf3;
+}
+Screen.theme-github-colorblind ListView > ListItem.--highlight {
+    background: #161b22;
+}
+Screen.theme-github-colorblind .row-command {
+    color: #e6edf3;
+    text-style: bold;
+}
+Screen.theme-github-colorblind .row-meta {
+    color: #7d8590;
+}
+Screen.theme-github-colorblind .row-path,
+Screen.theme-github-colorblind .row-context {
+    color: #7d8590;
+}
+Screen.theme-github-colorblind .row-hint {
+    color: #484f58;
+    text-style: italic;
+}
+Screen.theme-github-colorblind .row-warn {
+    color: #316dca;
+}
+""",
+    ),
 }
 
 DEFAULT_THEME = "midnight"
@@ -172,6 +281,15 @@ def next_theme(current: str) -> str:
     current = normalize_theme(current)
     idx = THEME_ORDER.index(current)
     return THEME_ORDER[(idx + 1) % len(THEME_ORDER)]
+
+
+def cycle_theme_ids(textual_theme_names: Sequence[str]) -> tuple[str, ...]:
+    """Ordered theme IDs for ``t`` key cycling (custom layer, then Textual built-ins)."""
+    ids = [f"whatwasit:{key}" for key in THEME_ORDER]
+    for name in sorted(textual_theme_names):
+        if name != "textual-ansi":
+            ids.append(f"textual:{name}")
+    return tuple(ids)
 
 
 def theme_css(name: str) -> str:

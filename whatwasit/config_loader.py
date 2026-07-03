@@ -19,7 +19,13 @@ if TYPE_CHECKING:
     from .config import Config
 
 _VALID_OUTPUT_MODES = frozenset({"tui", "plain"})
-_VALID_TUI_THEMES = frozenset({"midnight", "default", "high-contrast"})
+_VALID_TUI_THEMES = frozenset({
+    "midnight",
+    "default",
+    "high-contrast",
+    "github-dark",
+    "github-colorblind",
+})
 
 
 def _xdg_config_home() -> Path:

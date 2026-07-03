@@ -103,7 +103,7 @@ press **Space** to expand. When the top result is below the confidence threshold
 | Space | Expand or collapse a session |
 | `m` or `/more` | Show more results |
 | `t` or `/theme` | Cycle color theme |
-| `/theme <name>` | Set theme (`midnight`, `default`, `high-contrast`) |
+| `/theme <name>` | Set theme (`midnight`, `default`, `high-contrast`, `github-dark`, `github-colorblind`) |
 | `/settings` | Show theme and config |
 | `/help` | Show keybindings |
 | Tab / Shift+Tab | Focus results ↔ search |
@@ -119,7 +119,7 @@ Optional config file: `~/.config/whatwasit/config.toml`
 ```toml
 output_mode = "tui"              # "tui" or "plain"
 tui_page_size = 5
-tui_theme = "midnight"           # midnight | default | high-contrast
+tui_theme = "midnight"           # midnight | default | high-contrast | github-dark | github-colorblind
 low_confidence_threshold = 0.40
 use_daemon = true                # use warm daemon when running (if started)
 ```

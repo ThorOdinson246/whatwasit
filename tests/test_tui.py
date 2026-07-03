@@ -8,7 +8,10 @@ import pytest
 from textual.widgets import Input, ListView, Static
 
 from whatwasit.models import Command, SearchResult, Session
+from whatwasit.config_loader import load_config_file
+from whatwasit.themes import THEME_ORDER, cycle_theme_ids
 from whatwasit.tui import (
+    TextualBuiltinThemeProvider,
     WhatwasitREPL,
     WhatwasitTUI,
     confidence_level,
@@ -213,3 +216,54 @@ async def test_repl_query_and_slash_commands() -> None:
         settings_text = str(pilot.app.query_one("#header", Static).render())
         assert "whatwasit settings" in settings_text
         assert "midnight" in settings_text
+
+
+def test_change_theme_overrides_textual_default() -> None:
+    from textual.app import App
+
+    assert WhatwasitREPL.action_change_theme is not App.action_change_theme
+    assert WhatwasitTUI.action_change_theme is not App.action_change_theme
+
+
+@pytest.mark.asyncio
+async def test_nested_theme_palette_includes_textual_builtins() -> None:
+    app = WhatwasitREPL(lambda q: [])
+
+    async with app.run_test() as pilot:
+        provider = TextualBuiltinThemeProvider(pilot.app.screen)
+        discovered = [hit async for hit in provider.discover()]
+
+    names = " ".join(str(h) for h in discovered)
+    assert "nord" in names
+    assert "dracula" in names
+    assert len(discovered) >= 10
+
+
+def test_cycle_theme_ids_covers_custom_and_textual() -> None:
+    ids = cycle_theme_ids(["nord", "dracula", "textual-ansi"])
+    assert len(ids) == len(THEME_ORDER) + 2
+    assert ids[0] == "whatwasit:midnight"
+    assert "textual:nord" in ids
+    assert "textual:dracula" in ids
+    assert not any("textual-ansi" in i for i in ids)
+
+
+@pytest.mark.asyncio
+async def test_t_key_cycles_in_repl_with_search_focus() -> None:
+    app = WhatwasitREPL(lambda q: [])
+
+    async with app.run_test() as pilot:
+        assert pilot.app.query_one("#prompt", Input).has_focus
+        await pilot.press("t")
+        assert pilot.app._theme_name == "default"
+
+
+@pytest.mark.asyncio
+async def test_t_key_cycles_past_custom_into_textual() -> None:
+    app = WhatwasitTUI([], "query", theme="midnight")
+
+    async with app.run_test() as pilot:
+        for _ in range(len(THEME_ORDER)):
+            await pilot.press("t")
+        assert pilot.app._theme_name == "default"
+        assert load_config_file().get("textual_theme") == "atom-one-dark"

@@ -8,21 +8,24 @@ from rich.text import Text
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
+from textual.command import CommandPalette, DiscoveryHit, Hit, Hits, Provider
 from textual.containers import Horizontal, Vertical
+from textual.events import Key
 from textual.widgets import Footer, Input, ListItem, ListView, Static
 
 from .brand import CLI_NAME
 from .clipboard import copy_to_clipboard as copy_to_system_clipboard
-from .config_loader import config_file_path, save_config_value
+from .config_loader import config_file_path, load_config_file, save_config_value
 from .models import SearchResult
 from .textutil import truncate_display
 from .themes import (
     DEFAULT_THEME,
     THEMES,
+    THEME_ORDER,
     WEAK_INDICATOR,
     combined_stylesheet,
+    cycle_theme_ids,
     format_settings_text,
-    next_theme,
     normalize_theme,
 )
 from .timefmt import format_relative_time
@@ -49,7 +52,8 @@ Keybindings:
   Enter        copy matched command(s) to clipboard
   Space        expand or collapse a session
   m            show more results
-  t            cycle color theme (midnight → default → high-contrast → …)
+  t            cycle color theme (midnight → default → … → github-colorblind)
+  ctrl+p       command palette — pick Theme for nested theme list
   q            quit
 
 Slash commands:
@@ -179,6 +183,16 @@ def render_result_label(
     return text
 
 
+class SearchInput(Input):
+    """Search box; empty ``t`` cycles theme instead of typing."""
+
+    def on_key(self, event: Key) -> None:
+        if event.key == "t" and not self.value:
+            event.prevent_default()
+            event.stop()
+            self.app.action_cycle_theme()
+
+
 class SessionRow(Vertical):
     """One search result: command + right-aligned meta, path, optional context."""
 
@@ -217,7 +231,7 @@ class SessionRow(Vertical):
         )
         multi = len(session.commands) > 1
 
-        if multi or expanded:
+        if multi or self._expanded:
             yield Static(f"  {cwd}", classes="row-path")
             for i in visible_indices:
                 if i == primary and not self._expanded:
@@ -236,6 +250,66 @@ class SessionRow(Vertical):
             yield Static(f"  {cwd}", classes="row-path")
 
 
+class WhatwasitThemeProvider(Provider):
+    """Theme list for the nested palette opened from Ctrl+P → Theme."""
+
+    async def discover(self) -> Hits:
+        app = self.app
+        if not hasattr(app, "action_set_theme"):
+            return
+        for key in THEME_ORDER:
+            theme = THEMES[key]
+            yield DiscoveryHit(
+                theme.label,
+                lambda k=key: app.action_set_theme(k),
+            )
+
+    async def search(self, query: str) -> Hits:
+        app = self.app
+        if not hasattr(app, "action_set_theme"):
+            return
+        matcher = self.matcher(query)
+        for key in THEME_ORDER:
+            theme = THEMES[key]
+            if (match := matcher.match(theme.label)) > 0:
+                yield Hit(
+                    match,
+                    matcher.highlight(theme.label),
+                    lambda k=key: app.action_set_theme(k),
+                )
+
+
+class TextualBuiltinThemeProvider(Provider):
+    """Textual built-in themes (Nord, Dracula, …) in the nested Theme palette."""
+
+    async def discover(self) -> Hits:
+        app = self.app
+        if not hasattr(app, "action_apply_textual_theme"):
+            return
+        for name in sorted(app.available_themes):
+            if name == "textual-ansi":
+                continue
+            yield DiscoveryHit(
+                name,
+                lambda n=name: app.action_apply_textual_theme(n),
+            )
+
+    async def search(self, query: str) -> Hits:
+        app = self.app
+        if not hasattr(app, "action_apply_textual_theme"):
+            return
+        matcher = self.matcher(query)
+        for name in sorted(app.available_themes):
+            if name == "textual-ansi":
+                continue
+            if (match := matcher.match(name)) > 0:
+                yield Hit(
+                    match,
+                    matcher.highlight(name),
+                    lambda n=name: app.action_apply_textual_theme(n),
+                )
+
+
 class _ThemedAppMixin:
     """Apply and cycle Textual color themes."""
 
@@ -252,29 +326,76 @@ class _ThemedAppMixin:
             screen.remove_class(f"theme-{theme}")
         screen.add_class(f"theme-{self._theme_name}")
 
-    def action_set_theme(self, name: str = "") -> None:
-        """Set theme by name, or cycle to the next theme when *name* is empty."""
-        if name:
-            key = name.lower().strip()
-            if key not in THEMES:
-                available = ", ".join(THEME_ORDER)
-                self.notify(
-                    f"Unknown theme {name!r} — try: {available}",
-                    severity="warning",
-                    timeout=4,
-                )
-                return
-            self._theme_name = key
-        else:
-            self._theme_name = next_theme(self._theme_name)
-
+    def action_set_theme(self, name: str) -> None:
+        """Set a whatwasit custom theme by key."""
+        key = name.lower().strip()
+        if key not in THEMES:
+            available = ", ".join(THEME_ORDER)
+            self.notify(
+                f"Unknown theme {name!r} — try: {available}",
+                severity="warning",
+                timeout=4,
+            )
+            return
+        self._theme_name = key
         save_config_value("tui_theme", self._theme_name)
+        save_config_value("textual_theme", "")
         self._apply_theme(self._theme_name)
         label = THEMES[self._theme_name].label
-        self.notify(f"Theme: {label} ({self._theme_name})", timeout=2)
+        self.notify(f"Theme: {label}", timeout=2)
+
+    def action_apply_textual_theme(self, name: str) -> None:
+        """Apply a Textual built-in theme (uses the default whatwasit CSS layer)."""
+        if name not in self.available_themes:
+            self.notify(f"Unknown theme {name!r}", severity="warning", timeout=3)
+            return
+        self.theme = name
+        self._theme_name = "default"
+        self._apply_theme("default")
+        save_config_value("tui_theme", "default")
+        save_config_value("textual_theme", name)
+        self.notify(f"Theme: {name}", timeout=2)
+
+    def _restore_textual_theme(self) -> None:
+        """Re-apply saved Textual theme when using the default whatwasit layer."""
+        if self._theme_name != "default":
+            return
+        data = load_config_file()
+        name = data.get("textual_theme")
+        if isinstance(name, str) and name in self.available_themes:
+            self.theme = name
+
+    def _active_theme_id(self) -> str:
+        if self._theme_name != "default":
+            return f"whatwasit:{self._theme_name}"
+        data = load_config_file()
+        name = data.get("textual_theme")
+        if isinstance(name, str) and name and name in self.available_themes:
+            return f"textual:{name}"
+        return "whatwasit:default"
 
     def action_cycle_theme(self) -> None:
-        self.action_set_theme("")
+        """Cycle ``t`` through custom and Textual built-in themes."""
+        ids = cycle_theme_ids(self.available_themes.keys())
+        current = self._active_theme_id()
+        try:
+            idx = ids.index(current)
+        except ValueError:
+            idx = -1
+        kind, name = ids[(idx + 1) % len(ids)].split(":", 1)
+        if kind == "whatwasit":
+            self.action_set_theme(name)
+        else:
+            self.action_apply_textual_theme(name)
+
+    def action_change_theme(self) -> None:
+        """Open nested palette (Ctrl+P → Theme) with custom + Textual themes."""
+        self.push_screen(
+            CommandPalette(
+                providers=[WhatwasitThemeProvider, TextualBuiltinThemeProvider],
+                placeholder="Search for themes…",
+            )
+        )
 
     def action_show_settings(self) -> None:
         self.query_one("#header", Static).update(
@@ -492,6 +613,7 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
 
     def on_mount(self) -> None:
         self._apply_theme(self._theme_name)
+        self._restore_textual_theme()
         self._refresh_results_ui()
 
     def _refresh_results_ui(self) -> None:
@@ -551,7 +673,7 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         self._theme_name = normalize_theme(theme)
 
     def compose(self) -> ComposeResult:
-        yield Input(placeholder="Search shell history…", id="prompt")
+        yield SearchInput(placeholder="Search shell history…", id="prompt")
         yield Static("Type to search your shell history", id="header")
         yield Static("", id="banner")
         yield ListView(id="results")
@@ -560,7 +682,8 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
 
     def on_mount(self) -> None:
         self._apply_theme(self._theme_name)
-        self.query_one("#prompt", Input).focus()
+        self._restore_textual_theme()
+        self.query_one("#prompt", SearchInput).focus()
 
     def _cancel_debounce(self) -> None:
         if self._debounce_timer is not None:
