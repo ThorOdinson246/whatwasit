@@ -7,15 +7,18 @@
   "n_null": 10,
   "model": "sentence-transformers/all-MiniLM-L6-v2",
   "embedding_dim": 384,
+  "search_config": {
+    "hybrid_search": true
+  },
   "aggregate": {
     "semantic": {
-      "P@1": 0.5348837209302325,
-      "P@3": 0.2751937984496124,
-      "P@5": 0.18604651162790697,
-      "R@5": 0.9302325581395349,
-      "R@10": 0.9767441860465116,
-      "MRR": 0.6996124031007752,
-      "nDCG@5": 0.7511722306451758
+      "P@1": 0.4186046511627907,
+      "P@3": 0.22868217054263562,
+      "P@5": 0.17674418604651165,
+      "R@5": 0.8837209302325582,
+      "R@10": 0.9534883720930233,
+      "MRR": 0.595860728418868,
+      "nDCG@5": 0.6557034015619161
     },
     "keyword": {
       "P@1": 0.29069767441860467,
@@ -52,13 +55,13 @@
     "cron-setup": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
-        "P@3": 0.3333333333333333,
-        "P@5": 0.2,
-        "R@5": 1.0,
+        "P@1": 0.5,
+        "P@3": 0.16666666666666666,
+        "P@5": 0.1,
+        "R@5": 0.5,
         "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "MRR": 0.5714285714285714,
+        "nDCG@5": 0.5
       },
       "keyword": {
         "P@1": 0.5,
@@ -75,11 +78,11 @@
       "semantic": {
         "P@1": 0.0,
         "P@3": 0.16666666666666666,
-        "P@5": 0.2,
-        "R@5": 1.0,
+        "P@5": 0.1,
+        "R@5": 0.5,
         "R@10": 1.0,
-        "MRR": 0.26666666666666666,
-        "nDCG@5": 0.4434264036172708
+        "MRR": 0.25,
+        "nDCG@5": 0.25
       },
       "keyword": {
         "P@1": 0.0,
@@ -94,13 +97,13 @@
     "db-migrate-down": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
+        "P@1": 0.5,
         "P@3": 0.3333333333333333,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "MRR": 0.75,
+        "nDCG@5": 0.8154648767857288
       },
       "keyword": {
         "P@1": 0.0,
@@ -221,12 +224,12 @@
       "n": 2,
       "semantic": {
         "P@1": 0.5,
-        "P@3": 0.3333333333333333,
-        "P@5": 0.2,
-        "R@5": 1.0,
+        "P@3": 0.16666666666666666,
+        "P@5": 0.1,
+        "R@5": 0.5,
         "R@10": 1.0,
-        "MRR": 0.75,
-        "nDCG@5": 0.8154648767857288
+        "MRR": 0.5833333333333334,
+        "nDCG@5": 0.5
       },
       "keyword": {
         "P@1": 0.5,
@@ -267,8 +270,8 @@
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 0.41666666666666663,
-        "nDCG@5": 0.5654648767857288
+        "MRR": 0.3333333333333333,
+        "nDCG@5": 0.5
       },
       "keyword": {
         "P@1": 0.5,
@@ -326,12 +329,12 @@
       "n": 2,
       "semantic": {
         "P@1": 0.0,
-        "P@3": 0.16666666666666666,
+        "P@3": 0.0,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 0.35,
-        "nDCG@5": 0.5088912804029996
+        "MRR": 0.225,
+        "nDCG@5": 0.40876468265396737
       },
       "keyword": {
         "P@1": 0.5,
@@ -347,12 +350,12 @@
       "n": 2,
       "semantic": {
         "P@1": 0.0,
-        "P@3": 0.16666666666666666,
+        "P@3": 0.0,
         "P@5": 0.1,
         "R@5": 0.5,
-        "R@10": 1.0,
-        "MRR": 0.3,
-        "nDCG@5": 0.31546487678572877
+        "R@10": 0.5,
+        "MRR": 0.13846153846153847,
+        "nDCG@5": 0.19342640361727081
       },
       "keyword": {
         "P@1": 0.0,
@@ -388,13 +391,13 @@
     "git-undo": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
+        "P@1": 0.5,
         "P@3": 0.3333333333333333,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "MRR": 0.75,
+        "nDCG@5": 0.8154648767857288
       },
       "keyword": {
         "P@1": 0.0,
@@ -409,13 +412,13 @@
     "gpg-encrypt": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
-        "P@3": 0.3333333333333333,
+        "P@1": 0.5,
+        "P@3": 0.16666666666666666,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "MRR": 0.6,
+        "nDCG@5": 0.6934264036172708
       },
       "keyword": {
         "P@1": 1.0,
@@ -451,13 +454,13 @@
     "log-parse": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
-        "P@3": 0.3333333333333333,
+        "P@1": 0.5,
+        "P@3": 0.16666666666666666,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "MRR": 0.625,
+        "nDCG@5": 0.7153382790366966
       },
       "keyword": {
         "P@1": 0.0,
@@ -556,13 +559,13 @@
     "npm-cache": {
       "n": 2,
       "semantic": {
-        "P@1": 0.5,
+        "P@1": 1.0,
         "P@3": 0.3333333333333333,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 0.75,
-        "nDCG@5": 0.8154648767857288
+        "MRR": 1.0,
+        "nDCG@5": 1.0
       },
       "keyword": {
         "P@1": 0.5,
@@ -598,13 +601,13 @@
     "perm-chmod": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
+        "P@1": 0.5,
         "P@3": 0.3333333333333333,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "MRR": 0.6666666666666666,
+        "nDCG@5": 0.75
       },
       "keyword": {
         "P@1": 1.0,
@@ -620,12 +623,12 @@
       "n": 2,
       "semantic": {
         "P@1": 0.5,
-        "P@3": 0.3333333333333333,
+        "P@3": 0.16666666666666666,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 0.75,
-        "nDCG@5": 0.8154648767857288
+        "MRR": 0.625,
+        "nDCG@5": 0.7153382790366966
       },
       "keyword": {
         "P@1": 0.0,
@@ -645,8 +648,8 @@
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 0.625,
-        "nDCG@5": 0.7153382790366966
+        "MRR": 0.6,
+        "nDCG@5": 0.6934264036172708
       },
       "keyword": {
         "P@1": 0.0,
@@ -666,8 +669,8 @@
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 0.6666666666666666,
-        "nDCG@5": 0.75
+        "MRR": 0.75,
+        "nDCG@5": 0.8154648767857288
       },
       "keyword": {
         "P@1": 0.0,
@@ -766,13 +769,13 @@
     "rsync-sync": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
-        "P@3": 0.3333333333333333,
-        "P@5": 0.2,
-        "R@5": 1.0,
-        "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "P@1": 0.5,
+        "P@3": 0.16666666666666666,
+        "P@5": 0.1,
+        "R@5": 0.5,
+        "R@10": 0.5,
+        "MRR": 0.5454545454545454,
+        "nDCG@5": 0.5
       },
       "keyword": {
         "P@1": 0.0,
@@ -787,13 +790,13 @@
     "sed-replace": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
-        "P@3": 0.3333333333333333,
+        "P@1": 0.5,
+        "P@3": 0.16666666666666666,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "MRR": 0.6,
+        "nDCG@5": 0.6934264036172708
       },
       "keyword": {
         "P@1": 0.5,
@@ -809,12 +812,12 @@
       "n": 2,
       "semantic": {
         "P@1": 0.5,
-        "P@3": 0.3333333333333333,
+        "P@3": 0.16666666666666666,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 0.6666666666666666,
-        "nDCG@5": 0.75
+        "MRR": 0.6,
+        "nDCG@5": 0.6934264036172708
       },
       "keyword": {
         "P@1": 0.5,
@@ -850,13 +853,13 @@
     "ssh-keys": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
+        "P@1": 0.5,
         "P@3": 0.3333333333333333,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "MRR": 0.6666666666666666,
+        "nDCG@5": 0.75
       },
       "keyword": {
         "P@1": 0.5,
@@ -892,13 +895,13 @@
     "tar-archive": {
       "n": 2,
       "semantic": {
-        "P@1": 1.0,
-        "P@3": 0.3333333333333333,
+        "P@1": 0.0,
+        "P@3": 0.0,
         "P@5": 0.2,
         "R@5": 1.0,
         "R@10": 1.0,
-        "MRR": 1.0,
-        "nDCG@5": 1.0
+        "MRR": 0.2,
+        "nDCG@5": 0.38685280723454163
       },
       "keyword": {
         "P@1": 0.5,
@@ -1059,49 +1062,49 @@
       {
         "threshold": 0.25,
         "semantic_null_fp_rate": 0.2,
-        "semantic_answerable_suppressed": 0.0435
+        "semantic_answerable_suppressed": 0.1389
       },
       {
         "threshold": 0.3,
         "semantic_null_fp_rate": 0.1,
-        "semantic_answerable_suppressed": 0.1087
+        "semantic_answerable_suppressed": 0.2222
       },
       {
         "threshold": 0.35,
         "semantic_null_fp_rate": 0.1,
-        "semantic_answerable_suppressed": 0.2391
+        "semantic_answerable_suppressed": 0.3333
       },
       {
         "threshold": 0.4,
         "semantic_null_fp_rate": 0.1,
-        "semantic_answerable_suppressed": 0.4565
+        "semantic_answerable_suppressed": 0.5556
       },
       {
         "threshold": 0.45,
         "semantic_null_fp_rate": 0.0,
-        "semantic_answerable_suppressed": 0.6957
+        "semantic_answerable_suppressed": 0.8056
       },
       {
         "threshold": 0.5,
         "semantic_null_fp_rate": 0.0,
-        "semantic_answerable_suppressed": 0.7826
+        "semantic_answerable_suppressed": 0.8611
       },
       {
         "threshold": 0.55,
         "semantic_null_fp_rate": 0.0,
-        "semantic_answerable_suppressed": 0.8261
+        "semantic_answerable_suppressed": 0.8611
       },
       {
         "threshold": 0.6,
         "semantic_null_fp_rate": 0.0,
-        "semantic_answerable_suppressed": 0.9783
+        "semantic_answerable_suppressed": 0.9722
       }
     ],
     "answerable_top1_semantic": {
-      "mean": 0.4186,
-      "p50": 0.4167,
+      "mean": 0.3715,
+      "p50": 0.3891,
       "p95": 0.5695,
-      "min": 0.1983,
+      "min": 0.0296,
       "max": 0.6222
     },
     "null_top1_semantic": {
@@ -1153,25 +1156,25 @@
   },
   "timing": {
     "semantic_embed_ms": {
-      "mean": 9.9801,
-      "p50": 8.0636,
-      "p95": 19.4388,
-      "min": 3.7071,
-      "max": 43.0987
+      "mean": 10.2616,
+      "p50": 8.4571,
+      "p95": 27.3385,
+      "min": 3.0705,
+      "max": 43.3731
     },
     "semantic_ann_ms": {
-      "mean": 0.4942,
-      "p50": 0.2843,
-      "p95": 2.917,
-      "min": 0.2561,
-      "max": 4.6231
+      "mean": 0.3742,
+      "p50": 0.3871,
+      "p95": 0.4902,
+      "min": 0.2232,
+      "max": 0.7367
     },
     "semantic_total_ms": {
-      "mean": 2660.991,
-      "p50": 2589.1318,
-      "p95": 3176.7096,
-      "min": 2349.5122,
-      "max": 3994.3466
+      "mean": 2499.1238,
+      "p50": 2561.3321,
+      "p95": 3122.0562,
+      "min": 1637.8143,
+      "max": 3279.8375
     }
   },
   "per_query": [
@@ -1184,15 +1187,15 @@
         "top3": [
           [
             "git_undo_commit",
-            0.4261
+            0.0296
           ],
           [
             "db_migration_rollback",
-            0.3338
+            0.0291
           ],
           [
             "git_rebase_conflict",
-            0.3156
+            0.0287
           ]
         ],
         "metrics": {
@@ -1294,29 +1297,29 @@
       "topic": "git-merge",
       "gold": "git_merge_conflict",
       "semantic": {
-        "rank": 2,
+        "rank": 5,
         "top3": [
           [
             "tmux_session",
-            0.2531
+            0.0318
           ],
           [
-            "git_merge_conflict",
-            0.2393
+            "distractor_03",
+            0.0311
           ],
           [
-            "git_undo_commit",
-            0.2206
+            "distractor_08",
+            0.0301
           ]
         ],
         "metrics": {
           "P@1": 0.0,
-          "P@3": 0.3333333333333333,
+          "P@3": 0.0,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 0.6309297535714575,
-          "MRR": 0.5
+          "nDCG@5": 0.38685280723454163,
+          "MRR": 0.2
         }
       },
       "keyword": {
@@ -1351,19 +1354,19 @@
       "topic": "git-merge",
       "gold": "git_merge_conflict",
       "semantic": {
-        "rank": 10,
+        "rank": 13,
         "top3": [
           [
-            "git_undo_commit",
-            0.2392
-          ],
-          [
             "distractor_08",
-            0.2331
+            0.0318
           ],
           [
-            "log_parsing_grep",
-            0.216
+            "distractor_03",
+            0.0313
+          ],
+          [
+            "distractor_06",
+            0.0302
           ]
         ],
         "metrics": {
@@ -1371,9 +1374,9 @@
           "P@3": 0.0,
           "P@5": 0.0,
           "R@5": 0.0,
-          "R@10": 1.0,
+          "R@10": 0.0,
           "nDCG@5": 0.0,
-          "MRR": 0.1
+          "MRR": 0.07692307692307693
         }
       },
       "keyword": {
@@ -1408,29 +1411,29 @@
       "topic": "git-undo",
       "gold": "git_undo_commit",
       "semantic": {
-        "rank": 1,
+        "rank": 2,
         "top3": [
           [
-            "git_undo_commit",
-            0.4216
+            "db_migration_rollback",
+            0.0295
           ],
           [
-            "db_migration_rollback",
-            0.418
+            "git_undo_commit",
+            0.0294
           ],
           [
             "db_migration_run",
-            0.3523
+            0.029
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
+          "P@1": 0.0,
           "P@3": 0.3333333333333333,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.6309297535714575,
+          "MRR": 0.5
         }
       },
       "keyword": {
@@ -1469,15 +1472,15 @@
         "top3": [
           [
             "git_undo_commit",
-            0.3882
+            0.0296
+          ],
+          [
+            "distractor_03",
+            0.0296
           ],
           [
             "db_migration_rollback",
-            0.3814
-          ],
-          [
-            "db_migration_run",
-            0.313
+            0.0291
           ]
         ],
         "metrics": {
@@ -1526,15 +1529,15 @@
         "top3": [
           [
             "git_undo_commit",
-            0.4312
+            0.0297
           ],
           [
             "npm_audit_fix",
-            0.3455
+            0.0293
           ],
           [
             "db_migration_rollback",
-            0.3236
+            0.0289
           ]
         ],
         "metrics": {
@@ -1579,29 +1582,29 @@
       "topic": "git-history-scrub",
       "gold": "git_large_file_purge",
       "semantic": {
-        "rank": 2,
+        "rank": 4,
         "top3": [
           [
+            "distractor_04",
+            0.0299
+          ],
+          [
             "find_large_old_files",
-            0.5464
+            0.0294
           ],
           [
-            "git_large_file_purge",
-            0.3996
-          ],
-          [
-            "gpg_encrypt_file",
-            0.3889
+            "distractor_03",
+            0.0292
           ]
         ],
         "metrics": {
           "P@1": 0.0,
-          "P@3": 0.3333333333333333,
+          "P@3": 0.0,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 0.6309297535714575,
-          "MRR": 0.5
+          "nDCG@5": 0.43067655807339306,
+          "MRR": 0.25
         }
       },
       "keyword": {
@@ -1693,19 +1696,19 @@
       "topic": "docker-volumes",
       "gold": "docker_volume_mount",
       "semantic": {
-        "rank": 2,
+        "rank": 3,
         "top3": [
           [
-            "docker_disk_prune",
-            0.2454
+            "distractor_12",
+            0.0315
+          ],
+          [
+            "distractor_02",
+            0.0299
           ],
           [
             "docker_volume_mount",
-            0.2445
-          ],
-          [
-            "tmux_session",
-            0.1516
+            0.0296
           ]
         ],
         "metrics": {
@@ -1714,8 +1717,8 @@
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 0.6309297535714575,
-          "MRR": 0.5
+          "nDCG@5": 0.5,
+          "MRR": 0.3333333333333333
         }
       },
       "keyword": {
@@ -1921,29 +1924,29 @@
       "topic": "docker-compose",
       "gold": "docker_compose_stack",
       "semantic": {
-        "rank": 2,
+        "rank": 6,
         "top3": [
           [
             "distractor_01",
-            0.247
+            0.032
           ],
           [
-            "docker_compose_stack",
-            0.2195
+            "distractor_03",
+            0.0303
           ],
           [
-            "tar_backup",
-            0.1817
+            "distractor_12",
+            0.0301
           ]
         ],
         "metrics": {
           "P@1": 0.0,
-          "P@3": 0.3333333333333333,
-          "P@5": 0.2,
-          "R@5": 1.0,
+          "P@3": 0.0,
+          "P@5": 0.0,
+          "R@5": 0.0,
           "R@10": 1.0,
-          "nDCG@5": 0.6309297535714575,
-          "MRR": 0.5
+          "nDCG@5": 0.0,
+          "MRR": 0.16666666666666666
         }
       },
       "keyword": {
@@ -2833,29 +2836,29 @@
       "topic": "npm-cache",
       "gold": "npm_cache_clear",
       "semantic": {
-        "rank": 2,
+        "rank": 1,
         "top3": [
           [
-            "disk_space_cleanup",
-            0.4417
-          ],
-          [
             "npm_cache_clear",
-            0.3146
+            0.0325
           ],
           [
-            "find_large_old_files",
-            0.2746
+            "distractor_01",
+            0.0297
+          ],
+          [
+            "npm_dependency_resolution",
+            0.0293
           ]
         ],
         "metrics": {
-          "P@1": 0.0,
+          "P@1": 1.0,
           "P@3": 0.3333333333333333,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 0.6309297535714575,
-          "MRR": 0.5
+          "nDCG@5": 1.0,
+          "MRR": 1.0
         }
       },
       "keyword": {
@@ -2947,29 +2950,29 @@
       "topic": "ssh-keys",
       "gold": "ssh_key_setup",
       "semantic": {
-        "rank": 1,
+        "rank": 3,
         "top3": [
           [
+            "distractor_07",
+            0.0303
+          ],
+          [
+            "distractor_08",
+            0.0302
+          ],
+          [
             "ssh_key_setup",
-            0.3398
-          ],
-          [
-            "ssh_permission_denied",
-            0.263
-          ],
-          [
-            "tmux_session",
-            0.2371
+            0.0296
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
+          "P@1": 0.0,
           "P@3": 0.3333333333333333,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.5,
+          "MRR": 0.3333333333333333
         }
       },
       "keyword": {
@@ -3061,29 +3064,29 @@
       "topic": "ssh-agent",
       "gold": "ssh_agent_forwarding",
       "semantic": {
-        "rank": 3,
+        "rank": 5,
         "top3": [
           [
+            "distractor_08",
+            0.031
+          ],
+          [
             "ssh_permission_denied",
-            0.3353
+            0.0297
           ],
           [
             "ssh_key_setup",
-            0.3336
-          ],
-          [
-            "ssh_agent_forwarding",
-            0.1956
+            0.0293
           ]
         ],
         "metrics": {
           "P@1": 0.0,
-          "P@3": 0.3333333333333333,
+          "P@3": 0.0,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 0.5,
-          "MRR": 0.3333333333333333
+          "nDCG@5": 0.38685280723454163,
+          "MRR": 0.2
         }
       },
       "keyword": {
@@ -3232,29 +3235,29 @@
       "topic": "cron-setup",
       "gold": "cron_job_setup",
       "semantic": {
-        "rank": 1,
+        "rank": 7,
         "top3": [
           [
-            "cron_job_setup",
-            0.4994
-          ],
-          [
             "distractor_02",
-            0.3873
+            0.0308
           ],
           [
-            "cron_job_debug",
-            0.3765
+            "distractor_07",
+            0.0306
+          ],
+          [
+            "distractor_11",
+            0.0306
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
-          "P@3": 0.3333333333333333,
-          "P@5": 0.2,
-          "R@5": 1.0,
+          "P@1": 0.0,
+          "P@3": 0.0,
+          "P@5": 0.0,
+          "R@5": 0.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.0,
+          "MRR": 0.14285714285714285
         }
       },
       "keyword": {
@@ -3574,29 +3577,29 @@
       "topic": "db-migrate-down",
       "gold": "db_migration_rollback",
       "semantic": {
-        "rank": 1,
+        "rank": 2,
         "top3": [
           [
+            "distractor_01",
+            0.0298
+          ],
+          [
             "db_migration_rollback",
-            0.4939
+            0.0297
           ],
           [
             "db_migration_run",
-            0.3965
-          ],
-          [
-            "git_undo_commit",
-            0.3207
+            0.0293
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
+          "P@1": 0.0,
           "P@3": 0.3333333333333333,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.6309297535714575,
+          "MRR": 0.5
         }
       },
       "keyword": {
@@ -3745,29 +3748,29 @@
       "topic": "perm-chmod",
       "gold": "chmod_permission_error",
       "semantic": {
-        "rank": 1,
+        "rank": 3,
         "top3": [
           [
+            "distractor_06",
+            0.0306
+          ],
+          [
+            "distractor_03",
+            0.0301
+          ],
+          [
             "chmod_permission_error",
-            0.5543
-          ],
-          [
-            "ssh_permission_denied",
-            0.3492
-          ],
-          [
-            "npm_cache_clear",
-            0.2753
+            0.0297
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
+          "P@1": 0.0,
           "P@3": 0.3333333333333333,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.5,
+          "MRR": 0.3333333333333333
         }
       },
       "keyword": {
@@ -3802,29 +3805,29 @@
       "topic": "perm-ownership",
       "gold": "sudo_ownership_fix",
       "semantic": {
-        "rank": 2,
+        "rank": 4,
         "top3": [
           [
+            "distractor_03",
+            0.0305
+          ],
+          [
+            "distractor_08",
+            0.0301
+          ],
+          [
             "git_undo_commit",
-            0.36
-          ],
-          [
-            "sudo_ownership_fix",
-            0.341
-          ],
-          [
-            "find_large_old_files",
-            0.3224
+            0.0296
           ]
         ],
         "metrics": {
           "P@1": 0.0,
-          "P@3": 0.3333333333333333,
+          "P@3": 0.0,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 0.6309297535714575,
-          "MRR": 0.5
+          "nDCG@5": 0.43067655807339306,
+          "MRR": 0.25
         }
       },
       "keyword": {
@@ -4091,15 +4094,15 @@
         "top3": [
           [
             "find_large_old_files",
-            0.3556
+            0.0292
           ],
           [
             "dns_cache_flush",
-            0.3542
+            0.0288
           ],
           [
-            "disk_space_cleanup",
-            0.2595
+            "distractor_01",
+            0.0286
           ]
         ],
         "metrics": {
@@ -4429,29 +4432,29 @@
       "topic": "log-parse",
       "gold": "log_parsing_grep",
       "semantic": {
-        "rank": 1,
+        "rank": 4,
         "top3": [
           [
-            "log_parsing_grep",
-            0.5674
+            "distractor_04",
+            0.0315
+          ],
+          [
+            "distractor_00",
+            0.0308
           ],
           [
             "cron_job_setup",
-            0.4123
-          ],
-          [
-            "log_rotation",
-            0.4034
+            0.0296
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
-          "P@3": 0.3333333333333333,
+          "P@1": 0.0,
+          "P@3": 0.0,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.43067655807339306,
+          "MRR": 0.25
         }
       },
       "keyword": {
@@ -4828,29 +4831,29 @@
       "topic": "tar-archive",
       "gold": "tar_backup",
       "semantic": {
-        "rank": 1,
+        "rank": 5,
         "top3": [
           [
-            "tar_backup",
-            0.4299
+            "distractor_06",
+            0.0323
           ],
           [
-            "distractor_06",
-            0.4172
+            "distractor_08",
+            0.0311
           ],
           [
             "distractor_04",
-            0.4
+            0.0308
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
-          "P@3": 0.3333333333333333,
+          "P@1": 0.0,
+          "P@3": 0.0,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.38685280723454163,
+          "MRR": 0.2
         }
       },
       "keyword": {
@@ -4885,29 +4888,29 @@
       "topic": "tar-archive",
       "gold": "tar_backup",
       "semantic": {
-        "rank": 1,
+        "rank": 5,
         "top3": [
           [
-            "tar_backup",
-            0.5158
-          ],
-          [
-            "find_large_old_files",
-            0.4479
-          ],
-          [
             "distractor_13",
-            0.3679
+            0.0315
+          ],
+          [
+            "distractor_06",
+            0.031
+          ],
+          [
+            "distractor_05",
+            0.0304
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
-          "P@3": 0.3333333333333333,
+          "P@1": 0.0,
+          "P@3": 0.0,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.38685280723454163,
+          "MRR": 0.2
         }
       },
       "keyword": {
@@ -4946,15 +4949,15 @@
         "top3": [
           [
             "kubectl_pod_debug",
-            0.304
+            0.0297
           ],
           [
             "systemd_service_debug",
-            0.2418
+            0.0293
           ],
           [
             "kill_process_on_port",
-            0.2154
+            0.0289
           ]
         ],
         "metrics": {
@@ -5056,29 +5059,29 @@
       "topic": "rsync-sync",
       "gold": "rsync_transfer",
       "semantic": {
-        "rank": 1,
+        "rank": 11,
         "top3": [
           [
-            "rsync_transfer",
-            0.5763
+            "distractor_06",
+            0.0323
           ],
           [
             "distractor_08",
-            0.3526
+            0.0323
           ],
           [
-            "distractor_06",
-            0.281
+            "distractor_01",
+            0.0308
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
-          "P@3": 0.3333333333333333,
-          "P@5": 0.2,
-          "R@5": 1.0,
-          "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "P@1": 0.0,
+          "P@3": 0.0,
+          "P@5": 0.0,
+          "R@5": 0.0,
+          "R@10": 0.0,
+          "nDCG@5": 0.0,
+          "MRR": 0.09090909090909091
         }
       },
       "keyword": {
@@ -5170,29 +5173,29 @@
       "topic": "sed-replace",
       "gold": "find_replace_sed",
       "semantic": {
-        "rank": 1,
+        "rank": 5,
         "top3": [
           [
-            "find_replace_sed",
-            0.38
+            "distractor_13",
+            0.0323
           ],
           [
             "distractor_04",
-            0.2159
+            0.0323
           ],
           [
-            "distractor_13",
-            0.2125
+            "distractor_06",
+            0.0303
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
-          "P@3": 0.3333333333333333,
+          "P@1": 0.0,
+          "P@3": 0.0,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.38685280723454163,
+          "MRR": 0.2
         }
       },
       "keyword": {
@@ -5398,19 +5401,19 @@
       "topic": "postgres-conn",
       "gold": "postgres_connection_refused",
       "semantic": {
-        "rank": 3,
+        "rank": 2,
         "top3": [
           [
-            "systemd_service_debug",
-            0.3556
-          ],
-          [
-            "db_migration_rollback",
-            0.3044
+            "distractor_01",
+            0.0311
           ],
           [
             "postgres_connection_refused",
-            0.2693
+            0.0298
+          ],
+          [
+            "systemd_service_debug",
+            0.0294
           ]
         ],
         "metrics": {
@@ -5419,8 +5422,8 @@
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 0.5,
-          "MRR": 0.3333333333333333
+          "nDCG@5": 0.6309297535714575,
+          "MRR": 0.5
         }
       },
       "keyword": {
@@ -5512,19 +5515,19 @@
       "topic": "port-kill",
       "gold": "kill_process_on_port",
       "semantic": {
-        "rank": 4,
+        "rank": 5,
         "top3": [
           [
             "log_rotation",
-            0.1924
+            0.0297
           ],
           [
             "npm_audit_fix",
-            0.1841
+            0.0293
           ],
           [
-            "dns_cache_flush",
-            0.1723
+            "distractor_12",
+            0.029
           ]
         ],
         "metrics": {
@@ -5533,8 +5536,8 @@
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 0.43067655807339306,
-          "MRR": 0.25
+          "nDCG@5": 0.38685280723454163,
+          "MRR": 0.2
         }
       },
       "keyword": {
@@ -5683,29 +5686,29 @@
       "topic": "curl-debug",
       "gold": "curl_api_debug",
       "semantic": {
-        "rank": 5,
+        "rank": 6,
         "top3": [
           [
             "nginx_reverse_proxy",
-            0.1914
+            0.0297
           ],
           [
             "git_undo_commit",
-            0.1793
+            0.0293
           ],
           [
             "kill_process_on_port",
-            0.1736
+            0.0289
           ]
         ],
         "metrics": {
           "P@1": 0.0,
           "P@3": 0.0,
-          "P@5": 0.2,
-          "R@5": 1.0,
+          "P@5": 0.0,
+          "R@5": 0.0,
           "R@10": 1.0,
-          "nDCG@5": 0.38685280723454163,
-          "MRR": 0.2
+          "nDCG@5": 0.0,
+          "MRR": 0.16666666666666666
         }
       },
       "keyword": {
@@ -6025,29 +6028,29 @@
       "topic": "gpg-encrypt",
       "gold": "gpg_encrypt_file",
       "semantic": {
-        "rank": 1,
+        "rank": 5,
         "top3": [
           [
-            "gpg_encrypt_file",
-            0.5032
-          ],
-          [
             "distractor_03",
-            0.2342
+            0.0323
           ],
           [
-            "distractor_04",
-            0.23
+            "distractor_08",
+            0.0313
+          ],
+          [
+            "distractor_06",
+            0.0312
           ]
         ],
         "metrics": {
-          "P@1": 1.0,
-          "P@3": 0.3333333333333333,
+          "P@1": 0.0,
+          "P@3": 0.0,
           "P@5": 0.2,
           "R@5": 1.0,
           "R@10": 1.0,
-          "nDCG@5": 1.0,
-          "MRR": 1.0
+          "nDCG@5": 0.38685280723454163,
+          "MRR": 0.2
         }
       },
       "keyword": {
@@ -6640,11 +6643,11 @@
               0.0328
             ],
             [
-              "python_dependency_conflict",
-              0.032
+              "python_import_error",
+              0.0323
             ],
             [
-              "python_import_error",
+              "python_dependency_conflict",
               0.032
             ]
           ],
@@ -6701,8 +6704,8 @@
               0.0323
             ],
             [
-              "git_merge_conflict",
-              0.0306
+              "find_large_old_files",
+              0.032
             ]
           ],
           "metrics": {
@@ -6979,15 +6982,15 @@
           "top3": [
             [
               "cron_job_setup",
-              0.6678
+              0.0328
             ],
             [
               "cron_job_debug",
-              0.4713
+              0.0318
             ],
             [
-              "distractor_02",
-              0.2981
+              "distractor_07",
+              0.0306
             ]
           ],
           "metrics": {
@@ -7150,15 +7153,15 @@
           "top3": [
             [
               "tmux_session",
-              0.9312
+              0.0328
             ],
             [
               "find_large_old_files",
-              0.1653
+              0.0323
             ],
             [
               "distractor_08",
-              0.1249
+              0.0317
             ]
           ],
           "metrics": {
@@ -7207,15 +7210,15 @@
           "top3": [
             [
               "ssh_key_setup",
-              0.5405
+              0.0328
             ],
             [
               "ssh_permission_denied",
-              0.4858
+              0.0323
             ],
             [
               "ssh_agent_forwarding",
-              0.371
+              0.0315
             ]
           ],
           "metrics": {
