@@ -226,7 +226,7 @@ def search(
 
         results = _annotate_results(embedder, query, sessions)
 
-        if not config.hybrid_search:
+        if not config.hybrid_search or not looks_literal_query(query):
             return results
 
         kw_pairs = [

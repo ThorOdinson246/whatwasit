@@ -52,3 +52,25 @@ def test_literal_query_uses_fts_fast_path(config: Config) -> None:
 
     assert results
     assert results[0].session.cwd == "/srv/nginx-proxy"
+
+
+def test_intent_query_skips_hybrid_rrf(config: Config) -> None:
+    intent = "how do I reload nginx after changing the reverse proxy config"
+    assert not looks_literal_query(intent)
+
+    embedder = FakeEmbedder()
+    _seed(config, embedder)
+    query_index = UsearchIndex(config.index_path, 16)
+
+    semantic_only = Config(
+        data_dir=config.data_dir, embedding_dim=16, top_k=5, hybrid_search=False
+    )
+    hybrid_on = Config(
+        data_dir=config.data_dir, embedding_dim=16, top_k=5, hybrid_search=True
+    )
+
+    r_sem = search(semantic_only, intent, embedder=embedder, index=query_index)
+    r_hyb = search(hybrid_on, intent, embedder=embedder, index=query_index)
+
+    assert [r.session.id for r in r_sem] == [r.session.id for r in r_hyb]
+    assert [r.score for r in r_sem] == [r.score for r in r_hyb]

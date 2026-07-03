@@ -8,8 +8,7 @@
   "model": "sentence-transformers/all-MiniLM-L6-v2",
   "embedding_dim": 384,
   "search_config": {
-    "hybrid_search": true,
-    "hybrid_literal_only": true
+    "hybrid_search": true
   },
   "aggregate": {
     "semantic": {
