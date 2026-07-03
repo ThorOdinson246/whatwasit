@@ -283,6 +283,7 @@ def run() -> int:
         "n_sessions": n_sessions, "n_labeled": n_labeled, "n_distractor": n_distract,
         "n_queries": len(queries), "n_answerable": len(answerable), "n_null": len(nulls),
         "model": config.model_name, "embedding_dim": config.embedding_dim,
+        "search_config": {"hybrid_search": config.hybrid_search},
         "aggregate": agg,
         "per_topic": per_topic,
         "null_analysis": {
