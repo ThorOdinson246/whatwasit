@@ -45,6 +45,21 @@ CREATE TABLE IF NOT EXISTS commands (
 CREATE INDEX IF NOT EXISTS idx_commands_session ON commands(session_id);
 """
 
+_FTS_SCHEMA = """
+CREATE VIRTUAL TABLE IF NOT EXISTS sessions_fts USING fts5(
+    session_id UNINDEXED,
+    doc_text,
+    tokenize='unicode61'
+);
+"""
+
+
+def _strip_hints(doc_text: str) -> str:
+    """Drop semantic hint lines from doc_text for keyword indexing."""
+    return "\n".join(
+        line for line in doc_text.split("\n") if not line.startswith("context: ")
+    )
+
 
 def connect(path: Path | str) -> sqlite3.Connection:
     """Open (creating the parent dir if needed) a SQLite connection."""
@@ -59,6 +74,7 @@ def connect(path: Path | str) -> sqlite3.Connection:
 def initialize(conn: sqlite3.Connection) -> None:
     """Create tables and stamp the schema version if not already present."""
     conn.executescript(_SCHEMA)
+    conn.executescript(_FTS_SCHEMA)
     cur = conn.execute("SELECT value FROM meta WHERE key = 'schema_version'")
     row = cur.fetchone()
     if row is None:
@@ -66,7 +82,20 @@ def initialize(conn: sqlite3.Connection) -> None:
             "INSERT INTO meta(key, value) VALUES ('schema_version', ?)",
             (str(SCHEMA_VERSION),),
         )
+    _backfill_fts(conn)
     conn.commit()
+
+
+def _backfill_fts(conn: sqlite3.Connection) -> None:
+    """Populate FTS from sessions when the table exists but is empty."""
+    fts_count = conn.execute("SELECT COUNT(*) AS n FROM sessions_fts").fetchone()["n"]
+    if fts_count:
+        return
+    for row in conn.execute("SELECT id, doc_text FROM sessions").fetchall():
+        conn.execute(
+            "INSERT INTO sessions_fts(session_id, doc_text) VALUES (?, ?)",
+            (int(row["id"]), _strip_hints(row["doc_text"] or "")),
+        )
 
 
 def get_schema_version(conn: sqlite3.Connection) -> Optional[int]:
@@ -93,6 +122,7 @@ def set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
 def reset(conn: sqlite3.Connection) -> None:
     """Drop all data tables (used for a full re-index) and recreate them."""
     conn.executescript(
+        "DROP TABLE IF EXISTS sessions_fts;"
         "DROP TABLE IF EXISTS commands;"
         "DROP TABLE IF EXISTS sessions;"
         "DROP TABLE IF EXISTS meta;"
@@ -128,6 +158,10 @@ def insert_session(conn: sqlite3.Connection, session: Session) -> int:
         ],
     )
     session.id = session_id
+    conn.execute(
+        "INSERT INTO sessions_fts(session_id, doc_text) VALUES (?, ?)",
+        (session_id, _strip_hints(doc_text)),
+    )
     return session_id
 
 
@@ -172,3 +206,28 @@ def iter_sessions(conn: sqlite3.Connection) -> Iterator[Session]:
 
 def count_sessions(conn: sqlite3.Connection) -> int:
     return int(conn.execute("SELECT COUNT(*) AS n FROM sessions").fetchone()["n"])
+
+
+def search_fts(
+    conn: sqlite3.Connection,
+    match_query: str,
+    *,
+    limit: int,
+) -> List[tuple[int, float]]:
+    """Return ``(session_id, bm25_score)`` pairs best-first for an FTS5 match.
+
+    ``bm25_score`` is negated so higher values mean better matches.
+    Returns an empty list when the query is invalid or matches nothing.
+    """
+    if not match_query.strip():
+        return []
+    try:
+        rows = conn.execute(
+            "SELECT session_id, bm25(sessions_fts) AS rank "
+            "FROM sessions_fts WHERE sessions_fts MATCH ? "
+            "ORDER BY rank LIMIT ?",
+            (match_query, limit),
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [(int(r["session_id"]), -float(r["rank"])) for r in rows]
