@@ -39,3 +39,14 @@ htmlcov/
 /MAINTAINER.local.md
 /docs/AGENT_INDEX.md
 /docs/RESEARCH_AGENT.md
+/docs/ACCURACY_*.md
+/docs/BENCHMARKS_*.md
+
+# Eval dev artifacts and investigation notes (canonical: summary.json, tables.md, metrics_summary.csv)
+/eval/research/
+/eval/summary_*.json
+/eval/summary_v*.json
+/eval/tables_v*.md
+/eval/metrics_summary_v*.csv
+/eval/results_raw_v*.jsonl
+/eval/results.jsonl

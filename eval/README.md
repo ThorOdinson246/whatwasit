@@ -23,16 +23,13 @@ literal-gated hybrid). The harness uses production defaults
 (`Config.hybrid_search=True`); hybrid RRF/FTS fusion runs only for **literal
 queries** (`looks_literal_query()`).
 
-**Reproduced 2026-07-03** — investigation write-ups:
-[`eval/research/README.md`](research/README.md).
+**Reproduced 2026-07-03** on `main`.
 
 **Standard set (86 answerable queries)**
 
 | Method | P@1 | MRR | nDCG@5 | Notes |
 |--------|-----|-----|--------|-------|
 | semantic (**shipping**) | **0.547** | 0.701 | 0.746 | literal-gated hybrid + universal doc enrichment |
-| semantic (gated hybrid, no enrichment) | 0.535 | 0.700 | 0.751 | hybrid fix only |
-| semantic (broken hybrid, pre-fix) | 0.419 | 0.596 | 0.656 | Jaccard RRF on all queries |
 | keyword baseline | 0.372 | 0.488 | 0.492 | eval fuzzy ranker |
 
 **Keyword-heavy breakout (15 queries)**
