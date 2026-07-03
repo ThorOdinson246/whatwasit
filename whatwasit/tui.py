@@ -13,14 +13,22 @@ from textual.widgets import Footer, Input, ListItem, ListView, Static
 
 from .brand import CLI_NAME
 from .clipboard import copy_to_clipboard as copy_to_system_clipboard
-from .config_loader import save_config_value
+from .config_loader import config_file_path, save_config_value
 from .models import SearchResult
 from .textutil import truncate_display
-from .themes import DEFAULT_THEME, THEMES, WEAK_INDICATOR, next_theme, normalize_theme, theme_css
+from .themes import (
+    DEFAULT_THEME,
+    THEMES,
+    WEAK_INDICATOR,
+    combined_stylesheet,
+    format_settings_text,
+    next_theme,
+    normalize_theme,
+)
 from .timefmt import format_relative_time
 
 _FOOTER_HINTS = (
-    "↑↓ nav  ·  ⏎ copy  ·  space expand  ·  m more  ·  t theme  ·  q quit"
+    "↑↓ nav  ·  ⏎ copy  ·  space expand  ·  m more  ·  t theme  ·  /settings  ·  q quit"
 )
 _REPL_DEBOUNCE_SECONDS = 0.35
 _LIVE_SEARCH_MIN_CHARS = 2
@@ -41,13 +49,14 @@ Keybindings:
   Enter        copy matched command(s) to clipboard
   Space        expand or collapse a session
   m            show more results
-  t            cycle color theme
+  t            cycle color theme (midnight → default → high-contrast → …)
   q            quit
 
 Slash commands:
-  /help        show this help
+  /help        show keybindings
+  /settings    show theme and config
+  /theme       cycle theme  ·  /theme <name>  pick one
   /more        load more results
-  /theme       cycle color theme
   /quit        quit
 """
 
@@ -231,6 +240,10 @@ class _ThemedAppMixin:
     """Apply and cycle Textual color themes."""
 
     _theme_name: str
+    _page_size: int = 5
+    _low_confidence_threshold: float = 0.40
+    _output_mode: str = "tui"
+    _config_path: str = ""
 
     def _apply_theme(self, name: str) -> None:
         self._theme_name = normalize_theme(name)
@@ -239,12 +252,41 @@ class _ThemedAppMixin:
             screen.remove_class(f"theme-{theme}")
         screen.add_class(f"theme-{self._theme_name}")
 
-    def action_cycle_theme(self) -> None:
-        self._theme_name = next_theme(self._theme_name)
+    def action_set_theme(self, name: str = "") -> None:
+        """Set theme by name, or cycle to the next theme when *name* is empty."""
+        if name:
+            key = name.lower().strip()
+            if key not in THEMES:
+                available = ", ".join(THEME_ORDER)
+                self.notify(
+                    f"Unknown theme {name!r} — try: {available}",
+                    severity="warning",
+                    timeout=4,
+                )
+                return
+            self._theme_name = key
+        else:
+            self._theme_name = next_theme(self._theme_name)
+
         save_config_value("tui_theme", self._theme_name)
         self._apply_theme(self._theme_name)
         label = THEMES[self._theme_name].label
-        self.notify(f"Theme: {label}", timeout=2)
+        self.notify(f"Theme: {label} ({self._theme_name})", timeout=2)
+
+    def action_cycle_theme(self) -> None:
+        self.action_set_theme("")
+
+    def action_show_settings(self) -> None:
+        self.query_one("#header", Static).update(
+            format_settings_text(
+                active_theme=self._theme_name,
+                page_size=self._page_size,
+                low_confidence_threshold=self._low_confidence_threshold,
+                output_mode=self._output_mode,
+                config_path=self._config_path or str(config_file_path()),
+            )
+        )
+        self.query_one("#banner", Static).display = False
 
 
 class _ResultPanelMixin(_ThemedAppMixin):
@@ -396,46 +438,8 @@ class _ResultPanelMixin(_ThemedAppMixin):
             pass
 
 
-def _app_css(theme_name: str) -> str:
-    return (
-        theme_css(theme_name)
-        + """
-SessionRow {
-    height: auto;
-    width: 100%;
-}
-SessionRow > Horizontal.headline {
-    height: auto;
-    width: 100%;
-}
-SessionRow .row-command {
-    width: 1fr;
-    text-style: bold;
-}
-SessionRow .row-warn {
-    width: auto;
-    padding: 0 1;
-}
-SessionRow .row-meta {
-    width: auto;
-    min-width: 12;
-    text-align: right;
-}
-SessionRow .row-path {
-    width: 100%;
-    padding-left: 2;
-}
-SessionRow .row-context {
-    width: 100%;
-    padding-left: 4;
-}
-SessionRow .row-hint {
-    width: 100%;
-    padding-left: 2;
-    text-style: italic;
-}
-"""
-    )
+def _app_css() -> str:
+    return combined_stylesheet()
 
 
 class WhatwasitTUI(_ResultPanelMixin, App[None]):
@@ -451,11 +455,11 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         Binding("m", "load_more", "More"),
         Binding("enter", "copy", "Copy"),
         Binding("space", "toggle_expand", "Expand", show=False),
-        Binding("t", "cycle_theme", "Theme", show=False),
+        Binding("t", "cycle_theme", "Theme"),
         Binding("tab", "focus_results", "Results", show=False),
     ]
 
-    CSS = _app_css(DEFAULT_THEME)
+    CSS = _app_css()
 
     def __init__(
         self,
@@ -465,6 +469,8 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         page_size: int = 5,
         low_confidence_threshold: float = 0.40,
         theme: str = DEFAULT_THEME,
+        output_mode: str = "tui",
+        config_path: str = "",
     ) -> None:
         super().__init__()
         self._all_results = results
@@ -472,6 +478,8 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         self._page_size = max(1, page_size)
         self._visible_count = min(self._page_size, len(results))
         self._low_confidence_threshold = low_confidence_threshold
+        self._output_mode = output_mode
+        self._config_path = config_path or str(config_file_path())
         self._expanded_rows: Set[int] = set()
         self._theme_name = normalize_theme(theme)
 
@@ -509,13 +517,13 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         Binding("m", "load_more", "More"),
         Binding("enter", "copy", "Copy"),
         Binding("space", "toggle_expand", "Expand", show=False),
-        Binding("t", "cycle_theme", "Theme", show=False),
+        Binding("t", "cycle_theme", "Theme"),
         Binding("tab", "focus_results", "Results", show=False),
         Binding("shift+tab", "focus_prompt", "Search", show=False),
         Binding("ctrl+c", "quit", "Quit", show=False),
     ]
 
-    CSS = _app_css(DEFAULT_THEME)
+    CSS = _app_css()
 
     def __init__(
         self,
@@ -524,6 +532,8 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         page_size: int = 5,
         low_confidence_threshold: float = 0.40,
         theme: str = DEFAULT_THEME,
+        output_mode: str = "tui",
+        config_path: str = "",
     ) -> None:
         super().__init__()
         self._search_fn = search_fn
@@ -532,6 +542,8 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         self._page_size = max(1, page_size)
         self._visible_count = 0
         self._low_confidence_threshold = low_confidence_threshold
+        self._output_mode = output_mode
+        self._config_path = config_path or str(config_file_path())
         self._expanded_rows: Set[int] = set()
         self._debounce_timer = None
         self._pending_live_query = ""
@@ -612,8 +624,15 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         if cmd in ("/more", "/m"):
             self.action_load_more()
             return
-        if cmd == "/theme":
-            self.action_cycle_theme()
+        if cmd in ("/settings", "/config"):
+            self.action_show_settings()
+            return
+        if cmd.startswith("/theme"):
+            parts = raw.strip().split(maxsplit=1)
+            if len(parts) == 1 or not parts[1].strip():
+                self.action_cycle_theme()
+            else:
+                self.action_set_theme(parts[1].strip())
             return
         self.notify(f"Unknown command: {raw!r} — try /help", severity="warning", timeout=3)
 
@@ -639,17 +658,19 @@ def run_tui(
     page_size: int = 5,
     low_confidence_threshold: float = 0.40,
     theme: str = DEFAULT_THEME,
+    output_mode: str = "tui",
+    config_path: str = "",
 ) -> None:
     """Launch the one-shot interactive TUI (blocking)."""
-    app = WhatwasitTUI(
+    WhatwasitTUI(
         results,
         query,
         page_size=page_size,
         low_confidence_threshold=low_confidence_threshold,
         theme=theme,
-    )
-    app.CSS = _app_css(normalize_theme(theme))
-    app.run()
+        output_mode=output_mode,
+        config_path=config_path,
+    ).run()
 
 
 def run_repl(
@@ -658,13 +679,15 @@ def run_repl(
     page_size: int = 5,
     low_confidence_threshold: float = 0.40,
     theme: str = DEFAULT_THEME,
+    output_mode: str = "tui",
+    config_path: str = "",
 ) -> None:
     """Launch the persistent REPL (blocking)."""
-    app = WhatwasitREPL(
+    WhatwasitREPL(
         search_fn,
         page_size=page_size,
         low_confidence_threshold=low_confidence_threshold,
         theme=theme,
-    )
-    app.CSS = _app_css(normalize_theme(theme))
-    app.run()
+        output_mode=output_mode,
+        config_path=config_path,
+    ).run()

@@ -23,6 +23,7 @@ from typing import List, Optional, Sequence
 from .config import Config
 from .daemon import daemon_search, daemon_status, start_daemon, stop_daemon
 from .embedder import is_model_cached
+from .config_loader import config_file_path
 from .indexer import build_index_from_history
 from .output import display_results, render_json
 from .search import search
@@ -119,6 +120,8 @@ def _run_repl() -> int:
         page_size=config.tui_page_size,
         low_confidence_threshold=config.low_confidence_threshold,
         theme=config.tui_theme,
+        output_mode=config.output_mode,
+        config_path=str(config_file_path()),
     )
     return 0
 

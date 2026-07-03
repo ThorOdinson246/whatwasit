@@ -176,3 +176,94 @@ def next_theme(current: str) -> str:
 
 def theme_css(name: str) -> str:
     return THEMES[normalize_theme(name)].css
+
+
+SESSION_ROW_CSS = """
+SessionRow {
+    height: auto;
+    width: 100%;
+}
+SessionRow > Horizontal.headline {
+    height: auto;
+    width: 100%;
+}
+SessionRow .row-command {
+    width: 1fr;
+    text-style: bold;
+}
+SessionRow .row-warn {
+    width: auto;
+    padding: 0 1;
+}
+SessionRow .row-meta {
+    width: auto;
+    min-width: 12;
+    text-align: right;
+}
+SessionRow .row-path {
+    width: 100%;
+    padding-left: 2;
+}
+SessionRow .row-context {
+    width: 100%;
+    padding-left: 4;
+}
+SessionRow .row-hint {
+    width: 100%;
+    padding-left: 2;
+    text-style: italic;
+}
+"""
+
+
+def combined_stylesheet() -> str:
+    """CSS for layout, all theme variants, and result rows.
+
+    Every theme variant is included so cycling with ``t`` only swaps the
+    active ``Screen.theme-*`` class.
+    """
+    variants = ""
+    for key in THEME_ORDER:
+        block = THEMES[key].css
+        if block.startswith(BASE_CSS):
+            variants += block[len(BASE_CSS) :]
+        else:
+            variants += block
+    return BASE_CSS + variants + SESSION_ROW_CSS
+
+
+def format_settings_text(
+    *,
+    active_theme: str,
+    page_size: int,
+    low_confidence_threshold: float,
+    output_mode: str,
+    config_path: str,
+) -> str:
+    """Human-readable settings panel for the REPL ``/settings`` command."""
+    active = normalize_theme(active_theme)
+    lines = [
+        "whatwasit settings",
+        "",
+        "Theme",
+        f"  Active: {THEMES[active].label} ({active})",
+        "  Available:",
+    ]
+    for key in THEME_ORDER:
+        theme = THEMES[key]
+        marker = "  → " if key == active else "    "
+        lines.append(f"{marker}{key:<14} {theme.label}")
+    lines.extend(
+        [
+            "",
+            "  Change: press t to cycle, or /theme <name>",
+            "",
+            f"Results per page: {page_size}",
+            f"Low-confidence threshold: {low_confidence_threshold}",
+            f"Output mode (CLI): {output_mode}",
+            f"Config file: {config_path}",
+            "",
+            "Type a search query or /help to return.",
+        ]
+    )
+    return "\n".join(lines)

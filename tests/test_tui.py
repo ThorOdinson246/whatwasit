@@ -207,3 +207,9 @@ async def test_repl_query_and_slash_commands() -> None:
         await pilot.press("enter")
         help_text = str(pilot.app.query_one("#header", Static).render())
         assert "Slash commands" in help_text
+
+        prompt.value = "/settings"
+        await pilot.press("enter")
+        settings_text = str(pilot.app.query_one("#header", Static).render())
+        assert "whatwasit settings" in settings_text
+        assert "midnight" in settings_text

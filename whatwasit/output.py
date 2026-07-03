@@ -15,6 +15,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from .models import SearchResult
+from .config_loader import config_file_path
 from .timefmt import format_relative_time, format_timestamp
 from .tui import confidence_level, low_confidence_message, render_result_label
 
@@ -180,4 +181,6 @@ def display_results(
         page_size=config.tui_page_size,
         low_confidence_threshold=threshold,
         theme=config.tui_theme,
+        output_mode=config.output_mode,
+        config_path=str(config_file_path()),
     )
