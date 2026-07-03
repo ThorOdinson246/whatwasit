@@ -263,7 +263,12 @@ async def test_t_key_cycles_past_custom_into_textual() -> None:
     app = WhatwasitTUI([], "query", theme="midnight")
 
     async with app.run_test() as pilot:
+        ids = cycle_theme_ids(pilot.app.available_themes.keys())
+        first_textual = ids[len(THEME_ORDER)]
+        assert first_textual.startswith("textual:")
+        expected_name = first_textual.split(":", 1)[1]
+
         for _ in range(len(THEME_ORDER)):
             await pilot.press("t")
         assert pilot.app._theme_name == "default"
-        assert load_config_file().get("textual_theme") == "atom-one-dark"
+        assert load_config_file().get("textual_theme") == expected_name
