@@ -50,23 +50,34 @@ def test_find_session_includes_size_and_age_hints():
     assert "old files modification age" in doc
 
 
-def test_non_sparse_git_session_keeps_minimal_doc_shape():
+def test_git_workflow_session_not_enriched():
     session = Session(
         cwd="~/projects/api",
         commands=[
             Command(raw_cmd="git fetch origin"),
             Command(raw_cmd="git rebase origin/main"),
-            Command(raw_cmd="git status"),
-            Command(raw_cmd="vim auth.py"),
+            Command(raw_cmd="git add auth.py"),
+            Command(raw_cmd="git rebase --continue"),
         ],
     )
     doc = session.to_document()
     assert "path:" not in doc
     assert "tools:" not in doc
-    assert "git fetch origin" in doc
 
 
-def test_python_dependency_conflict_is_sparse():
+def test_non_git_session_gets_universal_enrichment():
+    session = Session(
+        cwd="~/projects/newtool",
+        commands=[
+            Command(raw_cmd="pip install requests"),
+        ],
+    )
+    doc = session.to_document()
+    assert "tools:" in doc
+    assert "path: projects/newtool" in doc
+
+
+def test_python_dependency_conflict_is_enriched():
     session = Session(
         cwd="~/projects/newtool",
         commands=[

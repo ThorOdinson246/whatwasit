@@ -226,47 +226,25 @@ def _collect_hints_from(patterns: List[Tuple[str, str]], cmds: List[str]) -> Lis
     return hints
 
 
-# Substrings that identify terse Mode-C-style sessions worth enriching.
-_SPARSE_SESSION_MARKERS: Tuple[str, ...] = (
-    "-m venv",
-    ".venv",
-    "bin/activate",
-    "$path",
-    ".bashrc",
-    ".zshrc",
-    "which ",
-    "cprofile",
-    "snakeviz",
-    "pip check",
-    "find ",
-    "-size +",
-    "-mtime +",
-    "sites-available",
-    "nginx -t",
-    "crontab",
-    "filter-branch",
-    "volume inspect",
-    "docker system df",
-)
-
-
-def _is_sparse_session(cmds: List[str]) -> bool:
-    """True when commands match a known terse-doc pattern (Mode C fix)."""
+def _is_git_workflow_session(cmds: List[str]) -> bool:
+    """True when the session is predominantly git commands (not sparse-doc targets)."""
     if not cmds:
         return False
-    text = " ".join(cmds).lower()
-    if not any(marker in text for marker in _SPARSE_SESSION_MARKERS):
-        return False
-    total = sum(len(c) for c in cmds)
-    return len(cmds) <= 6 and total <= 250
+    git_cmds = sum(1 for c in cmds if re.match(r"git\s", c.strip()))
+    return git_cmds >= 2
 
 
-def _collect_hints(cmds: List[str], *, sparse: bool) -> List[str]:
+def _should_enrich_session(cmds: List[str]) -> bool:
+    """Universal enrichment for non-git sessions; git workflows keep baseline docs."""
+    return bool(cmds) and not _is_git_workflow_session(cmds)
+
+
+def _collect_hints(cmds: List[str], *, enrich: bool) -> List[str]:
     patterns = list(_BASIC_COMMAND_HINTS)
-    if sparse:
+    if enrich:
         patterns.extend(_SPARSE_COMMAND_HINTS)
     hints = _collect_hints_from(patterns, cmds)
-    if sparse:
+    if enrich:
         seen = set(hints)
         for hint in _collect_flag_hints(cmds):
             if hint not in seen:
@@ -318,20 +296,19 @@ class Session:
     def to_document(self) -> str:
         """Build the text that gets embedded for this session.
 
-        Terse sessions (short command lists with little semantic signal) get
-        extra enrichment: path tail, tool-name expansions, and additional
-        context hints derived from flags and arguments.  All other sessions keep
-        the pre-enrichment document shape so sibling-topic ranking is unchanged.
+        Terse non-git sessions get extra enrichment: path tail, tool-name expansions,
+        and additional context hints. Git workflow sessions keep the baseline doc
+        shape to avoid collateral ranking shifts in Mode B.
         """
         cmd_lines = [c.raw_cmd for c in self.commands]
-        sparse = _is_sparse_session(cmd_lines)
+        enrich = _should_enrich_session(cmd_lines)
         lines: List[str] = []
         if self.cwd and self.cwd != UNKNOWN_CWD:
-            lines.extend(_format_cwd_lines(self.cwd, extended=sparse))
-        if sparse:
+            lines.extend(_format_cwd_lines(self.cwd, extended=enrich))
+        if enrich:
             lines.extend(_collect_tool_lines(cmd_lines))
         lines.extend(cmd_lines)
-        hints = _collect_hints(cmd_lines, sparse=sparse)
+        hints = _collect_hints(cmd_lines, enrich=enrich)
         if hints:
             lines.append("context: " + "; ".join(hints))
         return "\n".join(lines)
