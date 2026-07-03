@@ -21,10 +21,16 @@ project `whatwasit`).
 **Each release:**
 
 1. Bump `version` in `pyproject.toml` and `whatwasit/__init__.py`.
-2. Commit and push to `main`.
+2. Commit and push to `main` (do **not** push `vX.Y.Z` yourself — the workflow
+   creates the tag after a successful PyPI upload).
 
-The workflow detects the version bump, publishes to PyPI, and tags `vX.Y.Z`.
+The workflow detects the version bump, publishes to PyPI, verifies the package
+is indexed, and creates `vX.Y.Z` on GitHub. If you already pushed the tag
+manually, the workflow still succeeds and skips tag creation.
+
 Publishing a GitHub Release for an existing tag also triggers the workflow.
+To re-publish a version that failed before upload, use **Actions → Publish to
+PyPI → Run workflow** (skips if that version is already on PyPI).
 
 ## Further reading
 
