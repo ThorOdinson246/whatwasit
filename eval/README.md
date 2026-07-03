@@ -19,17 +19,18 @@ session.
 
 Measured with `python eval/run_eval.py` against `whatwasit.search.search()` on
 **unmodified `main`** (MiniLM, length normalization, session doc hints). The harness
-uses production defaults (`Config.hybrid_search=True`).
+uses production defaults (`Config.hybrid_search=True`); hybrid RRF/FTS fusion runs
+only for **literal queries** (`looks_literal_query()`).
 
 **Reproduced 2026-07-03** — see [`eval/research/BASELINE_REPRO.md`](research/BASELINE_REPRO.md)
-for why older docs showed P@1 0.535.
+for the pre-fix hybrid regression (P@1 0.419).
 
 **Standard set (86 answerable queries)**
 
 | Method | P@1 | MRR | nDCG@5 | Notes |
 |--------|-----|-----|--------|-------|
-| semantic (**shipping**, hybrid on) | **0.419** | 0.596 | 0.656 | current production path |
-| semantic (hybrid off) | 0.535 | 0.700 | 0.751 | semantic-only reference |
+| semantic (**shipping**, literal-gated hybrid) | **0.535** | 0.700 | 0.751 | current production path |
+| semantic (broken hybrid, pre-fix) | 0.419 | 0.596 | 0.656 | Jaccard RRF on all queries |
 | keyword baseline | 0.291 | 0.415 | 0.427 | eval fuzzy ranker |
 
 **Keyword-heavy breakout (15 queries)**
