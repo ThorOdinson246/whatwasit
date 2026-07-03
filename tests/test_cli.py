@@ -16,7 +16,7 @@ from rich.console import Console
 from whatwasit import cli
 from whatwasit.indexer import IndexStats
 from whatwasit.models import Command, SearchResult, Session
-from whatwasit.output import format_timestamp, render_results
+from whatwasit.output import format_timestamp, render_json, render_results
 
 
 def _cmd(raw_cmd: str) -> Command:
@@ -153,6 +153,14 @@ def test_main_index_with_window_overrides_config(monkeypatch: pytest.MonkeyPatch
 
     assert rc == 0
     assert captured_configs[0].session_window_seconds == 120
+
+
+def test_render_json_includes_query_and_commands() -> None:
+    result = _make_result()
+    payload = render_json([result], "fix nginx")
+    assert '"query": "fix nginx"' in payload
+    assert "systemctl reload nginx" in payload
+    assert '"rank": 1' in payload
 
 
 def test_main_query_joins_args_and_calls_search(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:

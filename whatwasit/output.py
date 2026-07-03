@@ -6,6 +6,7 @@ TUI mode delegates to :mod:`whatwasit.tui`.
 
 from __future__ import annotations
 
+import json
 import sys
 from typing import List, Optional, TYPE_CHECKING
 
@@ -104,6 +105,30 @@ def render_plain_lines(
             marker = ">" if i in matched else " "
             print(f"  {marker} {command.raw_cmd}", file=out)
         print(file=out)
+
+
+def render_json(results: List[SearchResult], query: str) -> str:
+    """Serialize search results for scripting (``--json``)."""
+    payload = {
+        "query": query,
+        "count": len(results),
+        "results": [
+            {
+                "rank": rank,
+                "score": round(result.score, 6),
+                "session": {
+                    "id": result.session.id,
+                    "cwd": result.session.cwd,
+                    "start_ts": result.session.start_ts,
+                    "start_relative": format_relative_time(result.session.start_ts),
+                },
+                "matched_indices": result.matched_indices,
+                "commands": [cmd.raw_cmd for cmd in result.session.commands],
+            }
+            for rank, result in enumerate(results, start=1)
+        ],
+    }
+    return json.dumps(payload, indent=2)
 
 
 def display_results(
