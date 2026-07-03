@@ -159,11 +159,14 @@ def test_display_results_plain_uses_lines_when_not_tty(monkeypatch: pytest.Monke
 
 
 @pytest.mark.asyncio
-async def test_tui_smoke_navigate_and_copy() -> None:
+async def test_tui_smoke_navigate_and_copy(monkeypatch: pytest.MonkeyPatch) -> None:
     results = _make_results(6)
     app = WhatwasitTUI(results, "docker build", page_size=5)
     copied: list[str] = []
-    app.copy_to_clipboard = lambda text: copied.append(text)  # type: ignore[method-assign]
+    monkeypatch.setattr(
+        "whatwasit.tui.copy_to_system_clipboard",
+        lambda text: copied.append(text) or True,
+    )
 
     async with app.run_test() as pilot:
         header = pilot.app.query_one("#header", Static)
@@ -175,8 +178,8 @@ async def test_tui_smoke_navigate_and_copy() -> None:
         await pilot.press("enter")
         assert copied == ["git status 1"]
         await pilot.press("n")
-        header_text = str(pilot.app.query_one("#header", Static).render())
-        assert "6/6" in header_text
+        list_view = pilot.app.query_one("#results", ListView)
+        assert len(list_view.children) == 6
 
 
 def test_config_file_path_uses_xdg(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

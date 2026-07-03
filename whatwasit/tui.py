@@ -2,42 +2,42 @@
 
 from __future__ import annotations
 
-from typing import Callable, List, Optional, Sequence
+from typing import Callable, List, Optional, Sequence, Set
 
 from rich.text import Text
+from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import Footer, Input, ListItem, ListView, Static
 
 from .brand import CLI_NAME
+from .clipboard import copy_to_clipboard as copy_to_system_clipboard
 from .models import SearchResult
+from .textutil import truncate_display
 from .timefmt import format_relative_time
 
 _FOOTER_HINTS = (
-    "↑↓ nav  ·  ⏎ copy  ·  Tab focus  ·  n more  ·  q quit"
+    "↑↓ nav  ·  ⏎ copy  ·  space expand  ·  Tab focus  ·  q quit"
 )
-_REPL_DEBOUNCE_SECONDS = 0.25
+_REPL_DEBOUNCE_SECONDS = 0.35
+_LIVE_SEARCH_MIN_CHARS = 2
+_COLLAPSED_CONTEXT_CMDS = 1
+_LINE_WIDTH = 76
 
-# Confidence bands from docs/ACCURACY_RESEARCH.md (C2 per-result badges).
-_BADGE_STRONG_MIN = 0.50
 _BADGE_WEAK_MAX = 0.35
+_BADGE_STRONG_MIN = 0.50
 _STRONG_MARGIN_MIN = 0.08
-
-_CONFIDENCE_STYLES = {
-    "strong": ("strong", "bold"),
-    "medium": ("medium", "dim"),
-    "weak": ("weak", "dim italic"),
-}
 
 _HELP_TEXT = """\
 whatwasit REPL — search your shell history by intent
 
-Type a natural-language query and press Enter.
-Results update in place; matched commands are highlighted.
+Type in the search box; results update after a short pause.
+Matched commands are shown in bold.
 
 Keybindings:
   j/k or ↑/↓   navigate results
   Enter        copy matched command(s) to clipboard
+  Space        expand or collapse a session
   n            show more results
   q            quit
 
@@ -90,33 +90,79 @@ def matched_commands_text(result: SearchResult) -> str:
     return "\n".join(cmd.raw_cmd for cmd in result.session.commands)
 
 
-def render_result_label(
-    rank: int,
-    result: SearchResult,
-    all_results: Sequence[SearchResult],
-) -> Text:
-    """Build list item text: commands primary, metadata dim secondary."""
-    level = confidence_level(result, rank, all_results)
-    label, style = _CONFIDENCE_STYLES[level]
+def _primary_command_index(result: SearchResult) -> int:
+    if result.matched_indices:
+        return result.matched_indices[0]
+    return 0
 
-    text = Text()
-    text.append(f"#{rank} ", style="dim")
-    text.append(f"[{label}] ", style=style)
+
+def _visible_command_indices(
+    result: SearchResult,
+    *,
+    expanded: bool,
+) -> tuple[List[int], int]:
+    """Return command indices to render and how many remain hidden."""
+    commands = result.session.commands
+    if expanded or len(commands) <= 2:
+        return list(range(len(commands))), 0
+
+    primary = _primary_command_index(result)
+    visible: Set[int] = set(result.matched_indices)
+    for i in range(max(0, primary - _COLLAPSED_CONTEXT_CMDS), primary + 1):
+        visible.add(i)
+    ordered = sorted(visible)
+    hidden = len(commands) - len(ordered)
+    return ordered, hidden
+
+
+def _append_headline(text: Text, command: str, rel_time: str, *, bold: bool = True) -> None:
+    left = truncate_display(command)
+    pad = max(1, _LINE_WIDTH - len(left) - len(rel_time))
+    text.append(left, style="bold" if bold else "dim")
+    text.append(" " * pad)
+    text.append(rel_time, style="dim")
     text.append("\n")
 
-    matched = set(result.matched_indices)
-    for i, command in enumerate(result.session.commands):
-        if i in matched:
-            text.append("  › ", style="bold")
-            text.append(f"{command.raw_cmd}\n", style="bold")
-        else:
-            text.append("    ", style="dim")
-            text.append(f"{command.raw_cmd}\n", style="dim")
 
+def render_result_label(
+    result: SearchResult,
+    all_results: Sequence[SearchResult],
+    rank: int,
+    *,
+    expanded: bool = False,
+) -> Text:
+    """Build a compact iCommand-style list row."""
+    text = Text()
     session = result.session
     cwd = session.cwd or "?"
     rel = format_relative_time(session.start_ts)
-    text.append(f"  {cwd}  ·  {rel}", style="dim italic")
+    matched = set(result.matched_indices)
+    primary = _primary_command_index(result)
+
+    if confidence_level(result, rank, all_results) == "weak":
+        text.append("weak  ", style="dim italic")
+
+    _append_headline(text, result.session.commands[primary].raw_cmd, rel)
+
+    visible_indices, hidden_count = _visible_command_indices(result, expanded=expanded)
+
+    if expanded or len(result.session.commands) > 1:
+        text.append(f"  {cwd}\n", style="dim")
+        for i in visible_indices:
+            if i == primary and not expanded:
+                continue
+            cmd = truncate_display(result.session.commands[i].raw_cmd)
+            if i in matched:
+                text.append("  › ", style="bold")
+                text.append(f"{cmd}\n", style="bold")
+            else:
+                text.append("    ", style="dim")
+                text.append(f"{cmd}\n", style="dim")
+        if hidden_count > 0:
+            text.append(f"  + {hidden_count} more — space to expand\n", style="dim italic")
+    else:
+        text.append(f"  {cwd}\n", style="dim")
+
     return text
 
 
@@ -128,13 +174,16 @@ class _ResultPanelMixin:
     _page_size: int
     _visible_count: int
     _low_confidence_threshold: float
+    _expanded_rows: Set[int]
 
     def _header_text(self) -> str:
         if not self._all_results:
-            return f'No results for: "{self._query}"'
+            if self._query:
+                return f'No results for: "{self._query}"'
+            return "Type to search your shell history"
         shown = min(self._visible_count, len(self._all_results))
         total = len(self._all_results)
-        return f'Results for: "{self._query}" ({shown}/{total})'
+        return f"{shown} of {total} sessions"
 
     def _banner_text(self) -> str:
         msg = low_confidence_message(self._all_results, self._low_confidence_threshold)
@@ -145,16 +194,32 @@ class _ResultPanelMixin:
         list_view.clear()
         visible = self._all_results[: self._visible_count]
         for rank, result in enumerate(visible, start=1):
+            row_index = rank - 1
             list_view.append(
-                ListItem(Static(render_result_label(rank, result, self._all_results)))
+                ListItem(
+                    Static(
+                        render_result_label(
+                            result,
+                            self._all_results,
+                            rank,
+                            expanded=row_index in self._expanded_rows,
+                        )
+                    )
+                )
             )
-        if visible:
+        if visible and list_view.index is None:
             list_view.index = 0
 
-    def _selected_result(self) -> Optional[SearchResult]:
+    def _selected_row_index(self) -> Optional[int]:
         list_view = self.query_one("#results", ListView)
         index = list_view.index
         if index is None or index < 0:
+            return None
+        return index
+
+    def _selected_result(self) -> Optional[SearchResult]:
+        index = self._selected_row_index()
+        if index is None:
             return None
         visible = self._all_results[: self._visible_count]
         if index >= len(visible):
@@ -171,18 +236,49 @@ class _ResultPanelMixin:
             banner.update("")
             banner.display = False
 
+    def _set_status(self, message: str) -> None:
+        status = self.query_one("#status", Static)
+        status.update(message or _FOOTER_HINTS)
+
     def _refresh_results_ui(self) -> None:
-        self.query_one("#header", Static).update(self._header_text())
+        header = self.query_one("#header", Static)
+        header.update(self._header_text())
         self._update_banner()
         self._refresh_list()
+        self._set_status(_FOOTER_HINTS)
+
+    def _copy_text(self, text: str) -> None:
+        if copy_to_system_clipboard(text):
+            self.notify("Copied to clipboard", title="whatwasit", timeout=2)
+            return
+        try:
+            self.copy_to_clipboard(text)
+            self.notify("Copied to clipboard", title="whatwasit", timeout=2)
+        except Exception:
+            self.notify(
+                "Copy failed — install wl-copy or xclip",
+                title="whatwasit",
+                severity="error",
+                timeout=4,
+            )
 
     def _copy_selected(self) -> None:
         result = self._selected_result()
         if result is None:
             return
-        text = matched_commands_text(result)
-        self.copy_to_clipboard(text)
-        self.notify("Copied to clipboard", title="whatwasit", timeout=2)
+        self._copy_text(matched_commands_text(result))
+
+    def action_toggle_expand(self) -> None:
+        index = self._selected_row_index()
+        if index is None:
+            return
+        if index in self._expanded_rows:
+            self._expanded_rows.remove(index)
+        else:
+            self._expanded_rows.add(index)
+        self._refresh_list()
+        list_view = self.query_one("#results", ListView)
+        list_view.index = index
 
     def action_cursor_down(self) -> None:
         list_view = self.query_one("#results", ListView)
@@ -228,6 +324,10 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
     Screen {
         layout: vertical;
     }
+    #header {
+        padding: 0 1;
+        color: $text-muted;
+    }
     #banner {
         height: auto;
         padding: 0 1;
@@ -235,8 +335,12 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
     }
     #results {
         height: 1fr;
-        border: solid $accent;
+        border: solid $primary-darken-2;
         margin: 0 1;
+    }
+    ListView > ListItem {
+        padding: 0 1;
+        height: auto;
     }
     #status {
         height: auto;
@@ -247,12 +351,14 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
 
     BINDINGS = [
         Binding("q", "quit", "Quit"),
+        Binding("escape", "quit", "Quit", show=False),
         Binding("j", "cursor_down", "Down", show=False),
         Binding("down", "cursor_down", "Down"),
         Binding("k", "cursor_up", "Up", show=False),
         Binding("up", "cursor_up", "Up"),
         Binding("n", "load_more", "More"),
         Binding("enter", "copy", "Copy"),
+        Binding("space", "toggle_expand", "Expand", show=False),
         Binding("tab", "focus_results", "Results", show=False),
     ]
 
@@ -270,9 +376,10 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         self._page_size = max(1, page_size)
         self._visible_count = min(self._page_size, len(results))
         self._low_confidence_threshold = low_confidence_threshold
+        self._expanded_rows: Set[int] = set()
 
     def compose(self) -> ComposeResult:
-        yield Static(self._header_text(), id="header")
+        yield Static(self._query, id="header")
         yield Static("", id="banner")
         yield ListView(id="results")
         yield Static(_FOOTER_HINTS, id="status")
@@ -280,6 +387,12 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
 
     def on_mount(self) -> None:
         self._refresh_results_ui()
+
+    def _refresh_results_ui(self) -> None:
+        self.query_one("#header", Static).update(self._query)
+        self._update_banner()
+        self._refresh_list()
+        self._set_status(_FOOTER_HINTS)
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         self._copy_selected()
@@ -292,6 +405,15 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
     Screen {
         layout: vertical;
     }
+    #prompt {
+        margin: 1 1 0 1;
+        border: tall $primary-darken-2;
+    }
+    #header {
+        padding: 0 1;
+        color: $text-muted;
+        height: auto;
+    }
     #banner {
         height: auto;
         padding: 0 1;
@@ -299,13 +421,12 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
     }
     #results {
         height: 1fr;
-        border: solid $accent;
-        margin: 0 1;
+        border: solid $primary-darken-2;
+        margin: 1;
     }
-    #prompt {
-        dock: bottom;
-        margin: 0 1 1 1;
-        border: tall $accent;
+    ListView > ListItem {
+        padding: 0 1;
+        height: auto;
     }
     #status {
         height: auto;
@@ -316,12 +437,14 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
 
     BINDINGS = [
         Binding("q", "quit", "Quit"),
+        Binding("escape", "quit", "Quit", show=False),
         Binding("j", "cursor_down", "Down", show=False),
         Binding("down", "cursor_down", "Down"),
         Binding("k", "cursor_up", "Up", show=False),
         Binding("up", "cursor_up", "Up"),
         Binding("n", "load_more", "More"),
         Binding("enter", "copy", "Copy"),
+        Binding("space", "toggle_expand", "Expand", show=False),
         Binding("tab", "focus_results", "Results", show=False),
         Binding("shift+tab", "focus_prompt", "Search", show=False),
         Binding("ctrl+c", "quit", "Quit", show=False),
@@ -341,14 +464,16 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         self._page_size = max(1, page_size)
         self._visible_count = 0
         self._low_confidence_threshold = low_confidence_threshold
+        self._expanded_rows: Set[int] = set()
         self._debounce_timer = None
         self._pending_live_query = ""
+        self._search_token = 0
 
     def compose(self) -> ComposeResult:
-        yield Static(f"{CLI_NAME} — type a query or /help", id="header")
+        yield Input(placeholder="Search shell history…", id="prompt")
+        yield Static("Type to search your shell history", id="header")
         yield Static("", id="banner")
         yield ListView(id="results")
-        yield Input(placeholder="Search shell history…  (/help for commands)", id="prompt")
         yield Static(_FOOTER_HINTS, id="status")
         yield Footer()
 
@@ -364,23 +489,46 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         self._debounce_timer = None
         query = self._pending_live_query.strip()
         if query and not query.startswith("/"):
-            self._run_query(query)
+            self._schedule_search(query)
 
     def on_input_changed(self, event: Input.Changed) -> None:
-        value = event.value.strip()
+        value = event.value
         self._pending_live_query = value
         self._cancel_debounce()
-        if not value or value.startswith("/"):
+        stripped = value.strip()
+        if not stripped or stripped.startswith("/"):
             return
         self._debounce_timer = self.set_timer(
             _REPL_DEBOUNCE_SECONDS,
             self._debounced_search,
         )
 
-    def _run_query(self, query: str) -> None:
+    def _schedule_search(self, query: str) -> None:
+        if len(query.strip()) < _LIVE_SEARCH_MIN_CHARS:
+            return
         self._query = query
-        self._all_results = self._search_fn(query)
-        self._visible_count = min(self._page_size, len(self._all_results))
+        self._expanded_rows.clear()
+        self._search_token += 1
+        token = self._search_token
+        self._set_status("searching…")
+        self._search_worker(query, token)
+
+    @work(thread=True, exclusive=True, group="search")
+    def _search_worker(self, query: str, token: int) -> None:
+        results = self._search_fn(query)
+        self.call_from_thread(self._apply_search_results, query, token, results)
+
+    def _apply_search_results(
+        self,
+        query: str,
+        token: int,
+        results: List[SearchResult],
+    ) -> None:
+        if token != self._search_token:
+            return
+        self._query = query
+        self._all_results = results
+        self._visible_count = min(self._page_size, len(results))
         self._refresh_results_ui()
 
     def _handle_slash(self, raw: str) -> None:
@@ -399,13 +547,13 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
     def on_input_submitted(self, event: Input.Submitted) -> None:
         self._cancel_debounce()
         value = event.value.strip()
-        event.input.value = ""
         if not value:
             return
         if value.startswith("/"):
+            event.input.value = ""
             self._handle_slash(value)
             return
-        self._run_query(value)
+        self._schedule_search(value)
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         self._copy_selected()

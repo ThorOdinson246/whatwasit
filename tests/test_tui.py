@@ -67,14 +67,28 @@ def test_low_confidence_message_above_threshold() -> None:
     assert low_confidence_message(results, threshold=0.40) is None
 
 
-def test_render_result_label_shows_rank_not_score() -> None:
+def test_render_result_label_shows_primary_command() -> None:
     results = _make_results(1)
-    text = render_result_label(1, results[0], results)
+    text = render_result_label(results[0], results, 1)
     rendered = str(text)
-    assert "#1" in rendered
     assert "git status 0" in rendered
+    assert "/tmp/project-0" in rendered
     assert "score=" not in rendered
-    assert "0.9" not in rendered
+    assert "[strong]" not in rendered
+
+
+def test_render_result_label_shows_weak_only_for_low_confidence() -> None:
+    weak = SearchResult(
+        session=_make_results(1)[0].session,
+        score=0.30,
+        matched_indices=[1],
+    )
+    rendered = str(render_result_label(weak, [weak], 1))
+    assert "weak" in rendered
+
+    strong = _make_results(1)[0]
+    rendered_strong = str(render_result_label(strong, [strong], 1))
+    assert "strong" not in rendered_strong
 
 
 def test_matched_commands_text_returns_highlighted_only() -> None:
@@ -111,16 +125,19 @@ async def test_tui_navigate_and_load_more() -> None:
         list_view = pilot.app.query_one("#results", ListView)
         assert list_view.index == 1
         await pilot.press("n")
-        header_text = str(pilot.app.query_one("#header", Static).render())
-        assert "6/6" in header_text
+        list_view = pilot.app.query_one("#results", ListView)
+        assert len(list_view.children) == 6
 
 
 @pytest.mark.asyncio
-async def test_tui_copy_on_select() -> None:
+async def test_tui_copy_on_select(monkeypatch: pytest.MonkeyPatch) -> None:
     results = _make_results(1)
     app = WhatwasitTUI(results, "git status", page_size=5)
     copied: list[str] = []
-    app.copy_to_clipboard = lambda text: copied.append(text)  # type: ignore[method-assign]
+    monkeypatch.setattr(
+        "whatwasit.tui.copy_to_system_clipboard",
+        lambda text: copied.append(text) or True,
+    )
 
     async with app.run_test() as pilot:
         await pilot.press("enter")
@@ -141,8 +158,20 @@ async def test_repl_debounced_live_search() -> None:
         prompt = pilot.app.query_one("#prompt", Input)
         prompt.value = "git"
         pilot.app.on_input_changed(Input.Changed(prompt, prompt.value))
-        await pilot.pause(0.3)
+        await pilot.pause(0.5)
         assert queries == ["git"]
+
+
+@pytest.mark.asyncio
+async def test_tui_toggle_expand() -> None:
+    results = _make_results(1)
+    app = WhatwasitTUI(results, "git status", page_size=5)
+
+    async with app.run_test() as pilot:
+        await pilot.press("space")
+        assert 0 in pilot.app._expanded_rows
+        await pilot.press("space")
+        assert 0 not in pilot.app._expanded_rows
 
 
 @pytest.mark.asyncio
@@ -161,12 +190,13 @@ async def test_repl_query_and_slash_commands() -> None:
         await pilot.press("enter")
         assert queries == ["nginx fix"]
         header = str(pilot.app.query_one("#header", Static).render())
-        assert "nginx fix" in header
+        assert "2 of 2" in header
+        assert prompt.value == "nginx fix"
 
         prompt.value = "/more"
         await pilot.press("enter")
         header = str(pilot.app.query_one("#header", Static).render())
-        assert "2/2" in header
+        assert "2 of 2" in header
 
         prompt.value = "/help"
         await pilot.press("enter")
