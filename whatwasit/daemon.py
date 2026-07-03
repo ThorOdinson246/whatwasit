@@ -21,6 +21,7 @@ from whatwasit.search import search
 
 _CONNECT_TIMEOUT = 0.2
 _REQUEST_TIMEOUT = 30.0
+_MAX_REQUEST_BYTES = 1_048_576
 
 
 def _xdg_runtime_dir() -> Optional[Path]:
@@ -161,6 +162,10 @@ def _handle_client(conn: socket.socket, state: DaemonState) -> None:
     conn.settimeout(_REQUEST_TIMEOUT)
     with conn.makefile("r", encoding="utf-8") as reader:
         for line in reader:
+            if len(line) > _MAX_REQUEST_BYTES:
+                response = {"ok": False, "error": "request too large"}
+                conn.sendall((json.dumps(response) + "\n").encode("utf-8"))
+                return
             line = line.strip()
             if not line:
                 continue
@@ -185,6 +190,10 @@ def serve(config: Optional[Config] = None) -> int:
 
     server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server.bind(str(sock_path))
+    try:
+        os.chmod(sock_path, 0o600)
+    except OSError:
+        pass
     server.listen(8)
     state = DaemonState(config)
 

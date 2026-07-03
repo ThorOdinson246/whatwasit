@@ -7,6 +7,9 @@ import shutil
 import subprocess
 from typing import Iterable, List
 
+# Avoid feeding megabyte paste-bombs to clipboard helpers.
+_MAX_CLIPBOARD_BYTES = 512_000
+
 
 def _clipboard_commands() -> Iterable[List[str]]:
     if os.environ.get("WAYLAND_DISPLAY"):
@@ -21,13 +24,17 @@ def copy_to_clipboard(text: str) -> bool:
     if not text:
         return False
 
+    payload = text.encode("utf-8")
+    if len(payload) > _MAX_CLIPBOARD_BYTES:
+        payload = payload[:_MAX_CLIPBOARD_BYTES]
+
     for cmd in _clipboard_commands():
         if shutil.which(cmd[0]) is None:
             continue
         try:
             subprocess.run(
                 cmd,
-                input=text.encode("utf-8"),
+                input=payload,
                 check=True,
                 timeout=2,
                 stdout=subprocess.DEVNULL,

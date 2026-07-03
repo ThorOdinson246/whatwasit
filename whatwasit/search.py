@@ -66,7 +66,10 @@ def build_fts_match_query(query: str) -> Optional[str]:
     terms = _KW_TOKEN_RE.findall(query.lower())
     if not terms:
         return None
-    return " ".join(f'"{term}"' for term in terms)
+    safe = [t.replace('"', "") for t in terms if t.replace('"', "")]
+    if not safe:
+        return None
+    return " ".join(f'"{term}"' for term in safe)
 
 
 def _keyword_score(query: str, doc_text: str) -> float:
