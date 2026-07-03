@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "whatwasit"
-version = "0.1.2"
+version = "0.2.0"
 description = "Local-first semantic search for your shell history. Search by intent, not exact text. No cloud, no API keys."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -12,7 +12,7 @@ license = { file = "LICENSE" }
 authors = [{ name = "ThorOdinson246", email = "110178596+ThorOdinson246@users.noreply.github.com" }]
 keywords = ["shell", "history", "semantic-search", "embeddings", "cli", "local-first", "privacy", "whatwasit", "shell-history"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
