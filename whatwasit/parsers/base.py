@@ -8,6 +8,8 @@ single flat list of :class:`~whatwasit.models.Command`.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterator, List, Tuple
@@ -63,3 +65,21 @@ def load_all(config: Config) -> List[Command]:
         elif kind == "atuin":
             commands.extend(atuin_mod.parse_atuin(path))
     return commands
+
+
+def history_fingerprint() -> str:
+    """Stable hash of default history source mtimes and sizes for incremental index."""
+    parts: List[dict[str, object]] = []
+    for path, _kind in default_sources():
+        if not path.exists():
+            continue
+        stat = path.stat()
+        parts.append(
+            {
+                "path": str(path),
+                "mtime_ns": stat.st_mtime_ns,
+                "size": stat.st_size,
+            }
+        )
+    payload = json.dumps(parts, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()

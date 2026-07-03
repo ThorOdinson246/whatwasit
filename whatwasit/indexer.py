@@ -17,7 +17,7 @@ from .embedder import _META_MODEL_NAME, build_embedder, encode_passages
 from .index import build_index
 from .interfaces import Embedder, VectorIndex
 from .models import Command
-from .parsers.base import load_all
+from .parsers.base import history_fingerprint, load_all
 from .sessions import group_commands
 
 
@@ -28,6 +28,7 @@ class IndexStats:
     n_commands: int
     n_sessions: int
     elapsed_seconds: float
+    skipped: bool = False
 
 
 def index_commands(
@@ -96,13 +97,38 @@ def build_index_from_history(
     *,
     embedder: Optional[Embedder] = None,
     index: Optional[VectorIndex] = None,
+    force_rebuild: bool = False,
 ) -> IndexStats:
-    """Load history from all available sources and index it from scratch."""
+    """Load history from all available sources and index when sources changed."""
+    config.ensure_data_dir()
+    fingerprint = history_fingerprint()
+
+    conn = db.connect(config.db_path)
+    db.initialize(conn)
+    stored_fp = db.get_meta(conn, "history_fingerprint")
+    has_data = db.count_sessions(conn) > 0 and config.index_path.exists()
+    conn.close()
+
+    if not force_rebuild and stored_fp == fingerprint and has_data:
+        return IndexStats(
+            n_commands=0,
+            n_sessions=0,
+            elapsed_seconds=0.0,
+            skipped=True,
+        )
+
     commands = load_all(config)
-    return index_commands(
+    stats = index_commands(
         config,
         commands,
         embedder=embedder,
         index=index,
         reset=True,
     )
+
+    conn = db.connect(config.db_path)
+    db.set_meta(conn, "history_fingerprint", fingerprint)
+    conn.commit()
+    conn.close()
+
+    return stats
