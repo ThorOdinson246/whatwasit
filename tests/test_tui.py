@@ -128,6 +128,24 @@ async def test_tui_copy_on_select() -> None:
 
 
 @pytest.mark.asyncio
+async def test_repl_debounced_live_search() -> None:
+    queries: list[str] = []
+
+    def fake_search(query: str):
+        queries.append(query)
+        return _make_results(1)
+
+    app = WhatwasitREPL(fake_search, page_size=5)
+
+    async with app.run_test() as pilot:
+        prompt = pilot.app.query_one("#prompt", Input)
+        prompt.value = "git"
+        pilot.app.on_input_changed(Input.Changed(prompt, prompt.value))
+        await pilot.pause(0.3)
+        assert queries == ["git"]
+
+
+@pytest.mark.asyncio
 async def test_repl_query_and_slash_commands() -> None:
     queries: list[str] = []
 

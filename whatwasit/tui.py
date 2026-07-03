@@ -16,6 +16,7 @@ from .timefmt import format_relative_time
 _FOOTER_HINTS = (
     "↑↓ nav  ·  ⏎ copy  ·  Tab focus  ·  n more  ·  q quit"
 )
+_REPL_DEBOUNCE_SECONDS = 0.25
 
 # Confidence bands from docs/ACCURACY_RESEARCH.md (C2 per-result badges).
 _BADGE_STRONG_MIN = 0.50
@@ -210,6 +211,15 @@ class _ResultPanelMixin:
         self.query_one("#header", Static).update(_HELP_TEXT)
         self.query_one("#banner", Static).display = False
 
+    def action_focus_results(self) -> None:
+        self.query_one("#results", ListView).focus()
+
+    def action_focus_prompt(self) -> None:
+        try:
+            self.query_one("#prompt", Input).focus()
+        except Exception:
+            pass
+
 
 class WhatwasitTUI(_ResultPanelMixin, App[None]):
     """Browse pre-fetched search results (one-shot ``whatwasit "query"``)."""
@@ -242,6 +252,8 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         Binding("k", "cursor_up", "Up", show=False),
         Binding("up", "cursor_up", "Up"),
         Binding("n", "load_more", "More"),
+        Binding("enter", "copy", "Copy"),
+        Binding("tab", "focus_results", "Results", show=False),
     ]
 
     def __init__(
@@ -263,10 +275,7 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         yield Static(self._header_text(), id="header")
         yield Static("", id="banner")
         yield ListView(id="results")
-        yield Static(
-            "Enter copy  n more  j/k navigate  q quit",
-            id="status",
-        )
+        yield Static(_FOOTER_HINTS, id="status")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -298,6 +307,11 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         margin: 0 1 1 1;
         border: tall $accent;
     }
+    #status {
+        height: auto;
+        padding: 0 1;
+        color: $text-muted;
+    }
     """
 
     BINDINGS = [
@@ -307,6 +321,9 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         Binding("k", "cursor_up", "Up", show=False),
         Binding("up", "cursor_up", "Up"),
         Binding("n", "load_more", "More"),
+        Binding("enter", "copy", "Copy"),
+        Binding("tab", "focus_results", "Results", show=False),
+        Binding("shift+tab", "focus_prompt", "Search", show=False),
         Binding("ctrl+c", "quit", "Quit", show=False),
     ]
 
@@ -324,15 +341,41 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         self._page_size = max(1, page_size)
         self._visible_count = 0
         self._low_confidence_threshold = low_confidence_threshold
+        self._debounce_timer = None
+        self._pending_live_query = ""
 
     def compose(self) -> ComposeResult:
         yield Static(f"{CLI_NAME} — type a query or /help", id="header")
         yield Static("", id="banner")
         yield ListView(id="results")
         yield Input(placeholder="Search shell history…  (/help for commands)", id="prompt")
+        yield Static(_FOOTER_HINTS, id="status")
+        yield Footer()
 
     def on_mount(self) -> None:
         self.query_one("#prompt", Input).focus()
+
+    def _cancel_debounce(self) -> None:
+        if self._debounce_timer is not None:
+            self._debounce_timer.stop()
+            self._debounce_timer = None
+
+    def _debounced_search(self) -> None:
+        self._debounce_timer = None
+        query = self._pending_live_query.strip()
+        if query and not query.startswith("/"):
+            self._run_query(query)
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        value = event.value.strip()
+        self._pending_live_query = value
+        self._cancel_debounce()
+        if not value or value.startswith("/"):
+            return
+        self._debounce_timer = self.set_timer(
+            _REPL_DEBOUNCE_SECONDS,
+            self._debounced_search,
+        )
 
     def _run_query(self, query: str) -> None:
         self._query = query
@@ -354,6 +397,7 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         self.notify(f"Unknown command: {raw!r} — try /help", severity="warning", timeout=3)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
+        self._cancel_debounce()
         value = event.value.strip()
         event.input.value = ""
         if not value:
