@@ -118,6 +118,7 @@ def _run_repl() -> int:
         do_search,
         page_size=config.tui_page_size,
         low_confidence_threshold=config.low_confidence_threshold,
+        theme=config.tui_theme,
     )
     return 0
 
@@ -147,7 +148,13 @@ def _run_query(
         results = search(config, query, k=top_k)
 
     if as_json:
-        print(render_json(results, query))
+        print(
+            render_json(
+                results,
+                query,
+                low_confidence_threshold=config.low_confidence_threshold,
+            )
+        )
         return 0
 
     display_results(results, query, config, force_plain=force_plain)

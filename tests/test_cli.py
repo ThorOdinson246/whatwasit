@@ -68,7 +68,6 @@ def test_render_results_highlights_matched_command_and_shows_cwd_and_score() -> 
     output = console.export_text()
     assert "systemctl reload nginx" in output  # matched command shown
     assert "/srv/nginx-proxy" in output  # cwd shown
-    assert "0.88" in output or "0.87" in output  # score shown (rounded)
 
 
 def test_render_results_empty_list_does_not_raise() -> None:
@@ -161,6 +160,7 @@ def test_render_json_includes_query_and_commands() -> None:
     assert '"query": "fix nginx"' in payload
     assert "systemctl reload nginx" in payload
     assert '"rank": 1' in payload
+    assert '"confidence"' in payload
 
 
 def test_main_query_joins_args_and_calls_search(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:

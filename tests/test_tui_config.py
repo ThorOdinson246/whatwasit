@@ -128,7 +128,7 @@ def test_display_results_plain_uses_rich_when_tty(monkeypatch: pytest.MonkeyPatc
 
     calls: List[dict] = []
 
-    def fake_render(results, query, console=None):
+    def fake_render(results, query, console=None, **kwargs):
         calls.append({"query": query, "n": len(results)})
 
     monkeypatch.setattr("whatwasit.output.render_results", fake_render)
@@ -142,7 +142,7 @@ def test_display_results_plain_uses_rich_when_tty(monkeypatch: pytest.MonkeyPatc
 def test_display_results_plain_uses_lines_when_not_tty(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: List[dict] = []
 
-    def fake_lines(results, query, *, file=None):
+    def fake_lines(results, query, *, file=None, **kwargs):
         calls.append({"query": query})
 
     monkeypatch.setattr("whatwasit.output.render_plain_lines", fake_lines)
@@ -174,10 +174,12 @@ async def test_tui_smoke_navigate_and_copy(monkeypatch: pytest.MonkeyPatch) -> N
         await pilot.press("j")
         list_view = pilot.app.query_one("#results", ListView)
         assert list_view.index == 1
-        assert "git status 1" in str(list_view.children[1].query_one(Static).render())
+        assert "git status 1" in "\n".join(
+            str(w.render()) for w in list_view.children[1].query(Static)
+        )
         await pilot.press("enter")
         assert copied == ["git status 1"]
-        await pilot.press("n")
+        await pilot.press("m")
         list_view = pilot.app.query_one("#results", ListView)
         assert len(list_view.children) == 6
 

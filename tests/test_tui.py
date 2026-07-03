@@ -18,6 +18,10 @@ from whatwasit.tui import (
 )
 
 
+def _row_text(list_item) -> str:
+    return "\n".join(str(w.render()) for w in list_item.query(Static))
+
+
 def _cmd(raw_cmd: str) -> Command:
     return Command(raw_cmd=raw_cmd, source="zsh")
 
@@ -77,18 +81,19 @@ def test_render_result_label_shows_primary_command() -> None:
     assert "[strong]" not in rendered
 
 
-def test_render_result_label_shows_weak_only_for_low_confidence() -> None:
+def test_render_result_label_shows_weak_indicator_on_right() -> None:
     weak = SearchResult(
         session=_make_results(1)[0].session,
         score=0.30,
         matched_indices=[1],
     )
-    rendered = str(render_result_label(weak, [weak], 1))
-    assert "weak" in rendered
+    rendered = str(render_result_label(weak, [weak], 1, line_width=60))
+    assert "⚠" in rendered
+    assert rendered.index("git status") < rendered.index("⚠")
 
     strong = _make_results(1)[0]
-    rendered_strong = str(render_result_label(strong, [strong], 1))
-    assert "strong" not in rendered_strong
+    rendered_strong = str(render_result_label(strong, [strong], 1, line_width=60))
+    assert "⚠" not in rendered_strong
 
 
 def test_matched_commands_text_returns_highlighted_only() -> None:
@@ -106,7 +111,7 @@ async def test_tui_shows_commands_and_banner() -> None:
     async with app.run_test() as pilot:
         list_view = pilot.app.query_one("#results", ListView)
         assert len(list_view.children) == 2
-        first_label = str(list_view.children[0].query_one(Static).render())
+        first_label = _row_text(list_view.children[0])
         assert "git status 0" in first_label
         assert "/tmp/project-0" in first_label
 
@@ -124,7 +129,7 @@ async def test_tui_navigate_and_load_more() -> None:
         await pilot.press("j")
         list_view = pilot.app.query_one("#results", ListView)
         assert list_view.index == 1
-        await pilot.press("n")
+        await pilot.press("m")
         list_view = pilot.app.query_one("#results", ListView)
         assert len(list_view.children) == 6
 
