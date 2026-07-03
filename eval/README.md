@@ -18,27 +18,32 @@ session.
 ## Latest results
 
 Measured with `python eval/run_eval.py` against `whatwasit.search.search()` on
-**unmodified `main`** (MiniLM, length normalization, session doc hints). The harness
-uses production defaults (`Config.hybrid_search=True`); hybrid RRF/FTS fusion runs
-only for **literal queries** (`looks_literal_query()`).
+**`main`** (MiniLM, length normalization, universal session doc enrichment,
+literal-gated hybrid). The harness uses production defaults
+(`Config.hybrid_search=True`); hybrid RRF/FTS fusion runs only for **literal
+queries** (`looks_literal_query()`).
 
-**Reproduced 2026-07-03** — see [`eval/research/BASELINE_REPRO.md`](research/BASELINE_REPRO.md)
-for the pre-fix hybrid regression (P@1 0.419).
+**Reproduced 2026-07-03** — investigation write-ups:
+[`eval/research/README.md`](research/README.md).
 
 **Standard set (86 answerable queries)**
 
 | Method | P@1 | MRR | nDCG@5 | Notes |
 |--------|-----|-----|--------|-------|
-| semantic (**shipping**, literal-gated hybrid) | **0.535** | 0.700 | 0.751 | current production path |
+| semantic (**shipping**) | **0.547** | 0.701 | 0.746 | literal-gated hybrid + universal doc enrichment |
+| semantic (gated hybrid, no enrichment) | 0.535 | 0.700 | 0.751 | hybrid fix only |
 | semantic (broken hybrid, pre-fix) | 0.419 | 0.596 | 0.656 | Jaccard RRF on all queries |
-| keyword baseline | 0.291 | 0.415 | 0.427 | eval fuzzy ranker |
+| keyword baseline | 0.372 | 0.488 | 0.492 | eval fuzzy ranker |
 
 **Keyword-heavy breakout (15 queries)**
 
 | Method | P@1 | MRR | nDCG@5 |
 |--------|-----|-----|--------|
-| semantic (whatwasit) | 1.000 | 1.000 | 1.000 |
+| semantic (whatwasit) | 0.933 | 0.967 | 0.975 |
 | keyword baseline | 0.933 | 0.967 | 0.975 |
+
+Known tradeoff: enrichment shifts the `alembic upgrade head revision migrate`
+literal query from P@1 1.000 → 0.933 (accepted; standard 86-query set unaffected).
 
 Full per-query breakdown: [`tables.md`](tables.md). Raw numbers:
 [`summary.json`](summary.json), [`metrics_summary.csv`](metrics_summary.csv).
@@ -60,4 +65,4 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python eval/run_eval.py
 
 The harness indexes all sessions through the real whatwasit pipeline, runs both
 semantic search and a keyword/fuzzy baseline, and computes standard IR metrics
-(P@k, R@k, MRR, nDCG@k). Summary JSON includes `search_config.hybrid_search`.
+(P@k, R@k, MRR, nDCG@k). Summary JSON includes `search_config`.

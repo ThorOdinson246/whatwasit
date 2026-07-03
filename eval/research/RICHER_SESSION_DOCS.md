@@ -40,8 +40,7 @@ rank 1→2; keyword-heavy P@1 **1.000 → 0.933**. Standard 86-query set unaffec
 
 ## Recommendation
 
-**Ready to merge** after `fix/hybrid-default` lands: Mode B holds, full set +0.012,
-Mode C +0.050. Review keyword-heavy regression before release if that slice matters.
+**Ready to merge** — merged to `main` 2026-07-03 after `fix/hybrid-default`.
 
 ## Implementation
 

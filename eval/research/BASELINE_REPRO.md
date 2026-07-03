@@ -49,3 +49,11 @@ produced identical P@1 to 4 decimal places.
   `hybrid_search=True`
 - Updated `eval/README.md` with shipping vs semantic-only rows
 - `run_eval.py` now records `search_config.hybrid_search` in summary JSON
+
+## Resolution (merged 2026-07-03)
+
+1. **`fix/eval-baseline-repro`** — artifacts updated to broken-hybrid numbers (P@1 0.419).
+2. **`fix/hybrid-default`** — hybrid RRF gated to literal queries only; P@1 **0.535**.
+3. **`feature/richer-session-docs`** — universal doc enrichment; P@1 **0.547**.
+
+See [README.md](README.md) for the full index of investigation write-ups.
