@@ -20,6 +20,7 @@ from .index import build_index
 from .interfaces import Embedder, VectorIndex
 from . import db
 from .models import SearchResult, Session
+from .textutil import truncate_for_embed
 
 MAX_MATCHED_INDICES = 3
 MATCH_SCORE_MARGIN = 0.05
@@ -135,7 +136,7 @@ def _annotate_results(
     spans: List[tuple[int, int]] = []
     for session, _ in sessions:
         start = len(all_texts)
-        all_texts.extend(c.raw_cmd for c in session.commands)
+        all_texts.extend(truncate_for_embed(c.raw_cmd) for c in session.commands)
         spans.append((start, len(all_texts)))
 
     cmd_vecs = (
