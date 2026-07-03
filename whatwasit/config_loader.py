@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from .config import Config
 
 _VALID_OUTPUT_MODES = frozenset({"tui", "plain"})
+_VALID_TUI_THEMES = frozenset({"midnight", "default", "high-contrast"})
 
 
 def _xdg_config_home() -> Path:
@@ -75,4 +76,27 @@ def apply_file_overrides(config: "Config") -> "Config":
     if "use_daemon" in data:
         config.use_daemon = bool(data["use_daemon"])
 
+    if "tui_theme" in data:
+        theme = str(data["tui_theme"]).lower()
+        if theme in _VALID_TUI_THEMES:
+            config.tui_theme = theme
+
     return config
+
+
+def save_config_value(key: str, value: object) -> None:
+    """Persist a single config key to the user's TOML file."""
+    path = config_file_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = dict(load_config_file())
+    data[key] = value
+    lines: list[str] = []
+    for k, v in sorted(data.items()):
+        if isinstance(v, bool):
+            lines.append(f"{k} = {'true' if v else 'false'}")
+        elif isinstance(v, (int, float)):
+            lines.append(f"{k} = {v}")
+        else:
+            escaped = str(v).replace("\\", "\\\\").replace('"', '\\"')
+            lines.append(f'{k} = "{escaped}"')
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")

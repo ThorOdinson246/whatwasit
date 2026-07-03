@@ -8,21 +8,23 @@ from rich.text import Text
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
+from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Input, ListItem, ListView, Static
 
 from .brand import CLI_NAME
 from .clipboard import copy_to_clipboard as copy_to_system_clipboard
+from .config_loader import save_config_value
 from .models import SearchResult
 from .textutil import truncate_display
+from .themes import DEFAULT_THEME, THEMES, WEAK_INDICATOR, next_theme, normalize_theme, theme_css
 from .timefmt import format_relative_time
 
 _FOOTER_HINTS = (
-    "↑↓ nav  ·  ⏎ copy  ·  space expand  ·  Tab focus  ·  q quit"
+    "↑↓ nav  ·  ⏎ copy  ·  space expand  ·  m more  ·  t theme  ·  q quit"
 )
 _REPL_DEBOUNCE_SECONDS = 0.35
 _LIVE_SEARCH_MIN_CHARS = 2
 _COLLAPSED_CONTEXT_CMDS = 1
-_LINE_WIDTH = 76
 
 _BADGE_WEAK_MAX = 0.35
 _BADGE_STRONG_MIN = 0.50
@@ -38,12 +40,14 @@ Keybindings:
   j/k or ↑/↓   navigate results
   Enter        copy matched command(s) to clipboard
   Space        expand or collapse a session
-  n            show more results
+  m            show more results
+  t            cycle color theme
   q            quit
 
 Slash commands:
   /help        show this help
   /more        load more results
+  /theme       cycle color theme
   /quit        quit
 """
 
@@ -115,13 +119,10 @@ def _visible_command_indices(
     return ordered, hidden
 
 
-def _append_headline(text: Text, command: str, rel_time: str, *, bold: bool = True) -> None:
-    left = truncate_display(command)
-    pad = max(1, _LINE_WIDTH - len(left) - len(rel_time))
-    text.append(left, style="bold" if bold else "dim")
-    text.append(" " * pad)
-    text.append(rel_time, style="dim")
-    text.append("\n")
+def _meta_label(rel_time: str, *, weak: bool) -> str:
+    if weak:
+        return f"{WEAK_INDICATOR}  {rel_time}"
+    return rel_time
 
 
 def render_result_label(
@@ -130,22 +131,26 @@ def render_result_label(
     rank: int,
     *,
     expanded: bool = False,
+    line_width: int = 76,
 ) -> Text:
-    """Build a compact iCommand-style list row."""
+    """Plain-text row preview (used by tests and plain output)."""
     text = Text()
     session = result.session
     cwd = session.cwd or "?"
     rel = format_relative_time(session.start_ts)
     matched = set(result.matched_indices)
     primary = _primary_command_index(result)
+    weak = confidence_level(result, rank, all_results) == "weak"
 
-    if confidence_level(result, rank, all_results) == "weak":
-        text.append("weak  ", style="dim italic")
-
-    _append_headline(text, result.session.commands[primary].raw_cmd, rel)
+    left = truncate_display(result.session.commands[primary].raw_cmd)
+    right = _meta_label(rel, weak=weak)
+    pad = max(1, line_width - len(left) - len(right))
+    text.append(left, style="bold")
+    text.append(" " * pad)
+    text.append(right, style="dim")
+    text.append("\n")
 
     visible_indices, hidden_count = _visible_command_indices(result, expanded=expanded)
-
     if expanded or len(result.session.commands) > 1:
         text.append(f"  {cwd}\n", style="dim")
         for i in visible_indices:
@@ -162,11 +167,87 @@ def render_result_label(
             text.append(f"  + {hidden_count} more — space to expand\n", style="dim italic")
     else:
         text.append(f"  {cwd}\n", style="dim")
-
     return text
 
 
-class _ResultPanelMixin:
+class SessionRow(Vertical):
+    """One search result: command + right-aligned meta, path, optional context."""
+
+    def __init__(
+        self,
+        result: SearchResult,
+        all_results: Sequence[SearchResult],
+        rank: int,
+        *,
+        expanded: bool = False,
+    ) -> None:
+        super().__init__()
+        self._result = result
+        self._all_results = all_results
+        self._rank = rank
+        self._expanded = expanded
+
+    def compose(self) -> ComposeResult:
+        result = self._result
+        session = result.session
+        cwd = session.cwd or "?"
+        rel = format_relative_time(session.start_ts)
+        matched = set(result.matched_indices)
+        primary = _primary_command_index(result)
+        weak = confidence_level(result, self._rank, self._all_results) == "weak"
+        primary_cmd = truncate_display(session.commands[primary].raw_cmd)
+
+        with Horizontal(classes="headline"):
+            yield Static(primary_cmd, classes="row-command")
+            if weak:
+                yield Static(WEAK_INDICATOR, classes="row-warn")
+            yield Static(rel, classes="row-meta")
+
+        visible_indices, hidden_count = _visible_command_indices(
+            result, expanded=self._expanded
+        )
+        multi = len(session.commands) > 1
+
+        if multi or expanded:
+            yield Static(f"  {cwd}", classes="row-path")
+            for i in visible_indices:
+                if i == primary and not self._expanded:
+                    continue
+                cmd = truncate_display(session.commands[i].raw_cmd)
+                if i in matched:
+                    yield Static(f"  › {cmd}", classes="row-command")
+                else:
+                    yield Static(f"    {cmd}", classes="row-context")
+            if hidden_count > 0:
+                yield Static(
+                    f"  + {hidden_count} more — space to expand",
+                    classes="row-hint",
+                )
+        else:
+            yield Static(f"  {cwd}", classes="row-path")
+
+
+class _ThemedAppMixin:
+    """Apply and cycle Textual color themes."""
+
+    _theme_name: str
+
+    def _apply_theme(self, name: str) -> None:
+        self._theme_name = normalize_theme(name)
+        screen = self.screen
+        for theme in THEMES:
+            screen.remove_class(f"theme-{theme}")
+        screen.add_class(f"theme-{self._theme_name}")
+
+    def action_cycle_theme(self) -> None:
+        self._theme_name = next_theme(self._theme_name)
+        save_config_value("tui_theme", self._theme_name)
+        self._apply_theme(self._theme_name)
+        label = THEMES[self._theme_name].label
+        self.notify(f"Theme: {label}", timeout=2)
+
+
+class _ResultPanelMixin(_ThemedAppMixin):
     """Shared result-list behaviour for one-shot TUI and REPL."""
 
     _all_results: List[SearchResult]
@@ -197,13 +278,11 @@ class _ResultPanelMixin:
             row_index = rank - 1
             list_view.append(
                 ListItem(
-                    Static(
-                        render_result_label(
-                            result,
-                            self._all_results,
-                            rank,
-                            expanded=row_index in self._expanded_rows,
-                        )
+                    SessionRow(
+                        result,
+                        self._all_results,
+                        rank,
+                        expanded=row_index in self._expanded_rows,
                     )
                 )
             )
@@ -317,37 +396,50 @@ class _ResultPanelMixin:
             pass
 
 
+def _app_css(theme_name: str) -> str:
+    return (
+        theme_css(theme_name)
+        + """
+SessionRow {
+    height: auto;
+    width: 100%;
+}
+SessionRow > Horizontal.headline {
+    height: auto;
+    width: 100%;
+}
+SessionRow .row-command {
+    width: 1fr;
+    text-style: bold;
+}
+SessionRow .row-warn {
+    width: auto;
+    padding: 0 1;
+}
+SessionRow .row-meta {
+    width: auto;
+    min-width: 12;
+    text-align: right;
+}
+SessionRow .row-path {
+    width: 100%;
+    padding-left: 2;
+}
+SessionRow .row-context {
+    width: 100%;
+    padding-left: 4;
+}
+SessionRow .row-hint {
+    width: 100%;
+    padding-left: 2;
+    text-style: italic;
+}
+"""
+    )
+
+
 class WhatwasitTUI(_ResultPanelMixin, App[None]):
     """Browse pre-fetched search results (one-shot ``whatwasit "query"``)."""
-
-    CSS = """
-    Screen {
-        layout: vertical;
-    }
-    #header {
-        padding: 0 1;
-        color: $text-muted;
-    }
-    #banner {
-        height: auto;
-        padding: 0 1;
-        display: none;
-    }
-    #results {
-        height: 1fr;
-        border: solid $primary-darken-2;
-        margin: 0 1;
-    }
-    ListView > ListItem {
-        padding: 0 1;
-        height: auto;
-    }
-    #status {
-        height: auto;
-        padding: 0 1;
-        color: $text-muted;
-    }
-    """
 
     BINDINGS = [
         Binding("q", "quit", "Quit"),
@@ -356,11 +448,14 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         Binding("down", "cursor_down", "Down"),
         Binding("k", "cursor_up", "Up", show=False),
         Binding("up", "cursor_up", "Up"),
-        Binding("n", "load_more", "More"),
+        Binding("m", "load_more", "More"),
         Binding("enter", "copy", "Copy"),
         Binding("space", "toggle_expand", "Expand", show=False),
+        Binding("t", "cycle_theme", "Theme", show=False),
         Binding("tab", "focus_results", "Results", show=False),
     ]
+
+    CSS = _app_css(DEFAULT_THEME)
 
     def __init__(
         self,
@@ -369,6 +464,7 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         *,
         page_size: int = 5,
         low_confidence_threshold: float = 0.40,
+        theme: str = DEFAULT_THEME,
     ) -> None:
         super().__init__()
         self._all_results = results
@@ -377,6 +473,7 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         self._visible_count = min(self._page_size, len(results))
         self._low_confidence_threshold = low_confidence_threshold
         self._expanded_rows: Set[int] = set()
+        self._theme_name = normalize_theme(theme)
 
     def compose(self) -> ComposeResult:
         yield Static(self._query, id="header")
@@ -386,6 +483,7 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
         yield Footer()
 
     def on_mount(self) -> None:
+        self._apply_theme(self._theme_name)
         self._refresh_results_ui()
 
     def _refresh_results_ui(self) -> None:
@@ -401,40 +499,6 @@ class WhatwasitTUI(_ResultPanelMixin, App[None]):
 class WhatwasitREPL(_ResultPanelMixin, App[None]):
     """Persistent interactive REPL launched by bare ``whatwasit``."""
 
-    CSS = """
-    Screen {
-        layout: vertical;
-    }
-    #prompt {
-        margin: 1 1 0 1;
-        border: tall $primary-darken-2;
-    }
-    #header {
-        padding: 0 1;
-        color: $text-muted;
-        height: auto;
-    }
-    #banner {
-        height: auto;
-        padding: 0 1;
-        display: none;
-    }
-    #results {
-        height: 1fr;
-        border: solid $primary-darken-2;
-        margin: 1;
-    }
-    ListView > ListItem {
-        padding: 0 1;
-        height: auto;
-    }
-    #status {
-        height: auto;
-        padding: 0 1;
-        color: $text-muted;
-    }
-    """
-
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("escape", "quit", "Quit", show=False),
@@ -442,13 +506,16 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         Binding("down", "cursor_down", "Down"),
         Binding("k", "cursor_up", "Up", show=False),
         Binding("up", "cursor_up", "Up"),
-        Binding("n", "load_more", "More"),
+        Binding("m", "load_more", "More"),
         Binding("enter", "copy", "Copy"),
         Binding("space", "toggle_expand", "Expand", show=False),
+        Binding("t", "cycle_theme", "Theme", show=False),
         Binding("tab", "focus_results", "Results", show=False),
         Binding("shift+tab", "focus_prompt", "Search", show=False),
         Binding("ctrl+c", "quit", "Quit", show=False),
     ]
+
+    CSS = _app_css(DEFAULT_THEME)
 
     def __init__(
         self,
@@ -456,6 +523,7 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         *,
         page_size: int = 5,
         low_confidence_threshold: float = 0.40,
+        theme: str = DEFAULT_THEME,
     ) -> None:
         super().__init__()
         self._search_fn = search_fn
@@ -468,6 +536,7 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         self._debounce_timer = None
         self._pending_live_query = ""
         self._search_token = 0
+        self._theme_name = normalize_theme(theme)
 
     def compose(self) -> ComposeResult:
         yield Input(placeholder="Search shell history…", id="prompt")
@@ -478,6 +547,7 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         yield Footer()
 
     def on_mount(self) -> None:
+        self._apply_theme(self._theme_name)
         self.query_one("#prompt", Input).focus()
 
     def _cancel_debounce(self) -> None:
@@ -539,8 +609,11 @@ class WhatwasitREPL(_ResultPanelMixin, App[None]):
         if cmd == "/help":
             self.action_show_help()
             return
-        if cmd == "/more":
+        if cmd in ("/more", "/m"):
             self.action_load_more()
+            return
+        if cmd == "/theme":
+            self.action_cycle_theme()
             return
         self.notify(f"Unknown command: {raw!r} — try /help", severity="warning", timeout=3)
 
@@ -565,14 +638,18 @@ def run_tui(
     *,
     page_size: int = 5,
     low_confidence_threshold: float = 0.40,
+    theme: str = DEFAULT_THEME,
 ) -> None:
     """Launch the one-shot interactive TUI (blocking)."""
-    WhatwasitTUI(
+    app = WhatwasitTUI(
         results,
         query,
         page_size=page_size,
         low_confidence_threshold=low_confidence_threshold,
-    ).run()
+        theme=theme,
+    )
+    app.CSS = _app_css(normalize_theme(theme))
+    app.run()
 
 
 def run_repl(
@@ -580,10 +657,14 @@ def run_repl(
     *,
     page_size: int = 5,
     low_confidence_threshold: float = 0.40,
+    theme: str = DEFAULT_THEME,
 ) -> None:
     """Launch the persistent REPL (blocking)."""
-    WhatwasitREPL(
+    app = WhatwasitREPL(
         search_fn,
         page_size=page_size,
         low_confidence_threshold=low_confidence_threshold,
-    ).run()
+        theme=theme,
+    )
+    app.CSS = _app_css(normalize_theme(theme))
+    app.run()
