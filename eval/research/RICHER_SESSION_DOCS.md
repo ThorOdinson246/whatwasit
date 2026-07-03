@@ -1,47 +1,47 @@
 # Richer session documents — universal enrichment (re-measured)
 
 **Branch:** `feature/richer-session-docs`  
-**Baseline:** hybrid shipping path P@1 **0.419** (`main` @ `fe2a235`)  
+**Baseline:** literal-gated hybrid P@1 **0.535** (`fix/hybrid-default` / `summary_v6.json`)  
 **Variant:** Universal enrichment, **git workflow sessions excluded** (≥2 `git` commands)
 
 Sparse-only dropped — dominated by universal on every metric at equal Mode B cost.
 
-## Results vs hybrid baseline
+## Results vs gated-hybrid baseline
 
-| Slice | n | Baseline | Universal−git | Δ |
-|-------|--:|---------:|--------------:|--:|
-| **Full** | 86 | 0.419 | **0.453** | **+0.035** |
-| **Mode C** | 20 | 0.150 | **0.250** | **+0.100** |
-| **Mode B** | 8 | 0.250 | **0.125** | **−0.125** |
+| Slice | n | Gated baseline | Universal−git | Δ |
+|-------|--:|---------------:|--------------:|--:|
+| **Full** | 86 | 0.535 | **0.547** | **+0.012** |
+| **Mode C** | 20 | 0.200 | **0.250** | **+0.050** |
+| **Mode B** | 8 | 0.500 | **0.500** | **0.000** |
 
-Artifact: `eval/summary_v5.json` (2026-07-03).
+Artifact: `eval/summary_v7.json` (2026-07-03).
 
-## Excluding git sessions from enrichment pool
+## Mode B under fixed hybrid
 
-**Hypothesis:** Mode B regression came from enriching git workflow docs.  
-**Result:** **Not confirmed.** Excluding git sessions (rebase/merge/undo/purge) does
-**not** restore Mode B — still **0.125** (−0.125 vs baseline).
+**Mode B holds.** The −0.125 regression measured against broken hybrid (0.419 baseline)
+was **hybrid-specific collateral** from Jaccard RRF. Against literal-gated hybrid:
 
-Git sessions keep baseline doc shape, but enriching **other** sessions still shifts
-the shared embedding index and hybrid RRF rankings. Example collateral: `git-undo`
-query rank 2→4 despite git session docs unchanged.
+- Aggregate Mode B P@1: **0.500 → 0.500**
+- `git-undo` queries: both remain P@1
+- Rank shifts on `git-rebase` / `git-merge` / `db-migrate-down` cancel out at P@1
 
-## Cross-contamination (unchanged mechanism)
+Excluding git sessions from enrichment pool is unchanged; the fix was gating hybrid,
+not doc gating.
 
-See `eval/research/HYBRID_SEARCH_INVESTIGATION.md` — hybrid Jaccard RRF is the
-largest accuracy problem (−0.116 P@1 vs semantic-only). Doc enrichment operates in
-the same shared vector space; fixing Mode B via doc gating alone is insufficient
-while hybrid default remains.
+## Prior measurement (obsolete baseline)
+
+Against broken hybrid (P@1 0.419), universal−git showed Mode B **0.125** — misleading.
+Do not use `summary_v5.json` for Mode B decisions.
+
+## Keyword-heavy slice
+
+Enrichment shifts one literal query (`alembic upgrade head revision migrate`) from
+rank 1→2; keyword-heavy P@1 **1.000 → 0.933**. Standard 86-query set unaffected.
 
 ## Recommendation
 
-**Do not merge** universal enrichment until:
-
-1. Hybrid default is fixed or disabled (semantic-only restores 0.535), **and**
-2. Mode B regression is re-checked on semantic-only baseline
-
-If proceeding later: **universal−git** is the preferred enrichment variant
-(+0.035 full, +0.100 Mode C) over sparse-only.
+**Ready to merge** after `fix/hybrid-default` lands: Mode B holds, full set +0.012,
+Mode C +0.050. Review keyword-heavy regression before release if that slice matters.
 
 ## Implementation
 
