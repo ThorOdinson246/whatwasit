@@ -1,6 +1,6 @@
 # Contributing
 
-Notes for contributors and maintainers. End-user documentation is in [README.md](README.md).
+Thanks for your interest in `whatwasit`. End-user documentation is in [README.md](README.md).
 
 ## Development setup
 
@@ -11,26 +11,11 @@ pip install -e ".[dev]"
 pytest
 ```
 
-## Releasing to PyPI
+## Pull requests
 
-Publishing is automated via [.github/workflows/publish.yml](.github/workflows/publish.yml).
-
-**One-time:** add GitHub Actions secret `PYPI_API_TOKEN` (PyPI API token scoped to
-project `whatwasit`).
-
-**Each release:**
-
-1. Bump `version` in `pyproject.toml` and `whatwasit/__init__.py`.
-2. Commit and push to `main` (do **not** push `vX.Y.Z` yourself — the workflow
-   creates the tag after a successful PyPI upload).
-
-The workflow detects the version bump, publishes to PyPI, verifies the package
-is indexed, and creates `vX.Y.Z` on GitHub. If you already pushed the tag
-manually, the workflow still succeeds and skips tag creation.
-
-Publishing a GitHub Release for an existing tag also triggers the workflow.
-To re-publish a version that failed before upload, use **Actions → Publish to
-PyPI → Run workflow** (skips if that version is already on PyPI).
+- Keep changes focused; match existing style in the files you touch.
+- Run `pytest` before opening a PR.
+- For search or indexing changes, note whether you re-ran `eval/run_eval.py`.
 
 ## Further reading
 

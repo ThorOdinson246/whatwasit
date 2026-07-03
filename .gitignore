@@ -36,3 +36,6 @@ htmlcov/
 # Local-only notes, not for version control
 /FINAL_REPORT.md
 /PROJECT_CONTEXT.md
+/MAINTAINER.local.md
+/docs/AGENT_INDEX.md
+/docs/RESEARCH_AGENT.md
