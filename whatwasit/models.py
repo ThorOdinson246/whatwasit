@@ -7,23 +7,16 @@ search, and output layers. Changing their public shape is a cross-module change.
 from __future__ import annotations
 
 import os
+import re
+import shlex
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 UNKNOWN_CWD = "?"
 """Sentinel for a working directory that could not be reconstructed."""
 
-# ---------------------------------------------------------------------------
-# Semantic expansion hints for terse commands (Fix 2: richer session docs).
-#
-# Each entry is (pattern, hint) where *pattern* is a substring matched
-# case-insensitively against the joined command text.  Hits are appended as
-# a single "context:" line so the embedding sees natural-language expansions
-# alongside the raw commands — without fabricating anything that isn't
-# already implied by the commands themselves.
-# ---------------------------------------------------------------------------
-_COMMAND_HINTS: List[Tuple[str, str]] = [
-    # Python / virtualenv
+# Patterns shipped before richer-doc enrichment (applied to every session).
+_BASIC_COMMAND_HINTS: List[Tuple[str, str]] = [
     ("-m venv",           "python virtual environment isolation sandbox"),
     ("pip install",       "install python packages dependencies"),
     ("pip freeze",        "python packages list requirements freeze"),
@@ -31,82 +24,232 @@ _COMMAND_HINTS: List[Tuple[str, str]] = [
     ("cProfile",          "python profiling performance slow hotspot"),
     ("snakeviz",          "profiling visualization flame graph performance"),
     ("pstats",            "profiling statistics performance hotspot"),
-    # Git operations
     ("rebase -i",         "interactive rebase replay commits history"),
     ("rebase --continue", "rebase continue after conflict"),
     ("filter-branch",     "git history rewrite purge scrub secret"),
     ("git revert",        "undo rollback commit history"),
     ("git reflog",        "git history recovery undo"),
-    # Docker
     ("docker volume",     "docker data persist survive container restart"),
     ("docker network",    "docker container networking bridge connect"),
     ("docker compose",    "docker multi service stack orchestrate"),
     ("docker-compose",    "docker multi service stack orchestrate"),
     ("docker system df",  "docker disk space cleanup prune"),
     ("image prune",       "docker cleanup remove dangling images"),
-    # npm / Node
     ("npm audit",         "javascript security vulnerability package patch"),
     ("npm cache",         "javascript npm cache corrupt rebuild"),
     ("--legacy-peer-deps","npm package dependency conflict version mismatch"),
-    # SSH
     ("ssh-keygen",        "ssh key generate authentication credentials"),
     ("ssh-copy-id",       "ssh key passwordless login authorized"),
     ("ssh -A",            "ssh agent forwarding jump host tunnel"),
     ("authorized_keys",   "ssh key permission access"),
-    # Cron / scheduling
     ("crontab",           "cron schedule timer recurring automatic task"),
-    # System services
     ("systemctl",         "service daemon background process start stop"),
     ("journalctl",        "service log output daemon debug"),
     ("logrotate",         "log rotation disk space size management"),
     ("certbot",           "ssl certificate https tls renew letsencrypt"),
-    # Permissions
     ("chmod",             "file permission access bits execute allowed"),
     ("chown",             "file ownership user group"),
-    # Network / DNS
     ("resolvectl",        "dns cache flush nameserver records resolve"),
     ("nslookup",          "dns lookup resolve address nameserver"),
     (" dig ",             "dns lookup resolve nameserver query"),
     ("lsof -i",           "port process occupy free kill listen"),
-    # Archiving
     ("tar czf",           "archive compress bundle pack folder"),
     ("tar xzf",           "archive extract unpack decompress"),
     ("tar tzf",           "archive list contents inspect"),
-    # Text / file processing
     ("sed -i",            "find replace text bulk rename across files"),
     ("xargs sed",         "bulk text replace across files"),
-    # Database migrations
     ("alembic upgrade",   "database migration schema apply up"),
     ("alembic downgrade", "database migration schema rollback"),
     ("pg_hba.conf",       "postgres authentication connection refused"),
-    # Terminal multiplexer
     ("tmux",              "terminal session persist reconnect detach"),
-    # HTTP / API inspection
     ("curl ",             "http api request response inspect endpoint"),
     ("| jq",              "json parse api response format"),
-    # File transfer
     ("rsync",             "file sync copy transfer remote mirror"),
-    # Encryption
     ("gpg -c",            "encrypt file passphrase secure protect"),
     ("gpg -d",            "decrypt file passphrase"),
-    # Kubernetes
     ("kubectl",           "kubernetes pod cluster container orchestrator"),
 ]
 
+# Extra patterns for terse sessions only (Mode C fix).
+_SPARSE_COMMAND_HINTS: List[Tuple[str, str]] = [
+    (".venv/bin/activate", "activate python virtual environment"),
+    ("bin/activate",      "activate python virtual environment"),
+    ("requirements.txt",  "python project dependencies requirements file"),
+    ("$path",             "shell PATH environment executable search lookup"),
+    (".bashrc",           "shell startup profile environment variables persist"),
+    (".zshrc",            "shell startup profile environment variables persist"),
+    (".profile",          "shell startup profile environment variables persist"),
+    ("which ",            "locate executable command in PATH"),
+    ("echo $path",        "print PATH environment variable"),
+    ("find ",             "search files filesystem directory tree"),
+    ("-size +",           "large files disk space threshold"),
+    ("-mtime +",          "old files modification age"),
+    ("-name '*.tmp'",     "temporary files cleanup delete"),
+    ("git rm --cached",   "remove tracked file from git history index"),
+    ("git gc",            "git repository garbage collect cleanup"),
+    ("--force --all",     "force push rewritten git history remote"),
+    ("volume inspect",    "docker named volume storage inspect"),
+    ("-v ",               "docker volume mount bind persist data"),
+    ("--volume",          "docker volume mount bind persist data"),
+    ("/var/lib/postgresql", "postgres database data directory persist"),
+    ("volume prune",      "docker cleanup remove unused volumes"),
+    ("sites-available",   "nginx site virtual host reverse proxy config"),
+    ("nginx -t",          "nginx configuration syntax test"),
+    ("systemctl reload nginx", "reload nginx reverse proxy web server"),
+]
 
-def _collect_hints(cmds: List[str]) -> List[str]:
-    """Return semantic expansion hints that match the given command list.
+_BINARY_EXPANSIONS: dict[str, str] = {
+    "python": "python interpreter",
+    "python3": "python interpreter",
+    "pip": "python package manager pip",
+    "pip3": "python package manager pip",
+    "which": "locate executable in PATH",
+    "find": "search files in directory tree",
+    "nginx": "nginx web server reverse proxy",
+    "crontab": "cron job scheduler",
+    "docker": "docker container runtime",
+    "kubectl": "kubernetes cluster CLI",
+    "git": "git version control",
+    "vim": "text editor config file",
+    "nano": "text editor config file",
+    "curl": "http client request test",
+    "alembic": "database schema migration tool",
+    "npm": "javascript node package manager",
+    "node": "javascript node runtime",
+    "systemctl": "linux systemd service manager",
+    "journalctl": "systemd service logs",
+    "tar": "archive compress extract files",
+    "rsync": "remote file sync copy",
+    "gpg": "encryption gpg tool",
+    "ssh": "secure shell remote login",
+    "ssh-keygen": "ssh key generation",
+    "tmux": "terminal multiplexer session",
+    "sed": "stream editor text replace",
+    "chmod": "change file permissions",
+    "chown": "change file ownership",
+    "source": "load shell script environment",
+    "pg_isready": "postgres server readiness check",
+    "psql": "postgres interactive SQL client",
+}
 
-    Scans the joined lower-cased command text for each pattern; duplicate
-    hint strings are suppressed so the context line stays compact.
-    """
-    text = " ".join(cmds).lower()
-    seen: set = set()
+
+def _format_cwd_lines(cwd: str, *, extended: bool) -> List[str]:
+    """Directory basename; path tail only for sparse sessions."""
+    base = os.path.basename(cwd.rstrip("/")) or cwd
+    lines = [f"directory: {base}"]
+    if not extended:
+        return lines
+    normalized = cwd.strip()
+    if normalized.startswith("~/"):
+        tail = normalized[2:].strip("/")
+    elif normalized.startswith("/"):
+        parts = [p for p in normalized.strip("/").split("/") if p]
+        tail = "/".join(parts[-2:]) if len(parts) > 1 else (parts[0] if parts else "")
+    else:
+        tail = normalized.strip("/")
+    if tail and tail != base:
+        lines.append(f"path: {tail}")
+    return lines
+
+
+def _command_binary(cmd: str) -> Optional[str]:
+    stripped = cmd.strip()
+    if not stripped or stripped.startswith("#"):
+        return None
+    if stripped.startswith("source ") or stripped.startswith("."):
+        return "source"
+    try:
+        tokens = shlex.split(stripped)
+    except ValueError:
+        tokens = stripped.split()
+    skip = {"sudo", "env", "nohup", "time", "command", "builtin"}
+    for tok in tokens:
+        if tok in skip:
+            continue
+        if tok.startswith("-") or "=" in tok:
+            continue
+        return os.path.basename(tok)
+    return None
+
+
+def _collect_tool_lines(cmds: List[str]) -> List[str]:
+    seen_bins: set[str] = set()
+    parts: List[str] = []
+    for cmd in cmds:
+        binary = _command_binary(cmd)
+        if binary is None or binary in seen_bins:
+            continue
+        seen_bins.add(binary)
+        expansion = _BINARY_EXPANSIONS.get(binary)
+        if expansion:
+            parts.append(f"{binary} ({expansion})")
+        else:
+            parts.append(binary)
+    if not parts:
+        return []
+    return ["tools: " + "; ".join(parts)]
+
+
+def _collect_flag_hints(cmds: List[str]) -> List[str]:
+    lower = " ".join(cmds).lower()
     hints: List[str] = []
-    for pattern, hint in _COMMAND_HINTS:
+    seen: set[str] = set()
+
+    def add(hint: str) -> None:
+        if hint not in seen:
+            seen.add(hint)
+            hints.append(hint)
+
+    if re.search(r"-size\s+\+", lower):
+        add("large files disk space threshold")
+    if re.search(r"-mtime\s+\+", lower):
+        add("old files modification age")
+    if re.search(r"docker\s+run\b", lower) and re.search(r"\s-v\s|--volume", lower):
+        add("docker volume mount persist container data")
+    if "postgres" in lower and ("docker run" in lower or "volume" in lower):
+        add("postgres database container data persist")
+    if re.search(r"git\s+filter-branch", lower):
+        add("rewrite git history remove file every revision")
+    if re.search(r"git\s+push\b.*--force", lower):
+        add("force push rewritten git history remote")
+    return hints
+
+
+def _collect_hints_from(patterns: List[Tuple[str, str]], cmds: List[str]) -> List[str]:
+    text = " ".join(cmds).lower()
+    seen: set[str] = set()
+    hints: List[str] = []
+    for pattern, hint in patterns:
         if pattern.lower() in text and hint not in seen:
             seen.add(hint)
             hints.append(hint)
+    return hints
+
+
+def _is_git_workflow_session(cmds: List[str]) -> bool:
+    """True when the session is predominantly git commands (not sparse-doc targets)."""
+    if not cmds:
+        return False
+    git_cmds = sum(1 for c in cmds if re.match(r"git\s", c.strip()))
+    return git_cmds >= 2
+
+
+def _should_enrich_session(cmds: List[str]) -> bool:
+    """Universal enrichment for non-git sessions; git workflows keep baseline docs."""
+    return bool(cmds) and not _is_git_workflow_session(cmds)
+
+
+def _collect_hints(cmds: List[str], *, enrich: bool) -> List[str]:
+    patterns = list(_BASIC_COMMAND_HINTS)
+    if enrich:
+        patterns.extend(_SPARSE_COMMAND_HINTS)
+    hints = _collect_hints_from(patterns, cmds)
+    if enrich:
+        seen = set(hints)
+        for hint in _collect_flag_hints(cmds):
+            if hint not in seen:
+                seen.add(hint)
+                hints.append(hint)
     return hints
 
 
@@ -153,23 +296,19 @@ class Session:
     def to_document(self) -> str:
         """Build the text that gets embedded for this session.
 
-        Includes the basename of the working directory followed by the raw
-        commands, then appends a compact "context:" line with semantic
-        expansion hints for any recognised abbreviated commands (e.g.
-        ``pip install`` → "install python packages dependencies").  The hints
-        add natural-language signal without fabricating content — each hint is
-        an established description of what the matched command does.
-
-        This is the single source of truth for how a session is turned into
-        embeddable text; the grouper and indexer must both use it.
+        Terse non-git sessions get extra enrichment: path tail, tool-name expansions,
+        and additional context hints. Git workflow sessions keep the baseline doc
+        shape to avoid collateral ranking shifts in Mode B.
         """
+        cmd_lines = [c.raw_cmd for c in self.commands]
+        enrich = _should_enrich_session(cmd_lines)
         lines: List[str] = []
         if self.cwd and self.cwd != UNKNOWN_CWD:
-            base = os.path.basename(self.cwd.rstrip("/")) or self.cwd
-            lines.append(f"directory: {base}")
-        cmd_lines = [c.raw_cmd for c in self.commands]
+            lines.extend(_format_cwd_lines(self.cwd, extended=enrich))
+        if enrich:
+            lines.extend(_collect_tool_lines(cmd_lines))
         lines.extend(cmd_lines)
-        hints = _collect_hints(cmd_lines)
+        hints = _collect_hints(cmd_lines, enrich=enrich)
         if hints:
             lines.append("context: " + "; ".join(hints))
         return "\n".join(lines)
