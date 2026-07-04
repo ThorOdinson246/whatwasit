@@ -2,6 +2,8 @@
 
 This module intentionally does not change search behavior. It gives experiment
 branches a shared command matrix so results can be compared consistently.
+``ranking_variant`` is a metadata label unless the current branch also changes
+the production search code.
 """
 
 from __future__ import annotations

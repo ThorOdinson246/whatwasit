@@ -17,7 +17,13 @@ def load_summary(path: Path | str) -> dict:
 def suites(summary: dict) -> dict[str, dict]:
     if "suites" in summary:
         return summary["suites"]
-    return {"standard": summary}
+    out = {"standard": summary}
+    if "keyword_heavy" in summary:
+        kh = dict(summary["keyword_heavy"])
+        kh.setdefault("null_analysis", {"details": []})
+        kh.setdefault("timing", {})
+        out["keyword_heavy"] = kh
+    return out
 
 
 def _rank_map(summary: dict) -> dict[str, int | None]:

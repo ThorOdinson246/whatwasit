@@ -42,3 +42,18 @@ def test_compare_summaries_reports_metric_and_rank_deltas() -> None:
 def test_compare_summaries_accepts_legacy_flat_summary() -> None:
     report = compare_summaries(_suite(0.5, 2, 0.1), _suite(0.5, 1, 0.1))
     assert "| standard | q1 | 2 | 1 | -1 |" in report
+
+
+def test_compare_summaries_includes_legacy_keyword_heavy() -> None:
+    old = _suite(0.5, 2, 0.1)
+    old["keyword_heavy"] = _suite(0.4, 3, 0.0)
+    new = {
+        "suites": {
+            "standard": _suite(0.5, 2, 0.1),
+            "keyword_heavy": _suite(0.6, 1, 0.0),
+        }
+    }
+
+    report = compare_summaries(old, new)
+
+    assert "| keyword_heavy | semantic | +0.2000" in report

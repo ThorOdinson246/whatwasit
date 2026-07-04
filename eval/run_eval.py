@@ -463,7 +463,11 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--retrieval-k", default="full", help="full, production, or a positive integer")
     parser.add_argument("--model-name", default=Config().model_name)
     parser.add_argument("--embedding-dim", type=int, default=Config().embedding_dim)
-    parser.add_argument("--ranking-variant", default="production")
+    parser.add_argument(
+        "--ranking-variant",
+        default="production",
+        help="Metadata label for the evaluated ranking implementation.",
+    )
     return parser.parse_args(argv)
 
 
@@ -473,8 +477,8 @@ def selected_suites(args: argparse.Namespace) -> list[EvalSuite]:
     if args.suite:
         return [get_suite(args.suite)]
     # Historical default: standard plus keyword-heavy breakout when present.
-    names = ["standard", "keyword_heavy"]
-    return [get_suite(name) for name in names if get_suite(name).exists()]
+    available = available_suites()
+    return [available[name] for name in ("standard", "keyword_heavy") if name in available]
 
 
 def run(argv: Optional[Sequence[str]] = None) -> int:
