@@ -39,6 +39,7 @@ def test_all_suites_includes_available_named_suites() -> None:
     args = parse_args(["--all-suites"])
     names = {suite.name for suite in selected_suites(args)}
     assert {"standard", "keyword_heavy", "hard"} <= names
+    assert "personal" not in names
 
 
 def test_retrieval_k_modes() -> None:

@@ -55,3 +55,6 @@ htmlcov/
 /eval/raw_downloads/
 /eval/raw_*_sessions.jsonl
 /eval/raw_*_provenance.json
+/eval/private/
+/eval/personal_*.jsonl
+/eval/personal_*.json

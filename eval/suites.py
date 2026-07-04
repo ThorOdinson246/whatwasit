@@ -47,6 +47,12 @@ SUITES: dict[str, EvalSuite] = {
         queries_path=EVAL_DIR / "raw_noise_queries.jsonl",
         label="External raw-command stress suite",
     ),
+    "personal": EvalSuite(
+        name="personal",
+        sessions_path=EVAL_DIR / "private" / "personal" / "sessions.jsonl",
+        queries_path=EVAL_DIR / "private" / "personal" / "queries.jsonl",
+        label="Private personal recall suite",
+    ),
 }
 
 
