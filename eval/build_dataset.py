@@ -32,9 +32,21 @@ Running this file regenerates the two JSONL assets deterministically.
 
 from __future__ import annotations
 
+import argparse
 import json
 import random
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from eval.dataset_io import (
+    load_raw_commands,
+    raw_commands_to_sessions,
+    validate_queries,
+    validate_sessions,
+    write_jsonl,
+)
 
 EVAL_DIR = Path(__file__).resolve().parent
 RAW_EMIR = EVAL_DIR / "raw_sources" / "emir_commands_sample.txt"
@@ -755,11 +767,11 @@ def build_distractors(rng: random.Random) -> list:
     return sessions
 
 
-def main() -> None:
+def build_standard() -> tuple[list[dict], list[dict]]:
     rng = random.Random(1234)
 
-    sessions = []
-    queries = []
+    sessions: list[dict] = []
+    queries: list[dict] = []
 
     for s in TOPIC_SESSIONS:
         sessions.append(
@@ -782,12 +794,19 @@ def main() -> None:
     for q, topic in NULL_QUERIES:
         queries.append({"query": q, "correct_session_id": None, "topic": topic})
 
+    return sessions, queries
+
+
+def write_standard() -> None:
+    sessions, queries = build_standard()
+    validate_sessions(sessions)
+    validate_queries(queries, {row["session_id"] for row in sessions})
     sessions_path = EVAL_DIR / "sessions.jsonl"
     queries_path = EVAL_DIR / "queries.jsonl"
-    with sessions_path.open("w") as f:
+    with sessions_path.open("w", encoding="utf-8") as f:
         for row in sessions:
             f.write(json.dumps(row) + "\n")
-    with queries_path.open("w") as f:
+    with queries_path.open("w", encoding="utf-8") as f:
         for row in queries:
             f.write(json.dumps(row) + "\n")
 
@@ -801,6 +820,71 @@ def main() -> None:
     print(f"queries: {len(queries)} ({n_answerable} answerable + {n_null} null)")
     print(f"wrote {sessions_path}")
     print(f"wrote {queries_path}")
+
+
+def write_raw(args: argparse.Namespace) -> None:
+    commands = load_raw_commands(args.input)
+    sessions = raw_commands_to_sessions(
+        commands,
+        suite=args.suite,
+        source=args.source,
+        session_size=args.session_size,
+        limit=args.limit,
+    )
+    validate_sessions(sessions)
+    out = EVAL_DIR / f"{args.suite}_sessions.jsonl"
+    write_jsonl(out, sessions)
+    meta = EVAL_DIR / f"{args.suite}_provenance.json"
+    meta.write_text(
+        json.dumps(
+            {
+                "suite": args.suite,
+                "source": args.source,
+                "input_files": [str(p) for p in args.input],
+                "raw_commands": len(commands),
+                "sessions": len(sessions),
+                "session_size": args.session_size,
+                "limit": args.limit,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    print(f"commands: {len(commands)}")
+    print(f"sessions: {len(sessions)}")
+    print(f"wrote {out}")
+    print(f"wrote {meta}")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers(dest="command")
+
+    sub.add_parser("standard")
+
+    raw = sub.add_parser("raw")
+    raw.add_argument("--input", nargs="+", type=Path, required=True)
+    raw.add_argument("--suite", default="raw_noise")
+    raw.add_argument("--source", default="external")
+    raw.add_argument("--session-size", type=int, default=5)
+    raw.add_argument("--limit", type=int)
+
+    args = parser.parse_args()
+    if args.command is None:
+        args.command = "standard"
+    return args
+
+
+def main() -> None:
+    args = parse_args()
+    if args.command == "standard":
+        write_standard()
+    elif args.command == "raw":
+        write_raw(args)
+    else:
+        raise SystemExit(f"unknown command: {args.command}")
 
 
 if __name__ == "__main__":
