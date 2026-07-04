@@ -42,6 +42,12 @@ def test_all_suites_includes_available_named_suites() -> None:
     assert "personal" not in names
 
 
+def test_personal_suite_requires_nonempty_private_files() -> None:
+    args = parse_args(["--all-suites"])
+    names = {suite.name for suite in selected_suites(args)}
+    assert "personal" not in names
+
+
 def test_retrieval_k_modes() -> None:
     config = Config(top_k=7)
     assert resolve_retrieval_limit("full", config, 42) == (42, "full")

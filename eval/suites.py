@@ -16,9 +16,17 @@ class EvalSuite:
     queries_path: Path
     label: str
     include_in_canonical: bool = False
+    require_nonempty: bool = False
 
     def exists(self) -> bool:
-        return self.sessions_path.exists() and self.queries_path.exists()
+        if not (self.sessions_path.exists() and self.queries_path.exists()):
+            return False
+        if not self.require_nonempty:
+            return True
+        return (
+            bool(self.sessions_path.read_text().strip())
+            and bool(self.queries_path.read_text().strip())
+        )
 
 
 SUITES: dict[str, EvalSuite] = {
@@ -52,6 +60,7 @@ SUITES: dict[str, EvalSuite] = {
         sessions_path=EVAL_DIR / "private" / "personal" / "sessions.jsonl",
         queries_path=EVAL_DIR / "private" / "personal" / "queries.jsonl",
         label="Private personal recall suite",
+        require_nonempty=True,
     ),
 }
 
