@@ -18,6 +18,12 @@ def test_experiment_command_records_metadata() -> None:
     assert "--ranking-variant production" in cmd
 
 
+def test_personal_experiments_are_available() -> None:
+    names = {exp.name for exp in EXPERIMENTS}
+    assert "minilm-personal-production" in names
+    assert "bge-personal-production" in names
+
+
 def test_unknown_experiment_exits() -> None:
     with pytest.raises(SystemExit):
         selected(["missing"])

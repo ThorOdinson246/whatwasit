@@ -54,6 +54,8 @@ EXPERIMENTS: list[Experiment] = [
     Experiment("minilm-hard-full", "hard", "full", MINILM, 384, "production"),
     Experiment("bge-hard-production", "hard", "production", BGE, 384, "bge-small-eval"),
     Experiment("bge-standard-production", "standard", "production", BGE, 384, "bge-small-eval"),
+    Experiment("minilm-personal-production", "personal", "production", MINILM, 384, "production"),
+    Experiment("bge-personal-production", "personal", "production", BGE, 384, "bge-small-eval"),
 ]
 
 

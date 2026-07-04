@@ -115,3 +115,30 @@ python -m eval.compare eval/summary_old.json eval/summary_new.json
 
 The comparison report includes aggregate metric deltas, answerable rank
 movements, null top-score changes, and timing mean deltas.
+
+## Private personal eval
+
+The most important accuracy signal is how well `whatwasit` matches the way you
+remember your own history. Personal eval data is private and gitignored under
+`eval/private/`.
+
+```bash
+python -m eval.personal init
+python -m eval.personal export \
+  --db ~/.local/share/whatwasit/whatwasit.db \
+  --out eval/private/personal/candidates.jsonl \
+  --limit 300
+python -m eval.personal label \
+  --candidates eval/private/personal/candidates.jsonl \
+  --out-dir eval/private/personal
+python -m eval.personal validate eval/private/personal
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python eval/run_eval.py \
+  --suite personal \
+  --retrieval-k production \
+  --ranking-variant production
+```
+
+Use the personal suite as a promotion gate only after it has roughly 50+
+sessions, 100+ answerable queries, 15+ null queries, and several confusable
+topics. Never commit the private JSONL files, private summaries, or comparison
+reports.
