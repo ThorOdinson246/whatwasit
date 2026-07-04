@@ -9,6 +9,7 @@ from eval.personal import (
     init_personal,
     likely_secret,
     personal_paths,
+    status_personal,
     validate_personal,
 )
 from whatwasit import db
@@ -103,6 +104,7 @@ def test_validate_personal_accepts_valid_private_suite(tmp_path) -> None:
     )
 
     assert validate_personal(root) == (1, 1)
+    assert status_personal(root)["answerable"] == 1
 
 
 def test_likely_secret_patterns() -> None:

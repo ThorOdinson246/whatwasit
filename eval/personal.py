@@ -120,6 +120,30 @@ def validate_personal(root: Path = DEFAULT_DIR, *, strict_size: bool = False) ->
     return len(sessions), len(queries)
 
 
+def status_personal(root: Path = DEFAULT_DIR) -> dict[str, int]:
+    paths = personal_paths(root)
+    counts = {
+        "candidates": len(_read_existing(paths["candidates"])),
+        "sessions": len(_read_existing(paths["sessions"])),
+        "queries": len(_read_existing(paths["queries"])),
+    }
+    answerable = sum(
+        1
+        for row in _read_existing(paths["queries"])
+        if row.get("correct_session_id") is not None
+    )
+    counts["answerable"] = answerable
+    counts["null"] = counts["queries"] - answerable
+    print(
+        "personal eval status: "
+        f"{counts['candidates']} candidates, "
+        f"{counts['sessions']} labeled sessions, "
+        f"{counts['answerable']} answerable queries, "
+        f"{counts['null']} null queries"
+    )
+    return counts
+
+
 def _append_jsonl(path: Path, rows: Iterable[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
@@ -198,6 +222,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     validate.add_argument("dir", nargs="?", type=Path, default=DEFAULT_DIR)
     validate.add_argument("--strict-size", action="store_true")
 
+    status = sub.add_parser("status")
+    status.add_argument("dir", nargs="?", type=Path, default=DEFAULT_DIR)
+
     return parser.parse_args(argv)
 
 
@@ -211,6 +238,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         label_candidates(args.candidates, args.out_dir)
     elif args.command == "validate":
         validate_personal(args.dir, strict_size=args.strict_size)
+    elif args.command == "status":
+        status_personal(args.dir)
     return 0
 
 
