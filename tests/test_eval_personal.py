@@ -5,6 +5,8 @@ import json
 import pytest
 
 from eval.personal import (
+    _next_query_index,
+    _redact_row,
     export_candidates,
     init_personal,
     likely_secret,
@@ -47,7 +49,7 @@ def test_export_candidates_from_whatwasit_db(tmp_path) -> None:
     conn.close()
 
     out = tmp_path / "candidates.jsonl"
-    export_candidates(db_path, out, limit=10)
+    export_candidates(db_path, out, limit=10, allow_unsafe_path=True)
 
     rows = _jsonl(out)
     assert rows[0]["session_id"] == "personal_000000"
@@ -111,3 +113,19 @@ def test_likely_secret_patterns() -> None:
     assert likely_secret("AWS_SECRET_ACCESS_KEY=abc")
     assert likely_secret("Authorization: Bearer abcdefghijklmnopqrstuvwxyz")
     assert not likely_secret("docker compose up -d")
+
+
+def test_redact_row_replaces_cwd_and_commands() -> None:
+    row = {"cwd": "/home/me/secret", "commands": ["cat /home/me/secret/token.txt"]}
+    redacted = _redact_row(row, "/home/me/secret", "~/redacted")
+    assert redacted["cwd"] == "~/redacted"
+    assert redacted["commands"] == ["cat ~/redacted/token.txt"]
+
+
+def test_next_query_index_uses_max_existing_id() -> None:
+    assert _next_query_index([{"query_id": "personal_q000003"}, {"query_id": "other"}]) == 4
+
+
+def test_export_refuses_tracked_paths(tmp_path) -> None:
+    with pytest.raises(SystemExit, match="refusing to write private history"):
+        export_candidates(tmp_path / "missing.db", tmp_path / "candidates.jsonl", limit=1)

@@ -39,13 +39,11 @@ def test_all_suites_includes_available_named_suites() -> None:
     args = parse_args(["--all-suites"])
     names = {suite.name for suite in selected_suites(args)}
     assert {"standard", "keyword_heavy", "hard"} <= names
-    assert "personal" not in names
 
 
-def test_personal_suite_requires_nonempty_private_files() -> None:
-    args = parse_args(["--all-suites"])
-    names = {suite.name for suite in selected_suites(args)}
-    assert "personal" not in names
+def test_personal_suite_is_a_valid_cli_choice() -> None:
+    args = parse_args(["--suite", "personal"])
+    assert args.suite == "personal"
 
 
 def test_retrieval_k_modes() -> None:

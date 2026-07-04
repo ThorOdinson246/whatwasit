@@ -47,6 +47,20 @@ def personal_paths(root: Path = DEFAULT_DIR) -> dict[str, Path]:
     }
 
 
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def _ensure_private_path(path: Path) -> None:
+    private_root = EVAL_DIR / "private"
+    if not _is_relative_to(path, private_root):
+        raise SystemExit(f"refusing to write private history outside {private_root}: {path}")
+
+
 def init_personal(root: Path = DEFAULT_DIR) -> None:
     paths = personal_paths(root)
     paths["baselines"].mkdir(parents=True, exist_ok=True)
@@ -72,7 +86,16 @@ def _session_to_row(session, *, prefix: str, index: int) -> dict:
     }
 
 
-def export_candidates(db_path: Path, out: Path, *, limit: int, prefix: str = "personal") -> None:
+def export_candidates(
+    db_path: Path,
+    out: Path,
+    *,
+    limit: int,
+    prefix: str = "personal",
+    allow_unsafe_path: bool = False,
+) -> None:
+    if not allow_unsafe_path:
+        _ensure_private_path(out)
     conn = db.connect(db_path)
     try:
         db.initialize(conn)
@@ -91,10 +114,12 @@ def _read_existing(path: Path) -> list[dict]:
     return load_jsonl(path) if path.exists() else []
 
 
-def validate_personal(root: Path = DEFAULT_DIR, *, strict_size: bool = False) -> tuple[int, int]:
-    paths = personal_paths(root)
-    sessions = _read_existing(paths["sessions"])
-    queries = _read_existing(paths["queries"])
+def _validate_personal_rows(
+    sessions: list[dict],
+    queries: list[dict],
+    *,
+    strict_size: bool = False,
+) -> tuple[int, int]:
     validate_sessions(sessions)
     validate_queries(queries, {row["session_id"] for row in sessions})
 
@@ -118,6 +143,15 @@ def validate_personal(root: Path = DEFAULT_DIR, *, strict_size: bool = False) ->
             )
     print(f"valid personal suite: {len(sessions)} sessions, {len(queries)} queries")
     return len(sessions), len(queries)
+
+
+def validate_personal(root: Path = DEFAULT_DIR, *, strict_size: bool = False) -> tuple[int, int]:
+    paths = personal_paths(root)
+    return _validate_personal_rows(
+        _read_existing(paths["sessions"]),
+        _read_existing(paths["queries"]),
+        strict_size=strict_size,
+    )
 
 
 def status_personal(root: Path = DEFAULT_DIR) -> dict[str, int]:
@@ -151,22 +185,59 @@ def _append_jsonl(path: Path, rows: Iterable[dict]) -> None:
             handle.write(json.dumps(row, sort_keys=True) + "\n")
 
 
-def label_candidates(candidates: Path, out_dir: Path) -> None:
+def _next_query_index(rows: Sequence[dict]) -> int:
+    max_seen = -1
+    for row in rows:
+        qid = str(row.get("query_id", ""))
+        match = re.fullmatch(r"personal_q(\d+)", qid)
+        if match:
+            max_seen = max(max_seen, int(match.group(1)))
+    return max_seen + 1
+
+
+def _redact_row(row: dict, needle: str, replacement: str = "[REDACTED]") -> dict:
+    redacted = dict(row)
+    redacted["cwd"] = str(redacted.get("cwd", "")).replace(needle, replacement)
+    redacted["commands"] = [
+        str(command).replace(needle, replacement)
+        for command in redacted.get("commands", [])
+    ]
+    return redacted
+
+
+def _print_candidate(row: dict) -> None:
+    print("\n" + "=" * 72)
+    print(f"{row['session_id']}  cwd={row.get('cwd', '?')}")
+    for i, cmd in enumerate(row.get("commands", []), start=1):
+        print(f"{i:>2}: {cmd}")
+
+
+def label_candidates(candidates: Path, out_dir: Path, *, allow_unsafe_path: bool = False) -> None:
     """Minimal interactive labeler for private local use."""
+    if not allow_unsafe_path:
+        _ensure_private_path(out_dir)
     init_personal(out_dir)
     rows = load_jsonl(candidates)
     paths = personal_paths(out_dir)
     sessions_to_add: list[dict] = []
     queries_to_add: list[dict] = []
+    existing_sessions = {row["session_id"] for row in _read_existing(paths["sessions"])}
     existing_queries = _read_existing(paths["queries"])
-    next_q = len(existing_queries)
+    next_q = _next_query_index(existing_queries)
 
     for row in rows:
-        print("\n" + "=" * 72)
-        print(f"{row['session_id']}  cwd={row.get('cwd', '?')}")
-        for i, cmd in enumerate(row.get("commands", []), start=1):
-            print(f"{i:>2}: {cmd}")
-        action = input("save session? [s=save, x=skip, q=quit] ").strip().lower()
+        if row["session_id"] in existing_sessions:
+            continue
+        while True:
+            _print_candidate(row)
+            action = input("action [s=save, r=redact, x=skip, q=quit] ").strip().lower()
+            if action == "r":
+                needle = input("text to redact: ")
+                replacement = input("replacement [[REDACTED]]: ").strip() or "[REDACTED]"
+                if needle:
+                    row = _redact_row(row, needle, replacement)
+                continue
+            break
         if action == "q":
             break
         if action != "s":
@@ -174,6 +245,7 @@ def label_candidates(candidates: Path, out_dir: Path) -> None:
         topic = input("topic: ").strip() or row.get("topic") or "personal"
         row["topic"] = topic
         sessions_to_add.append(row)
+        existing_sessions.add(row["session_id"])
         while True:
             kind = input("query kind [i=intent,e=error,f=fragment,n=null,enter=done]: ").strip().lower()
             if not kind:
@@ -197,6 +269,12 @@ def label_candidates(candidates: Path, out_dir: Path) -> None:
             )
             next_q += 1
 
+    existing_session_rows = _read_existing(paths["sessions"])
+    existing_query_rows = _read_existing(paths["queries"])
+    _validate_personal_rows(
+        [*existing_session_rows, *sessions_to_add],
+        [*existing_query_rows, *queries_to_add],
+    )
     _append_jsonl(paths["sessions"], sessions_to_add)
     _append_jsonl(paths["queries"], queries_to_add)
     validate_personal(out_dir)

@@ -76,5 +76,8 @@ def get_suite(name: str) -> EvalSuite:
         known = ", ".join(sorted(SUITES))
         raise SystemExit(f"unknown suite {name!r}; known suites: {known}") from exc
     if not suite.exists():
-        raise SystemExit(f"suite {name!r} is missing {suite.sessions_path} or {suite.queries_path}")
+        raise SystemExit(
+            f"suite {name!r} is missing or empty: "
+            f"{suite.sessions_path} / {suite.queries_path}"
+        )
     return suite

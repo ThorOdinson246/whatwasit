@@ -32,7 +32,7 @@ from whatwasit.search import search
 
 from eval import baseline, metrics
 from eval.dataset_io import dataset_stats, load_jsonl, validate_queries, validate_sessions
-from eval.suites import EvalSuite, available_suites, get_suite
+from eval.suites import SUITES, EvalSuite, available_suites, get_suite
 
 EVAL_DIR = Path(__file__).resolve().parent
 
@@ -458,7 +458,7 @@ def render_tables(summary: dict) -> str:
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--suite", choices=sorted(available_suites()))
+    group.add_argument("--suite", choices=sorted(SUITES))
     group.add_argument("--all-suites", action="store_true")
     parser.add_argument("--retrieval-k", default="full", help="full, production, or a positive integer")
     parser.add_argument("--model-name", default=Config().model_name)
