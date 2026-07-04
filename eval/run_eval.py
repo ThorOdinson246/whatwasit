@@ -1,27 +1,13 @@
-"""Run the whatwasit search-quality evaluation: semantic vs keyword baseline.
+"""Run whatwasit search-quality eval suites.
 
-Pipeline:
-  1. Load eval/sessions.jsonl and eval/queries.jsonl.
-  2. Index every session through whatwasit's real components (SQLite + embedder +
-     usearch), keeping a stable string-id <-> db-id map.
-  3. For each query, retrieve with:
-       - semantic: whatwasit.search.search() (the actual production search path)
-       - keyword : eval.baseline.rank() over the same session documents
-  4. Compute IR metrics (P@1/3/5, R@5/10, MRR, nDCG@5) per query and aggregate
-     overall and per-topic.
-  5. Capture per-query timings (query-embed, ANN search, full search) and the
-     full ranked list *with raw scores* for every query and both methods.
-  6. Write versioned, durable artifacts (never overwritten between runs):
-       eval/results_raw_v{N}.jsonl   -- full ranked lists + scores + timings
-       eval/metrics_summary_v{N}.csv -- aggregate + per-topic, both methods
-       eval/summary_v{N}.json        -- everything, for report/plot building
-       eval/tables_v{N}.md           -- ready-to-read aggregate + per-query tables
-
-Fully offline; uses the local cached MiniLM model.
+Default invocation preserves the historical behavior: run the standard suite
+and the keyword-heavy breakout, write versioned artifacts, and keep the
+standard suite at the top level of ``summary_vN.json`` for compatibility.
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import os
@@ -30,7 +16,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
@@ -45,12 +31,10 @@ from whatwasit.models import Command, Session
 from whatwasit.search import search
 
 from eval import baseline, metrics
+from eval.dataset_io import dataset_stats, load_jsonl, validate_queries, validate_sessions
+from eval.suites import EvalSuite, available_suites, get_suite
 
 EVAL_DIR = Path(__file__).resolve().parent
-
-
-def load_jsonl(path: Path) -> List[dict]:
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
 def next_version(prefix: str, suffix: str) -> int:
@@ -58,6 +42,33 @@ def next_version(prefix: str, suffix: str) -> int:
     while (EVAL_DIR / f"{prefix}_v{n}{suffix}").exists():
         n += 1
     return n
+
+
+def stat(xs: Sequence[float]) -> dict:
+    if not xs:
+        return {"mean": 0.0, "p50": 0.0, "p95": 0.0, "min": 0.0, "max": 0.0}
+    xs2 = sorted(xs)
+    return {
+        "mean": round(statistics.mean(xs), 4),
+        "p50": round(statistics.median(xs), 4),
+        "p95": round(xs2[min(len(xs2) - 1, int(0.95 * len(xs2)))], 4),
+        "min": round(xs2[0], 4),
+        "max": round(xs2[-1], 4),
+    }
+
+
+def resolve_retrieval_limit(mode: str, config: Config, n_sessions: int) -> tuple[int, str]:
+    if mode == "full":
+        return n_sessions, "full"
+    if mode == "production":
+        return config.top_k, "production"
+    try:
+        k = int(mode)
+    except ValueError as exc:
+        raise SystemExit("--retrieval-k must be full, production, or a positive integer") from exc
+    if k <= 0:
+        raise SystemExit("--retrieval-k integer must be positive")
+    return k, str(k)
 
 
 def index_sessions(config: Config, sessions: List[dict], embedder, index):
@@ -68,7 +79,7 @@ def index_sessions(config: Config, sessions: List[dict], embedder, index):
 
     str_to_db: Dict[str, int] = {}
     db_to_str: Dict[int, str] = {}
-    corpus: Dict[str, str] = {}  # string id -> doc text (for baseline)
+    corpus: Dict[str, str] = {}
     doc_texts: List[str] = []
     db_ids: List[int] = []
 
@@ -101,25 +112,39 @@ def index_sessions(config: Config, sessions: List[dict], embedder, index):
     return str_to_db, db_to_str, corpus
 
 
-def run() -> int:
-    sessions = load_jsonl(EVAL_DIR / "sessions.jsonl")
-    queries = load_jsonl(EVAL_DIR / "queries.jsonl")
-    n_sessions = len(sessions)
+def evaluate_suite(
+    suite: EvalSuite,
+    *,
+    retrieval_k: str,
+) -> tuple[dict, list[dict]]:
+    sessions = load_jsonl(suite.sessions_path)
+    queries = load_jsonl(suite.queries_path)
+    validate_sessions(sessions)
+    validate_queries(queries, {row["session_id"] for row in sessions})
 
-    tmp = tempfile.mkdtemp(prefix="hist_eval_")
+    tmp = tempfile.mkdtemp(prefix=f"hist_eval_{suite.name}_")
     config = Config(data_dir=Path(tmp))
     config.ensure_data_dir()
     embedder = build_embedder(config)
     index = build_index(config)
 
-    print(f"Indexing {n_sessions} sessions through the real whatwasit pipeline ...", flush=True)
-    embedder.encode(["warmup"])  # load model, excluded from timings
-    str_to_db, db_to_str, corpus = index_sessions(config, sessions, embedder, index)
+    n_sessions = len(sessions)
+    limit, retrieval_label = resolve_retrieval_limit(retrieval_k, config, n_sessions)
+
+    print(
+        f"[{suite.name}] Indexing {n_sessions} sessions through the real whatwasit pipeline ...",
+        flush=True,
+    )
+    embedder.encode(["warmup"])
+    _str_to_db, db_to_str, corpus = index_sessions(config, sessions, embedder, index)
 
     answerable = [q for q in queries if q["correct_session_id"] is not None]
     nulls = [q for q in queries if q["correct_session_id"] is None]
-    print(f"Running {len(queries)} queries ({len(answerable)} answerable + {len(nulls)} null) "
-          f"x 2 methods ...", flush=True)
+    print(
+        f"[{suite.name}] Running {len(queries)} queries "
+        f"({len(answerable)} answerable + {len(nulls)} null) x 2 methods ...",
+        flush=True,
+    )
 
     raw_records: List[dict] = []
     per_query: List[dict] = []
@@ -131,7 +156,6 @@ def run() -> int:
     embed_ms_list: List[float] = []
     ann_ms_list: List[float] = []
     total_ms_list: List[float] = []
-
     answerable_top1_sem: List[float] = []
     answerable_top1_kw: List[float] = []
 
@@ -140,23 +164,23 @@ def run() -> int:
         gold = q["correct_session_id"]
         topic = q["topic"]
 
-        # --- semantic: component timings (query embed + ANN) ---
         t0 = time.perf_counter()
         qv = encode_query_one(embedder, query)
         t_embed = (time.perf_counter() - t0) * 1000.0
         t0 = time.perf_counter()
-        _ = index.search(qv, n_sessions)
+        _ = index.search(qv, limit)
         t_ann = (time.perf_counter() - t0) * 1000.0
 
-        # --- semantic: official ranking through whatwasit's actual search() ---
         t0 = time.perf_counter()
-        results = search(config, query, k=n_sessions, embedder=embedder, index=index)
+        results = search(config, query, k=limit, embedder=embedder, index=index)
         t_total = (time.perf_counter() - t0) * 1000.0
 
         sem_ranked_ids = [db_to_str.get(r.session.id, f"?{r.session.id}") for r in results]
-        sem_scores = {db_to_str.get(r.session.id, f"?{r.session.id}"): float(r.score) for r in results}
+        sem_scores = {
+            db_to_str.get(r.session.id, f"?{r.session.id}"): float(r.score)
+            for r in results
+        }
 
-        # --- keyword baseline over the same documents ---
         t0 = time.perf_counter()
         kw_scored = baseline.rank(query, corpus)
         t_kw = (time.perf_counter() - t0) * 1000.0
@@ -167,7 +191,6 @@ def run() -> int:
         ann_ms_list.append(t_ann)
         total_ms_list.append(t_total)
 
-        # full ranked lists with scores for the raw log
         sem_full = [
             {"rank": i + 1, "session_id": sid, "score": round(sem_scores.get(sid, 0.0), 6)}
             for i, sid in enumerate(sem_ranked_ids)
@@ -177,18 +200,32 @@ def run() -> int:
             for i, (sid, sc) in enumerate(kw_scored)
         ]
 
-        raw_records.append({
-            "query": query, "topic": topic, "correct_session_id": gold,
-            "method": "semantic",
-            "timing_ms": {"embed": round(t_embed, 3), "ann": round(t_ann, 3), "total": round(t_total, 3)},
-            "ranked": sem_full,
-        })
-        raw_records.append({
-            "query": query, "topic": topic, "correct_session_id": gold,
-            "method": "keyword",
-            "timing_ms": {"total": round(t_kw, 3)},
-            "ranked": kw_full,
-        })
+        raw_records.append(
+            {
+                "suite": suite.name,
+                "query": query,
+                "topic": topic,
+                "correct_session_id": gold,
+                "method": "semantic",
+                "timing_ms": {
+                    "embed": round(t_embed, 3),
+                    "ann": round(t_ann, 3),
+                    "total": round(t_total, 3),
+                },
+                "ranked": sem_full,
+            }
+        )
+        raw_records.append(
+            {
+                "suite": suite.name,
+                "query": query,
+                "topic": topic,
+                "correct_session_id": gold,
+                "method": "keyword",
+                "timing_ms": {"total": round(t_kw, 3)},
+                "ranked": kw_full,
+            }
+        )
 
         if gold is not None:
             sem_m = metrics.per_query_metrics(sem_ranked_ids, gold)
@@ -199,40 +236,82 @@ def run() -> int:
             kw_rows_all.append(kw_m)
             sem_rows_by_topic.setdefault(topic, []).append(sem_m)
             kw_rows_by_topic.setdefault(topic, []).append(kw_m)
-            if sem_rank == 1:
+            if sem_rank == 1 and sem_ranked_ids:
                 answerable_top1_sem.append(sem_scores.get(sem_ranked_ids[0], 0.0))
-            if kw_rank == 1:
+            if kw_rank == 1 and kw_ranked_ids:
                 answerable_top1_kw.append(kw_scores.get(kw_ranked_ids[0], 0.0))
-            per_query.append({
-                "query": query, "topic": topic, "gold": gold,
-                "semantic": {"rank": sem_rank,
-                              "top3": [(sid, round(sem_scores.get(sid, 0.0), 4)) for sid in sem_ranked_ids[:3]],
-                              "metrics": sem_m},
-                "keyword": {"rank": kw_rank,
-                             "top3": [(sid, round(kw_scores.get(sid, 0.0), 4)) for sid in kw_ranked_ids[:3]],
-                             "metrics": kw_m},
-            })
+            per_query.append(
+                {
+                    "query": query,
+                    "query_id": q.get("query_id"),
+                    "kind": q.get("kind"),
+                    "topic": topic,
+                    "gold": gold,
+                    "semantic": {
+                        "rank": sem_rank,
+                        "top3": [
+                            (sid, round(sem_scores.get(sid, 0.0), 4))
+                            for sid in sem_ranked_ids[:3]
+                        ],
+                        "metrics": sem_m,
+                    },
+                    "keyword": {
+                        "rank": kw_rank,
+                        "top3": [
+                            (sid, round(kw_scores.get(sid, 0.0), 4))
+                            for sid in kw_ranked_ids[:3]
+                        ],
+                        "metrics": kw_m,
+                    },
+                }
+            )
         else:
-            per_query.append({
-                "query": query, "topic": topic, "gold": None,
-                "semantic": {"rank": None,
-                              "top1": (sem_ranked_ids[0], round(sem_scores.get(sem_ranked_ids[0], 0.0), 4)),
-                              "top3": [(sid, round(sem_scores.get(sid, 0.0), 4)) for sid in sem_ranked_ids[:3]]},
-                "keyword": {"rank": None,
-                             "top1": (kw_ranked_ids[0], round(kw_scores.get(kw_ranked_ids[0], 0.0), 4)),
-                             "top3": [(sid, round(kw_scores.get(sid, 0.0), 4)) for sid in kw_ranked_ids[:3]]},
-            })
+            sem_top1 = (
+                (sem_ranked_ids[0], round(sem_scores.get(sem_ranked_ids[0], 0.0), 4))
+                if sem_ranked_ids
+                else (None, 0.0)
+            )
+            kw_top1 = (
+                (kw_ranked_ids[0], round(kw_scores.get(kw_ranked_ids[0], 0.0), 4))
+                if kw_ranked_ids
+                else (None, 0.0)
+            )
+            per_query.append(
+                {
+                    "query": query,
+                    "query_id": q.get("query_id"),
+                    "kind": q.get("kind"),
+                    "topic": topic,
+                    "gold": None,
+                    "semantic": {
+                        "rank": None,
+                        "top1": sem_top1,
+                        "top3": [
+                            (sid, round(sem_scores.get(sid, 0.0), 4))
+                            for sid in sem_ranked_ids[:3]
+                        ],
+                    },
+                    "keyword": {
+                        "rank": None,
+                        "top1": kw_top1,
+                        "top3": [
+                            (sid, round(kw_scores.get(sid, 0.0), 4))
+                            for sid in kw_ranked_ids[:3]
+                        ],
+                    },
+                }
+            )
 
     agg = {"semantic": metrics.aggregate(sem_rows_all), "keyword": metrics.aggregate(kw_rows_all)}
-    per_topic = {}
-    for topic in sorted(sem_rows_by_topic):
-        per_topic[topic] = {
+    per_topic = {
+        topic: {
             "n": len(sem_rows_by_topic[topic]),
             "semantic": metrics.aggregate(sem_rows_by_topic[topic]),
             "keyword": metrics.aggregate(kw_rows_by_topic[topic]),
         }
+        for topic in sorted(sem_rows_by_topic)
+    }
 
-    # --- null-query false-positive analysis (score threshold sweep) ---
     null_details = []
     sem_null_top1 = []
     kw_null_top1 = []
@@ -242,47 +321,53 @@ def run() -> int:
         kw_top1_score = pq["keyword"]["top1"][1]
         sem_null_top1.append(sem_top1_score)
         kw_null_top1.append(kw_top1_score)
-        null_details.append({
-            "query": q["query"], "topic": q["topic"],
-            "semantic_top1": pq["semantic"]["top1"],
-            "keyword_top1": pq["keyword"]["top1"],
-        })
+        null_details.append(
+            {
+                "query": q["query"],
+                "query_id": q.get("query_id"),
+                "topic": q["topic"],
+                "semantic_top1": pq["semantic"]["top1"],
+                "keyword_top1": pq["keyword"]["top1"],
+            }
+        )
 
     sweep = []
     for t in [0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60]:
         sem_fp = sum(1 for s in sem_null_top1 if s >= t) / len(sem_null_top1) if sem_null_top1 else 0.0
-        # fraction of answerable-correct@1 queries that WOULD be suppressed at t
-        sem_suppress = (sum(1 for s in answerable_top1_sem if s < t) / len(answerable_top1_sem)
-                        if answerable_top1_sem else 0.0)
-        sweep.append({"threshold": t,
-                      "semantic_null_fp_rate": round(sem_fp, 4),
-                      "semantic_answerable_suppressed": round(sem_suppress, 4)})
+        sem_suppress = (
+            sum(1 for s in answerable_top1_sem if s < t) / len(answerable_top1_sem)
+            if answerable_top1_sem
+            else 0.0
+        )
+        sweep.append(
+            {
+                "threshold": t,
+                "semantic_null_fp_rate": round(sem_fp, 4),
+                "semantic_answerable_suppressed": round(sem_suppress, 4),
+            }
+        )
 
-    def stat(xs):
-        if not xs:
-            return {"mean": 0.0, "p50": 0.0, "p95": 0.0, "min": 0.0, "max": 0.0}
-        xs2 = sorted(xs)
-        return {
-            "mean": round(statistics.mean(xs), 4),
-            "p50": round(statistics.median(xs), 4),
-            "p95": round(xs2[min(len(xs2) - 1, int(0.95 * len(xs2)))], 4),
-            "min": round(xs2[0], 4),
-            "max": round(xs2[-1], 4),
-        }
-
-    timing = {
-        "semantic_embed_ms": stat(embed_ms_list),
-        "semantic_ann_ms": stat(ann_ms_list),
-        "semantic_total_ms": stat(total_ms_list),
-    }
-
+    stats = dataset_stats(sessions, queries)
     n_labeled = sum(1 for s in sessions if s.get("topic") != "distractor")
     n_distract = sum(1 for s in sessions if s.get("topic") == "distractor")
 
-    summary = {
-        "n_sessions": n_sessions, "n_labeled": n_labeled, "n_distractor": n_distract,
-        "n_queries": len(queries), "n_answerable": len(answerable), "n_null": len(nulls),
-        "model": config.model_name, "embedding_dim": config.embedding_dim,
+    suite_summary = {
+        "suite": suite.name,
+        "label": suite.label,
+        "n_sessions": stats.sessions,
+        "n_labeled": n_labeled,
+        "n_distractor": n_distract,
+        "n_queries": stats.queries,
+        "n_answerable": stats.answerable,
+        "n_null": stats.null,
+        "model": config.model_name,
+        "embedding_dim": config.embedding_dim,
+        "run": {
+            "retrieval_k": retrieval_label,
+            "retrieval_limit": limit,
+            "production_top_k": config.top_k,
+            "ranking_variant": "production",
+        },
         "search_config": {
             "hybrid_search": config.hybrid_search,
             "hybrid_literal_only": True,
@@ -297,104 +382,34 @@ def run() -> int:
             "answerable_top1_keyword_raw": answerable_top1_kw,
             "null_top1_keyword_raw": kw_null_top1,
         },
-        "timing": timing,
+        "timing": {
+            "semantic_embed_ms": stat(embed_ms_list),
+            "semantic_ann_ms": stat(ann_ms_list),
+            "semantic_total_ms": stat(total_ms_list),
+        },
         "per_query": per_query,
     }
-
-    # --- optional keyword-heavy breakout ----------------------------
-    kh_path = EVAL_DIR / "queries_keyword_heavy.jsonl"
-    if kh_path.exists():
-        kh_queries = load_jsonl(kh_path)
-        print(f"Running {len(kh_queries)} keyword-heavy queries ...", flush=True)
-        kh_rows_sem: List[dict] = []
-        kh_rows_kw:  List[dict] = []
-        kh_per_query: List[dict] = []
-        for kq in kh_queries:
-            query  = kq["query"]
-            gold   = kq["correct_session_id"]
-            topic  = kq["topic"]
-            kh_results_ = search(config, query, k=n_sessions, embedder=embedder, index=index)
-            kh_sem_ids   = [db_to_str.get(r.session.id, f"?{r.session.id}") for r in kh_results_]
-            kh_sem_sc    = {db_to_str.get(r.session.id, f"?{r.session.id}"): float(r.score) for r in kh_results_}
-            kh_kw_scored = baseline.rank(query, corpus)
-            kh_kw_ids    = [sid for sid, _ in kh_kw_scored]
-            kh_kw_sc     = {sid: float(sc) for sid, sc in kh_kw_scored}
-            sem_m = metrics.per_query_metrics(kh_sem_ids, gold)
-            kw_m  = metrics.per_query_metrics(kh_kw_ids, gold)
-            kh_rows_sem.append(sem_m); kh_rows_kw.append(kw_m)
-            kh_per_query.append({
-                "query": query, "topic": topic, "gold": gold,
-                "semantic": {"rank": metrics.rank_of(kh_sem_ids, gold),
-                             "top3": [(sid, round(kh_sem_sc.get(sid, 0.0), 4))
-                                      for sid in kh_sem_ids[:3]],
-                             "metrics": sem_m},
-                "keyword":  {"rank": metrics.rank_of(kh_kw_ids, gold),
-                             "top3": [(sid, round(kh_kw_sc.get(sid, 0.0), 4))
-                                      for sid in kh_kw_ids[:3]],
-                             "metrics": kw_m},
-            })
-        kh_agg = {"semantic": metrics.aggregate(kh_rows_sem),
-                  "keyword":  metrics.aggregate(kh_rows_kw)}
-        summary["keyword_heavy"] = {
-            "n_queries": len(kh_queries),
-            "aggregate": kh_agg,
-            "per_query": kh_per_query,
-        }
-        print(f"\n=== KEYWORD-HEAVY BREAKOUT (over {len(kh_queries)} queries) ===", flush=True)
-        print("method    " + "  ".join(f"{m:>7}" for m in metrics.METRIC_NAMES))
-        for method in ("semantic", "keyword"):
-            print(f"{method:<9} " + "  ".join(f"{kh_agg[method][m]:7.3f}" for m in metrics.METRIC_NAMES))
-
-    # ---------------- write versioned artifacts ----------------
-    v = next_version("results_raw", ".jsonl")
-    raw_path = EVAL_DIR / f"results_raw_v{v}.jsonl"
-    with raw_path.open("w") as f:
-        for rec in raw_records:
-            f.write(json.dumps(rec) + "\n")
-
-    csv_path = EVAL_DIR / f"metrics_summary_v{v}.csv"
-    with csv_path.open("w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["method", "scope", "n_queries"] + metrics.METRIC_NAMES)
-        for method in ("semantic", "keyword"):
-            w.writerow([method, "overall", len(answerable)]
-                       + [round(agg[method][m], 4) for m in metrics.METRIC_NAMES])
-        for topic in sorted(per_topic):
-            for method in ("semantic", "keyword"):
-                w.writerow([method, f"topic:{topic}", per_topic[topic]["n"]]
-                           + [round(per_topic[topic][method][m], 4) for m in metrics.METRIC_NAMES])
-
-    json_path = EVAL_DIR / f"summary_v{v}.json"
-    json_path.write_text(json.dumps(summary, indent=2))
-
-    tables_path = EVAL_DIR / f"tables_v{v}.md"
-    tables_path.write_text(render_tables(summary))
-
-    print(f"\n=== AGGREGATE (over {len(answerable)} answerable queries) ===", flush=True)
-    hdr = "method    " + "  ".join(f"{m:>7}" for m in metrics.METRIC_NAMES)
-    print(hdr)
-    for method in ("semantic", "keyword"):
-        print(f"{method:<9} " + "  ".join(f"{agg[method][m]:7.3f}" for m in metrics.METRIC_NAMES))
-    print(f"\nwrote {raw_path.name}, {csv_path.name}, {json_path.name}, {tables_path.name}")
-    return 0
+    return suite_summary, raw_records
 
 
-def render_tables(summary: dict) -> str:
+def render_suite_tables(name: str, summary: dict) -> list[str]:
     M = metrics.METRIC_NAMES
-    lines: List[str] = []
-    lines.append("# Eval tables (auto-generated)\n")
-    lines.append(f"Corpus: {summary['n_sessions']} sessions "
-                 f"({summary['n_labeled']} labeled + {summary['n_distractor']} distractor). "
-                 f"Queries: {summary['n_answerable']} answerable + {summary['n_null']} null. "
-                 f"Model: `{summary['model']}` ({summary['embedding_dim']}-dim).\n")
-
-    lines.append("\n## Aggregate: semantic vs keyword\n")
+    lines: list[str] = []
+    lines.append(f"\n## Suite: {name}\n")
+    lines.append(
+        f"Corpus: {summary['n_sessions']} sessions "
+        f"({summary['n_labeled']} labeled + {summary['n_distractor']} distractor). "
+        f"Queries: {summary['n_answerable']} answerable + {summary['n_null']} null. "
+        f"Retrieval: `{summary['run']['retrieval_k']}`. "
+        f"Model: `{summary['model']}` ({summary['embedding_dim']}-dim).\n"
+    )
+    lines.append("\n### Aggregate: semantic vs keyword\n")
     lines.append("| Method | " + " | ".join(M) + " |")
     lines.append("|---|" + "|".join(["---:"] * len(M)) + "|")
     for method in ("semantic", "keyword"):
         lines.append("| " + method + " | " + " | ".join(f"{summary['aggregate'][method][m]:.3f}" for m in M) + " |")
 
-    lines.append("\n## Per-topic (semantic / keyword)\n")
+    lines.append("\n### Per-topic (semantic / keyword)\n")
     lines.append("| Topic | n | " + " | ".join(M) + " |")
     lines.append("|---|--:|" + "|".join(["---:"] * len(M)) + "|")
     for topic in sorted(summary["per_topic"]):
@@ -404,7 +419,7 @@ def render_tables(summary: dict) -> str:
         kw = " | ".join(f"{pt['keyword'][m]:.2f}" for m in M)
         lines.append(f"| {topic} (kw) | {pt['n']} | " + kw + " |")
 
-    lines.append("\n## Per-query (answerable): semantic rank & top-3 vs keyword rank\n")
+    lines.append("\n### Per-query (answerable): semantic rank & top-3 vs keyword rank\n")
     lines.append("| Query | Expected | Sem rank | Sem top-3 (id:score) | KW rank |")
     lines.append("|---|---|--:|---|--:|")
     for p in summary["per_query"]:
@@ -416,38 +431,135 @@ def render_tables(summary: dict) -> str:
         top3 = "<br>".join(f"{sid}:{sc}" for sid, sc in p["semantic"]["top3"])
         lines.append(f"| {q} | {p['gold']} | {sem_rank} | {top3} | {kw_rank} |")
 
-    lines.append("\n## Null queries (no correct session): top-1 returned\n")
-    lines.append("| Query | Sem top-1 (id:score) | KW top-1 (id:score) |")
-    lines.append("|---|---|---|")
-    for p in summary["per_query"]:
-        if p["gold"] is not None:
-            continue
-        q = p["query"] if len(p["query"]) <= 70 else p["query"][:67] + "..."
-        st = p["semantic"]["top1"]
-        kt = p["keyword"]["top1"]
-        lines.append(f"| {q} | {st[0]}:{st[1]} | {kt[0]}:{kt[1]} |")
-
-    if "keyword_heavy" in summary:
-        kh = summary["keyword_heavy"]
-        lines.append("\n## Keyword-heavy queries breakout (exact tool names / flags)\n")
-        lines.append(f"*{kh['n_queries']} queries using exact keywords from target sessions "
-                     f"(opposite of the standard eval design). "
-                     f"Reported separately — not merged into the answerable aggregate.*\n")
-        lines.append("| Method | " + " | ".join(M) + " |")
-        lines.append("|---|" + "|".join(["---:"] * len(M)) + "|")
-        for method in ("semantic", "keyword"):
-            lines.append("| " + method + " | "
-                         + " | ".join(f"{kh['aggregate'][method][m]:.3f}" for m in M) + " |")
-        lines.append("\n| Query | Expected | Sem rank | Sem top-3 (id:score) | KW rank |")
-        lines.append("|---|---|--:|---|--:|")
-        for p in kh["per_query"]:
+    if summary["n_null"]:
+        lines.append("\n### Null queries (no correct session): top-1 returned\n")
+        lines.append("| Query | Sem top-1 (id:score) | KW top-1 (id:score) |")
+        lines.append("|---|---|---|")
+        for p in summary["per_query"]:
+            if p["gold"] is not None:
+                continue
             q = p["query"] if len(p["query"]) <= 70 else p["query"][:67] + "..."
-            sem_r = p["semantic"]["rank"] if p["semantic"]["rank"] else "NF"
-            kw_r  = p["keyword"]["rank"]  if p["keyword"]["rank"]  else "NF"
-            top3  = "<br>".join(f"{sid}:{sc}" for sid, sc in p["semantic"]["top3"])
-            lines.append(f"| {q} | {p['gold']} | {sem_r} | {top3} | {kw_r} |")
+            st = p["semantic"]["top1"]
+            kt = p["keyword"]["top1"]
+            lines.append(f"| {q} | {st[0]}:{st[1]} | {kt[0]}:{kt[1]} |")
+    return lines
 
+
+def render_tables(summary: dict) -> str:
+    lines: List[str] = ["# Eval tables (auto-generated)\n"]
+    for name, suite_summary in summary["suites"].items():
+        lines.extend(render_suite_tables(name, suite_summary))
     return "\n".join(lines) + "\n"
+
+
+def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--suite", choices=sorted(available_suites()))
+    group.add_argument("--all-suites", action="store_true")
+    parser.add_argument("--retrieval-k", default="full", help="full, production, or a positive integer")
+    return parser.parse_args(argv)
+
+
+def selected_suites(args: argparse.Namespace) -> list[EvalSuite]:
+    if args.all_suites:
+        return list(available_suites().values())
+    if args.suite:
+        return [get_suite(args.suite)]
+    # Historical default: standard plus keyword-heavy breakout when present.
+    names = ["standard", "keyword_heavy"]
+    return [get_suite(name) for name in names if get_suite(name).exists()]
+
+
+def run(argv: Optional[Sequence[str]] = None) -> int:
+    args = parse_args(argv)
+    suites = selected_suites(args)
+    if not suites:
+        raise SystemExit("no eval suites selected")
+
+    all_raw: list[dict] = []
+    suite_summaries: dict[str, dict] = {}
+    for suite in suites:
+        suite_summary, raw = evaluate_suite(suite, retrieval_k=args.retrieval_k)
+        suite_summaries[suite.name] = suite_summary
+        all_raw.extend(raw)
+
+    standard = suite_summaries.get("standard") or next(iter(suite_summaries.values()))
+    summary = {
+        "run": {
+            "retrieval_k": standard["run"]["retrieval_k"],
+            "retrieval_limit": standard["run"]["retrieval_limit"],
+            "production_top_k": standard["run"]["production_top_k"],
+            "ranking_variant": "production",
+            "suites": list(suite_summaries),
+        },
+        "suites": suite_summaries,
+        # Backward-compatible standard-suite fields.
+        **{k: v for k, v in standard.items() if k not in {"suite", "label"}},
+    }
+    if "keyword_heavy" in suite_summaries:
+        kh = suite_summaries["keyword_heavy"]
+        summary["keyword_heavy"] = {
+            "n_queries": kh["n_queries"],
+            "aggregate": kh["aggregate"],
+            "per_query": kh["per_query"],
+        }
+
+    v = next_version("results_raw", ".jsonl")
+    raw_path = EVAL_DIR / f"results_raw_v{v}.jsonl"
+    with raw_path.open("w", encoding="utf-8") as f:
+        for rec in all_raw:
+            f.write(json.dumps(rec) + "\n")
+
+    csv_path = EVAL_DIR / f"metrics_summary_v{v}.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["suite", "method", "scope", "n_queries", "retrieval_k"] + metrics.METRIC_NAMES)
+        for suite_name, suite_summary in suite_summaries.items():
+            for method in ("semantic", "keyword"):
+                w.writerow(
+                    [
+                        suite_name,
+                        method,
+                        "overall",
+                        suite_summary["n_answerable"],
+                        suite_summary["run"]["retrieval_k"],
+                    ]
+                    + [round(suite_summary["aggregate"][method][m], 4) for m in metrics.METRIC_NAMES]
+                )
+            for topic in sorted(suite_summary["per_topic"]):
+                for method in ("semantic", "keyword"):
+                    w.writerow(
+                        [
+                            suite_name,
+                            method,
+                            f"topic:{topic}",
+                            suite_summary["per_topic"][topic]["n"],
+                            suite_summary["run"]["retrieval_k"],
+                        ]
+                        + [
+                            round(suite_summary["per_topic"][topic][method][m], 4)
+                            for m in metrics.METRIC_NAMES
+                        ]
+                    )
+
+    json_path = EVAL_DIR / f"summary_v{v}.json"
+    json_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+    tables_path = EVAL_DIR / f"tables_v{v}.md"
+    tables_path.write_text(render_tables(summary), encoding="utf-8")
+
+    for suite_name, suite_summary in suite_summaries.items():
+        print(f"\n=== {suite_name.upper()} (over {suite_summary['n_answerable']} answerable queries) ===", flush=True)
+        hdr = "method    " + "  ".join(f"{m:>7}" for m in metrics.METRIC_NAMES)
+        print(hdr)
+        for method in ("semantic", "keyword"):
+            print(
+                f"{method:<9} "
+                + "  ".join(f"{suite_summary['aggregate'][method][m]:7.3f}" for m in metrics.METRIC_NAMES)
+            )
+    print(f"\nwrote {raw_path.name}, {csv_path.name}, {json_path.name}, {tables_path.name}")
+    return 0
 
 
 if __name__ == "__main__":
