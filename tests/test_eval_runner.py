@@ -17,6 +17,24 @@ def test_suite_selection_can_target_hard_suite() -> None:
     assert [suite.name for suite in selected_suites(args)] == ["hard"]
 
 
+def test_parse_model_and_ranking_metadata_args() -> None:
+    args = parse_args(
+        [
+            "--suite",
+            "hard",
+            "--model-name",
+            "BAAI/bge-small-en-v1.5",
+            "--embedding-dim",
+            "384",
+            "--ranking-variant",
+            "bge-eval",
+        ]
+    )
+    assert args.model_name == "BAAI/bge-small-en-v1.5"
+    assert args.embedding_dim == 384
+    assert args.ranking_variant == "bge-eval"
+
+
 def test_all_suites_includes_available_named_suites() -> None:
     args = parse_args(["--all-suites"])
     names = {suite.name for suite in selected_suites(args)}

@@ -116,6 +116,9 @@ def evaluate_suite(
     suite: EvalSuite,
     *,
     retrieval_k: str,
+    model_name: str,
+    embedding_dim: int,
+    ranking_variant: str,
 ) -> tuple[dict, list[dict]]:
     sessions = load_jsonl(suite.sessions_path)
     queries = load_jsonl(suite.queries_path)
@@ -123,7 +126,7 @@ def evaluate_suite(
     validate_queries(queries, {row["session_id"] for row in sessions})
 
     tmp = tempfile.mkdtemp(prefix=f"hist_eval_{suite.name}_")
-    config = Config(data_dir=Path(tmp))
+    config = Config(data_dir=Path(tmp), model_name=model_name, embedding_dim=embedding_dim)
     config.ensure_data_dir()
     embedder = build_embedder(config)
     index = build_index(config)
@@ -366,7 +369,7 @@ def evaluate_suite(
             "retrieval_k": retrieval_label,
             "retrieval_limit": limit,
             "production_top_k": config.top_k,
-            "ranking_variant": "production",
+            "ranking_variant": ranking_variant,
         },
         "search_config": {
             "hybrid_search": config.hybrid_search,
@@ -458,6 +461,9 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     group.add_argument("--suite", choices=sorted(available_suites()))
     group.add_argument("--all-suites", action="store_true")
     parser.add_argument("--retrieval-k", default="full", help="full, production, or a positive integer")
+    parser.add_argument("--model-name", default=Config().model_name)
+    parser.add_argument("--embedding-dim", type=int, default=Config().embedding_dim)
+    parser.add_argument("--ranking-variant", default="production")
     return parser.parse_args(argv)
 
 
@@ -480,7 +486,13 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
     all_raw: list[dict] = []
     suite_summaries: dict[str, dict] = {}
     for suite in suites:
-        suite_summary, raw = evaluate_suite(suite, retrieval_k=args.retrieval_k)
+        suite_summary, raw = evaluate_suite(
+            suite,
+            retrieval_k=args.retrieval_k,
+            model_name=args.model_name,
+            embedding_dim=args.embedding_dim,
+            ranking_variant=args.ranking_variant,
+        )
         suite_summaries[suite.name] = suite_summary
         all_raw.extend(raw)
 
@@ -490,7 +502,7 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
             "retrieval_k": standard["run"]["retrieval_k"],
             "retrieval_limit": standard["run"]["retrieval_limit"],
             "production_top_k": standard["run"]["production_top_k"],
-            "ranking_variant": "production",
+            "ranking_variant": standard["run"]["ranking_variant"],
             "suites": list(suite_summaries),
         },
         "suites": suite_summaries,
