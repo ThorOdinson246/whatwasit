@@ -30,6 +30,35 @@ SECRET_PATTERNS = [
     re.compile(r"bearer\s+[a-z0-9._~+/=-]{20,}", re.IGNORECASE),
     re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
 ]
+NOISE_COMMANDS = {"cd", "ls", "clear", "cls", "exit", "logout", "pwd", "history"}
+TOOL_TOPICS = {
+    "git": "git",
+    "docker": "docker",
+    "docker-compose": "docker",
+    "ssh": "ssh",
+    "scp": "ssh",
+    "rsync": "sync",
+    "python": "python",
+    "python3": "python",
+    "pip": "python",
+    "pytest": "python",
+    "npm": "javascript",
+    "node": "javascript",
+    "curl": "http",
+    "wget": "download",
+    "nginx": "nginx",
+    "systemctl": "systemd",
+    "journalctl": "logs",
+    "sudo": "system",
+    "apt": "packages",
+    "apt-get": "packages",
+    "warp-cli": "network",
+    "code": "editor",
+    "vscode": "editor",
+    "nano": "editor",
+    "chmod": "permissions",
+    "chown": "permissions",
+}
 
 
 def likely_secret(text: str) -> bool:
@@ -205,6 +234,148 @@ def _redact_row(row: dict, needle: str, replacement: str = "[REDACTED]") -> dict
     return redacted
 
 
+def _command_name(command: str) -> str:
+    parts = command.strip().split()
+    if not parts:
+        return ""
+    first = Path(parts[0].strip("\"'")).name
+    if first == "sudo" and len(parts) > 1:
+        return Path(parts[1].strip("\"'")).name
+    return first
+
+
+def _topic_for(commands: Sequence[str]) -> str:
+    for command in commands:
+        topic = TOOL_TOPICS.get(_command_name(command).lower())
+        if topic:
+            return topic
+    return "personal"
+
+
+def _usable_candidate(row: dict) -> bool:
+    commands = [str(command) for command in row.get("commands", [])]
+    if len(commands) < 2:
+        return False
+    if likely_secret("\n".join([str(row.get("cwd", "")), *commands])):
+        return False
+    useful = [
+        command for command in commands
+        if _command_name(command).lower() not in NOISE_COMMANDS
+    ]
+    return len(useful) >= 2
+
+
+def _bootstrap_queries(row: dict, topic: str, q_start: int) -> list[dict]:
+    sid = row["session_id"]
+    cwd = Path(str(row.get("cwd") or "work")).name or "work"
+    tools = []
+    for command in row.get("commands", []):
+        tool = _command_name(command).lower()
+        if tool and tool not in NOISE_COMMANDS and tool not in tools:
+            tools.append(tool)
+    tool_text = ", ".join(tools[:3]) if tools else "commands"
+    return [
+        {
+            "query_id": f"personal_q{q_start:06d}",
+            "query": f"the {topic} work I did in {cwd} using {tool_text}",
+            "correct_session_id": sid,
+            "topic": topic,
+            "kind": "intent",
+            "priority": "bootstrap",
+            "generated": True,
+        },
+        {
+            "query_id": f"personal_q{q_start + 1:06d}",
+            "query": f"where I was working through a {topic} task from that {cwd} session",
+            "correct_session_id": sid,
+            "topic": topic,
+            "kind": "intent",
+            "priority": "bootstrap",
+            "generated": True,
+        },
+    ]
+
+
+def bootstrap_personal(
+    candidates: Path,
+    out_dir: Path,
+    *,
+    sessions_target: int = 50,
+    null_target: int = 15,
+    allow_unsafe_path: bool = False,
+) -> tuple[int, int]:
+    """Create a generated private draft suite from exported candidates.
+
+    Bootstrap labels are useful for exercising the pipeline, but human-authored
+    labels remain the promotion gate.
+    """
+    if not allow_unsafe_path:
+        _ensure_private_path(out_dir)
+    init_personal(out_dir)
+    paths = personal_paths(out_dir)
+    existing_sessions = {row["session_id"] for row in _read_existing(paths["sessions"])}
+    existing_queries = _read_existing(paths["queries"])
+    next_q = _next_query_index(existing_queries)
+    selected: list[dict] = []
+    queries: list[dict] = []
+    topic_counts: dict[str, int] = {}
+
+    for row in load_jsonl(candidates):
+        if row["session_id"] in existing_sessions or not _usable_candidate(row):
+            continue
+        topic = _topic_for(row.get("commands", []))
+        if topic_counts.get(topic, 0) >= 8:
+            continue
+        row = dict(row)
+        row["topic"] = topic
+        row["bootstrap"] = True
+        selected.append(row)
+        queries.extend(_bootstrap_queries(row, topic, next_q))
+        next_q += 2
+        topic_counts[topic] = topic_counts.get(topic, 0) + 1
+        if len(selected) >= sessions_target:
+            break
+
+    null_templates = [
+        ("terraform cloud infrastructure provisioning", "terraform-null"),
+        ("kubernetes secret rotation in a namespace", "kubernetes-null"),
+        ("postgres slow query explain analyze index tuning", "postgres-null"),
+        ("nginx rate limiting burst configuration", "nginx-null"),
+        ("github actions workflow cache failure", "ci-null"),
+        ("rust borrow checker lifetime error", "rust-null"),
+        ("redis pub sub channel debugging", "redis-null"),
+        ("aws iam access key rotation", "aws-null"),
+        ("bluetooth audio pairing configuration", "bluetooth-null"),
+        ("oauth callback redirect mismatch", "oauth-null"),
+        ("elasticsearch shard allocation tuning", "search-null"),
+        ("helm chart values rollback", "helm-null"),
+        ("mysql replication lag troubleshooting", "mysql-null"),
+        ("cuda driver gpu training failure", "gpu-null"),
+        ("ansible playbook inventory variable issue", "ansible-null"),
+    ]
+    for text, topic in null_templates[:null_target]:
+        queries.append(
+            {
+                "query_id": f"personal_q{next_q:06d}",
+                "query": text,
+                "correct_session_id": None,
+                "topic": topic,
+                "kind": "null",
+                "priority": "bootstrap",
+                "generated": True,
+            }
+        )
+        next_q += 1
+
+    final_sessions = [*_read_existing(paths["sessions"]), *selected]
+    final_queries = [*_read_existing(paths["queries"]), *queries]
+    _validate_personal_rows(final_sessions, final_queries)
+    _append_jsonl(paths["sessions"], selected)
+    _append_jsonl(paths["queries"], queries)
+    print(f"bootstrapped {len(selected)} sessions and {len(queries)} queries")
+    return len(selected), len(queries)
+
+
 def _print_candidate(row: dict) -> None:
     print("\n" + "=" * 72)
     print(f"{row['session_id']}  cwd={row.get('cwd', '?')}")
@@ -303,6 +474,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     status = sub.add_parser("status")
     status.add_argument("dir", nargs="?", type=Path, default=DEFAULT_DIR)
 
+    bootstrap = sub.add_parser("bootstrap")
+    bootstrap.add_argument("--candidates", type=Path, default=personal_paths()["candidates"])
+    bootstrap.add_argument("--out-dir", type=Path, default=DEFAULT_DIR)
+    bootstrap.add_argument("--sessions", type=int, default=50)
+    bootstrap.add_argument("--nulls", type=int, default=15)
+
     return parser.parse_args(argv)
 
 
@@ -318,6 +495,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         validate_personal(args.dir, strict_size=args.strict_size)
     elif args.command == "status":
         status_personal(args.dir)
+    elif args.command == "bootstrap":
+        bootstrap_personal(
+            args.candidates,
+            args.out_dir,
+            sessions_target=args.sessions,
+            null_target=args.nulls,
+        )
     return 0
 
 

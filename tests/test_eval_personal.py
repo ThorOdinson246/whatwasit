@@ -7,6 +7,7 @@ import pytest
 from eval.personal import (
     _next_query_index,
     _redact_row,
+    bootstrap_personal,
     export_candidates,
     init_personal,
     likely_secret,
@@ -129,3 +130,42 @@ def test_next_query_index_uses_max_existing_id() -> None:
 def test_export_refuses_tracked_paths(tmp_path) -> None:
     with pytest.raises(SystemExit, match="refusing to write private history"):
         export_candidates(tmp_path / "missing.db", tmp_path / "candidates.jsonl", limit=1)
+
+
+def test_bootstrap_personal_generates_private_draft_suite(tmp_path) -> None:
+    root = tmp_path / "personal"
+    init_personal(root)
+    candidates = root / "candidates.jsonl"
+    rows = [
+        {
+            "session_id": "personal_000001",
+            "topic": "unlabeled",
+            "cwd": "~/project/api",
+            "commands": ["git status", "git log --oneline", "git diff"],
+        },
+        {
+            "session_id": "personal_000002",
+            "topic": "unlabeled",
+            "cwd": "~/project/web",
+            "commands": ["docker ps", "docker compose up -d", "docker logs api"],
+        },
+        {
+            "session_id": "personal_000003",
+            "topic": "unlabeled",
+            "cwd": "~",
+            "commands": ["cd ~/x"],
+        },
+    ]
+    candidates.write_text("\n".join(json.dumps(row) for row in rows) + "\n")
+
+    sessions, queries = bootstrap_personal(
+        candidates,
+        root,
+        sessions_target=2,
+        null_target=2,
+        allow_unsafe_path=True,
+    )
+
+    assert sessions == 2
+    assert queries == 6
+    assert validate_personal(root) == (2, 6)
