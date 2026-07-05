@@ -50,3 +50,11 @@ htmlcov/
 /eval/metrics_summary_v*.csv
 /eval/results_raw_v*.jsonl
 /eval/results.jsonl
+/eval/comparison_v*.md
+/eval/external_raw/
+/eval/raw_downloads/
+/eval/raw_*_sessions.jsonl
+/eval/raw_*_provenance.json
+/eval/private/
+/eval/personal_*.jsonl
+/eval/personal_*.json

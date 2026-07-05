@@ -49,10 +49,17 @@ Full per-query breakdown: [`tables.md`](tables.md). Raw numbers:
 
 ```bash
 # Regenerate the labeled dataset (optional; requires pyarrow for parquet sources)
-python eval/build_dataset.py
+python eval/build_dataset.py standard
 
-# Run evaluation (writes versioned artifacts; takes ~5 min on CPU)
+# Run the historical default: standard + keyword-heavy breakout.
 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python eval/run_eval.py
+
+# Run one suite explicitly.
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python eval/run_eval.py --suite standard --retrieval-k full
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python eval/run_eval.py --suite hard --retrieval-k production
+
+# Run every available suite separately.
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python eval/run_eval.py --all-suites --retrieval-k production
 
 # Copy versioned output to canonical files if updating the checked-in baseline:
 # cp eval/summary_vN.json eval/summary.json
@@ -63,3 +70,75 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python eval/run_eval.py
 The harness indexes all sessions through the real whatwasit pipeline, runs both
 semantic search and a keyword/fuzzy baseline, and computes standard IR metrics
 (P@k, R@k, MRR, nDCG@k). Summary JSON includes `search_config`.
+
+## Eval suites
+
+The runner supports named suites:
+
+| Suite | Purpose |
+|---|---|
+| `standard` | Canonical intent-paraphrase baseline (`sessions.jsonl`, `queries.jsonl`) |
+| `keyword_heavy` | Literal/tool/flag breakout over the standard corpus |
+| `hard` | Confusable/noisy/error/path/null promotion gate |
+| `raw_noise` | Optional external raw-command stress suite when generated locally |
+
+`--retrieval-k full` is diagnostic and ranks as deeply as the suite corpus allows.
+`--retrieval-k production` uses `Config.top_k` (currently 10) and records the
+effective cap in summary metadata. Do not compare full-depth and production-top-k
+runs as equivalent.
+
+## External raw data
+
+Raw public datasets should stay outside git under `eval/external_raw/` or
+`eval/raw_downloads/`. To convert line-based command samples into deterministic
+synthetic sessions:
+
+```bash
+python eval/build_dataset.py raw \
+  --input eval/raw_sources/*.txt \
+  --suite raw_noise \
+  --source bundled_raw \
+  --session-size 5 \
+  --limit 500
+```
+
+Generated `raw_*` files are ignored by default. Commit only deliberately curated
+samples and provenance.
+
+## Comparing runs
+
+Use `eval.compare` to compare two summary files:
+
+```bash
+python -m eval.compare eval/summary_old.json eval/summary_new.json
+```
+
+The comparison report includes aggregate metric deltas, answerable rank
+movements, null top-score changes, and timing mean deltas.
+
+## Private personal eval
+
+The most important accuracy signal is how well `whatwasit` matches the way you
+remember your own history. Personal eval data is private and gitignored under
+`eval/private/`.
+
+```bash
+python -m eval.personal init
+python -m eval.personal export \
+  --db ~/.local/share/whatwasit/whatwasit.db \
+  --out eval/private/personal/candidates.jsonl \
+  --limit 300
+python -m eval.personal label \
+  --candidates eval/private/personal/candidates.jsonl \
+  --out-dir eval/private/personal
+python -m eval.personal validate eval/private/personal
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python eval/run_eval.py \
+  --suite personal \
+  --retrieval-k production \
+  --ranking-variant production
+```
+
+Use the personal suite as a promotion gate only after it has roughly 50+
+sessions, 100+ answerable queries, 15+ null queries, and several confusable
+topics. Never commit the private JSONL files, private summaries, or comparison
+reports.

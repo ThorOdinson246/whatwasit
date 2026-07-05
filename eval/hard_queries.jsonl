@@ -1,0 +1,32 @@
+{"query_id":"hard_q001","query":"rebasing my branch onto upstream got stuck and I had to finish replaying it after fixing tests","correct_session_id":"hard_git_rebase_conflict","topic":"git-conflicts","kind":"intent"}
+{"query_id":"hard_q002","query":"the release patch I copied over from another branch collided with billing code","correct_session_id":"hard_git_cherrypick_conflict","topic":"git-conflicts","kind":"intent"}
+{"query_id":"hard_q003","query":"getting back a config file that had disappeared a few commits earlier","correct_session_id":"hard_git_restore_deleted_file","topic":"git-recovery","kind":"intent"}
+{"query_id":"hard_q004","query":"making nginx serve my local folder inside the container instead of the default page","correct_session_id":"hard_docker_bind_mount","topic":"docker-storage","kind":"intent"}
+{"query_id":"hard_q005","query":"the database container data needed to survive deleting and starting the service again","correct_session_id":"hard_docker_named_volume_db","topic":"docker-storage","kind":"intent"}
+{"query_id":"hard_q006","query":"bringing up the local stack with the environment file for development","correct_session_id":"hard_docker_compose_env_file","topic":"docker-compose","kind":"intent"}
+{"query_id":"hard_q007","query":"forcing an internal hostname to resolve locally before trying the request again","correct_session_id":"hard_dns_hosts_override","topic":"dns","kind":"intent"}
+{"query_id":"hard_q008","query":"teaching my machine to use the vpn resolver for corporate names","correct_session_id":"hard_dns_vpn_resolver","topic":"dns","kind":"intent"}
+{"query_id":"hard_q009","query":"the proxy was timing out before the backend health endpoint answered","correct_session_id":"hard_nginx_upstream_timeout","topic":"nginx","kind":"intent"}
+{"query_id":"hard_q010","query":"the login page kept bouncing forever until I fixed the forwarded headers","correct_session_id":"hard_nginx_redirect_loop","topic":"nginx","kind":"intent"}
+{"query_id":"hard_q011","query":"creating a migration from model changes and then applying it to the database","correct_session_id":"hard_alembic_autogenerate","topic":"db-migrations","kind":"intent"}
+{"query_id":"hard_q012","query":"repairing a broken schema step by rolling back one revision and trying it again","correct_session_id":"hard_alembic_failed_repair","topic":"db-migrations","kind":"intent"}
+{"query_id":"hard_q013","query":"the script could not see the package until I fixed how the interpreter found local source files","correct_session_id":"hard_python_import_path","topic":"python","kind":"intent"}
+{"query_id":"hard_q014","query":"rebuilding the project sandbox from scratch and installing it with developer extras","correct_session_id":"hard_python_venv_rebuild","topic":"python","kind":"intent"}
+{"query_id":"hard_q015","query":"my frontend server could not start because another process still owned the dev port","correct_session_id":"hard_node_port_conflict","topic":"node","kind":"intent"}
+{"query_id":"hard_q016","query":"ssh warned that the remote machine identity changed and I had to clear the saved fingerprint","correct_session_id":"hard_ssh_known_hosts","topic":"ssh","kind":"intent"}
+{"query_id":"hard_q017","query":"posting login json by hand and pulling the token field out of the response","correct_session_id":"hard_curl_json_login","topic":"curl","kind":"intent"}
+{"query_id":"hard_q018","query":"checking the log rotation config without applying it before forcing the rotation","correct_session_id":"hard_logrotate_permission","topic":"logs","kind":"intent"}
+{"query_id":"hard_q019","query":"ModuleNotFoundError: No module named whatwasit","correct_session_id":"hard_python_import_path","topic":"python","kind":"error"}
+{"query_id":"hard_q020","query":"EADDRINUSE address already in use 5173","correct_session_id":"hard_node_port_conflict","topic":"node","kind":"error"}
+{"query_id":"hard_q021","query":"WARNING REMOTE HOST IDENTIFICATION HAS CHANGED","correct_session_id":"hard_ssh_known_hosts","topic":"ssh","kind":"error"}
+{"query_id":"hard_q022","query":"upstream timed out while reading response header from upstream","correct_session_id":"hard_nginx_upstream_timeout","topic":"nginx","kind":"error"}
+{"query_id":"hard_q023","query":"psql alembic_version bad enum migration downgrade -1","correct_session_id":"hard_alembic_failed_repair","topic":"db-migrations","kind":"fragment"}
+{"query_id":"hard_q024","query":"docker compose --env-file .env.local logs api","correct_session_id":"hard_docker_compose_env_file","topic":"docker-compose","kind":"fragment"}
+{"query_id":"hard_q025","query":"/etc/hosts internal.example.test getent hosts","correct_session_id":"hard_dns_hosts_override","topic":"dns","kind":"fragment"}
+{"query_id":"hard_q026","query":"curl POST login content-type json jq token","correct_session_id":"hard_curl_json_login","topic":"curl","kind":"fragment"}
+{"query_id":"hard_q027","query":"/etc/logrotate.d/myapp logrotate -d","correct_session_id":"hard_logrotate_permission","topic":"logs","kind":"fragment"}
+{"query_id":"hard_q028","query":"configuring nginx rate limiting for login attempts","correct_session_id":null,"topic":"nginx-null","kind":"null"}
+{"query_id":"hard_q029","query":"docker image build cache invalidation after changing package files","correct_session_id":null,"topic":"docker-null","kind":"null"}
+{"query_id":"hard_q030","query":"postgres slow query explain analyze missing index","correct_session_id":null,"topic":"postgres-null","kind":"null"}
+{"query_id":"hard_q031","query":"kubernetes secret decode and update namespace credentials","correct_session_id":null,"topic":"kubernetes-null","kind":"null"}
+{"query_id":"hard_q032","query":"cron job timezone fired at the wrong hour","correct_session_id":null,"topic":"cron-null","kind":"null"}
